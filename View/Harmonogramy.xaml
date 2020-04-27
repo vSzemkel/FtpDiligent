@@ -1,0 +1,63 @@
+﻿<UserControl x:Class="FtpDiligent.Harmonogramy"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FtpDiligent"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="980">
+    <Grid Background="{StaticResource Tlo}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70"/>
+            <RowDefinition />
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Canvas>
+            <TextBox Canvas.Left="10" Canvas.Top="10" Text="Serwer:" IsReadOnly="True"/>
+            <ComboBox Canvas.Left="10" Canvas.Top="30" Name="cbSerwery" ItemsSource="{Binding}" Width="300" Height="27" SelectionChanged="OnSerwerChanged" >
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0}{1}">
+                                    <Binding Path="Host"/>
+                                    <Binding Path="RemoteDirectory"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </Canvas>
+        <ListView Grid.Row="1" Grid.ColumnSpan="2" Margin="10" Name="lvHarmonogramy" ItemsSource="{Binding}" MouseDoubleClick="OnDoubleClick">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Nazwa" Width="130"
+                          DisplayMemberBinding="{Binding Path=Name}"/>
+                    <GridViewColumn Header="Początek" Width="130"
+                          DisplayMemberBinding="{Binding Path=StartString}"/>
+                    <GridViewColumn Header="Koniec" Width="130"
+                          DisplayMemberBinding="{Binding Path=StopString}"/>
+                    <GridViewColumn Header="Co ile minut" Width="100"
+                          DisplayMemberBinding="{Binding Path=Stride}"/>
+                    <GridViewColumn Header="Ile razy" HeaderStringFormat=" {0} "
+                          DisplayMemberBinding="{Binding Path=Repeats}"/>
+                    <GridViewColumn Header="Najbliższy" Width="130"
+                          DisplayMemberBinding="{Binding Path=NextSyncString}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
+            <Button Name="btAdd" Click="OnAdd">Dodaj</Button>
+            <Button Name="btEdit" Click="OnChange" IsEnabled="{Binding SelectedItem, ElementName=lvHarmonogramy, Converter={StaticResource SelectedItemEnabler}}">Zmień</Button>
+            <Button Name="btDel" Click="OnRemove" IsEnabled="{Binding IsEnabled, ElementName=btEdit}">Usuń</Button>
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Name="btRelo" Click="OnRelo">Odśwież</Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

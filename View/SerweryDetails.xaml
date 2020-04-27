@@ -1,0 +1,42 @@
+﻿<UserControl x:Class="FtpDiligent.SerweryDetails"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FtpDiligent"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="980">
+    <Grid Background="{StaticResource Tlo}">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <StackPanel Margin="10" Width="350" VerticalAlignment="Center">
+            <HeaderedContentControl Header="Serwer">
+                <TextBox Width="210" Text="{Binding Path=Host, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Użytkownik">
+                <TextBox Width="210" Text="{Binding Path=Userid, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Hasło">
+                <TextBox Width="210" Text="{Binding Path=Password, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Katalog lokalny">
+                <TextBox Width="210" Text="{Binding Path=LocalDirectory, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Katalog zdalny">
+                <TextBox Width="210" Text="{Binding Path=RemoteDirectory, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Operacja">
+                <ComboBox Name="cbDirection" Width="210" SelectedItem="{Binding Path=Direction, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Tryb">
+                <ComboBox Name="cbMode" Width="210" SelectedItem="{Binding Path=Mode, Mode=TwoWay}"/>
+            </HeaderedContentControl>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Name="btCancel" Click="OnCancel">Anuluj</Button>
+            <Button Name="btOK" Click="OnCommit" IsDefault="True">Zatwierdź</Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

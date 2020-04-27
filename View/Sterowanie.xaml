@@ -1,0 +1,52 @@
+﻿<UserControl x:Class="FtpDiligent.Sterowanie"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FtpDiligent"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="980">
+    <Grid Background="{StaticResource Tlo}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70"/>
+            <RowDefinition/>
+            <RowDefinition Height="320"/>
+        </Grid.RowDefinitions>
+        <Canvas>
+            <TextBox Canvas.Left="10" Canvas.Top="10" Text="Tryb pobierania:" IsReadOnly="True"/>
+            <ComboBox Canvas.Left="10" Canvas.Top="30" Name="cbSyncMode" Width="200" Height="27"/>
+            <Button Canvas.Left="498" Canvas.Top="23" Name="btRunSync" Content="Uruchom przesyłanie" Click="OnStartSync"/>
+            <Button Canvas.Left="658" Canvas.Top="23" Name="btStopSync" Content="Zatrzymaj przesyłanie" IsEnabled="False" Click="OnStopSync"/>
+            <Button Canvas.Left="818" Canvas.Top="23" Name="btClearLog" Content="Wyczyść komunikaty" Click="OnClearLog"/>
+        </Canvas>
+        <Canvas Grid.Row="1">
+            <TextBox Canvas.Left="10" Canvas.Top="10" Text="Komunikaty bieżące:" IsReadOnly="True"/>
+            <TextBox Canvas.Left="160" Name="tbNextSync" Canvas.Top="10" IsReadOnly="True" Width="810" TextAlignment="Right"/>
+            <ListBox Canvas.Top="30" Name="lbLog" Height="310" Width="960" Canvas.Left="10"/>
+        </Canvas>
+        <Canvas Grid.Row="2">
+            <TextBox Canvas.Left="10" Canvas.Top="12" Text="Informacje o błędach:" IsReadOnly="True"/>
+            <ListBox Canvas.Left="10" Canvas.Top="32" Name="lbErrLog" Height="280" Width="475"/>
+            <TextBox Canvas.Left="495" Canvas.Top="12" Name="tbFilesCount" Text="{Binding Mode=OneWay, StringFormat=Przesłane pliki [{0}]:}" IsReadOnly="True"/>
+            <ListView Name="lvFilesLog" Canvas.Left="495" Canvas.Top="32" Height="280" Width="475" ItemsSource="{Binding}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Operacja">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Source="{Binding Path=Instance, Converter={StaticResource ImageForOperation}}" Width="20" Height="20"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Nazwa" Width="185"
+                          DisplayMemberBinding="{Binding Path=FileName}"/>
+                        <GridViewColumn Header="Rozmiar" Width="75"
+                          DisplayMemberBinding="{Binding Path=FileSize}"/>
+                        <GridViewColumn Header="Ostatnia modyfikacja"
+                          DisplayMemberBinding="{Binding Path=FileDate, StringFormat=dd/MM/yyyy HH:mm}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Canvas>
+    </Grid>
+</UserControl>
