@@ -19,7 +19,7 @@ namespace FtpDiligent
         /// <summary>
         /// Opis połączenia do bazy danych
         /// </summary>
-        protected static readonly string connStr = System.Configuration.ConfigurationManager.ConnectionStrings[eDbLocation.Onprem].ConnectionString;
+        protected static readonly string connStr = System.Configuration.ConfigurationManager.ConnectionStrings[eDbLocation.Cloud].ConnectionString;
 
         /// <summary>
         /// Ostatnia wartość pobrana z sekwencji do natychmiastowego, jednowątkowego użycia

@@ -8,7 +8,7 @@
 
 namespace FtpDiligent
 {
-    class FtpDiligentDatabaseClient : FtpDiligentOracleClient
+    class FtpDiligentDatabaseClient : FtpDiligentSqlClient
     {
     }
 }

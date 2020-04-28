@@ -144,7 +144,7 @@ namespace FtpDiligent
             par.Add("transmode", SqlDbType.TinyInt).Value = endpoint.mode;
 
             if (mode == eDbOperation.Insert)
-                return ExecuteNonQueryStoreKey(cmd, 1);
+                return ExecuteNonQueryStoreKey(cmd);
             else
                 return ExecuteNonQuery(cmd);
         }
@@ -170,7 +170,7 @@ namespace FtpDiligent
             par.Add("disabled", SqlDbType.TinyInt).Value = !schedule.enabled;
 
             if (mode == eDbOperation.Insert)
-                return ExecuteNonQueryStoreKey(cmd, 1);
+                return ExecuteNonQueryStoreKey(cmd);
             else
                 return ExecuteNonQuery(cmd);
         }
@@ -353,16 +353,12 @@ namespace FtpDiligent
         /// statycznej wartość parametru OUT, pobraną z sekwencji przy insercie
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
-        /// <param name="index">Numer porządkowy parametru typu OUT</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ExecuteNonQueryStoreKey(SqlCommand cmd, int index)
+        public static string ExecuteNonQueryStoreKey(SqlCommand cmd)
         {
-            var par = cmd.Parameters[index];
-            par.Direction = ParameterDirection.InputOutput;
-
-            string errmsg = ExecuteNonQuery(cmd);
+            var (key, errmsg) = ExecuteScalar<int>(cmd);
             if (string.IsNullOrEmpty(errmsg))
-                IFtpDiligentDatabaseClient.m_lastInsertedKey = (int)par.Value;
+                IFtpDiligentDatabaseClient.m_lastInsertedKey = key;
             else
                 IFtpDiligentDatabaseClient.m_lastInsertedKey = 0;
 

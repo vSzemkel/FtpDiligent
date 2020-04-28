@@ -84,12 +84,10 @@ create procedure sp_init_instance (
 ) as begin
     declare @xx int
     select @xx=xx from ftp_instance where hostname=@hostname
-    if @xx is null begin
-        insert into ftp_instance (hostname) values (@hostname)
-        select @xx = scope_identity()
-    end
-
-    select @xx
+    if @xx is null
+        insert into ftp_instance (hostname) output inserted.xx values (@hostname)
+    else
+        select @xx
 end
 go
 
@@ -97,7 +95,7 @@ drop procedure sp_modify_endpoint
 go
 create procedure sp_modify_endpoint (
     @mode tinyint,
-    @xx int output,
+    @xx int,
     @ins_xx int,
     @host varchar(64),
     @userid varchar(32),
@@ -107,11 +105,11 @@ create procedure sp_modify_endpoint (
     @direction tinyint,
     @transfer_mode tinyint
 ) as begin
-  if @mode=0 begin
+  if @mode=0
      insert into ftp_endpoint (ins_xx,host,userid,passwd,remote_dir,local_dir,direction,transfer_mode)
+     output inserted.xx
      values (@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@direction,@transfer_mode)
-     select @xx=scope_identity()
-  end else if @mode=1
+  else if @mode=1
     update ftp_endpoint
     set host=@host,userid=@userid,passwd=@passwd,remote_dir=@remdir,
         local_dir=@locdir,direction=direction,transfer_mode=@transfer_mode
@@ -127,7 +125,7 @@ drop procedure sp_modify_schedule
 go
 create procedure sp_modify_schedule (
     @mode tinyint,
-    @xx int output,
+    @xx int,
     @end_xx int,
     @name varchar(128),
     @job_start smallint,
@@ -138,15 +136,15 @@ create procedure sp_modify_schedule (
   if @job_stop < @job_start
     raiserror(N'Data zakonczenia musi byc pozniejsza niz data rozpoczecia', 16, 1);
   
-  if @mode=0 begin
+  if @mode=0
      insert into ftp_schedule (end_xx,name,job_start,job_stop,job_stride,disabled)
+     output inserted.xx
      values (@end_xx,@name,@job_start,@job_stop,@job_stride,case @disabled when 0 then null else 1 end)
-     select @xx=scope_identity()
-  end else if @mode=1
+  else if @mode=1
     update ftp_schedule set name=@name,disabled=case @disabled when 0 then null else 1 end,
            job_start=@job_start,job_stop=@job_stop,job_stride=@job_stride
      where xx=@xx;
-  else --vmode=2 DELETE
+  else
      update ftp_schedule set deleted=1 where xx=@xx;
 end
 go
@@ -190,14 +188,14 @@ go
 create procedure sp_select_next_sync (
     @ins_xx int
 ) as begin
-    select * from (select top 1 fs.xx,name,dbo.sf_get_next_sync(fs.xx) at time zone 'Central European Standard Time' as sync
+    select * from (select top 1 fs.xx,name,ftp.sf_get_next_sync(fs.xx) as sync
       from ftp_endpoint fe,ftp_schedule fs
      where fe.ins_xx=@ins_xx and fe.xx=fs.end_xx
        and fe.disabled is null and fs.disabled is null
-       and dbo.sf_get_week_minute() < fs.job_stop
+       and ftp.sf_get_week_minute() < fs.job_stop
      order by sync,refresh_date,job_stride) t
  union all
-    select -1,'next week',dateadd(day,7,dbo.sf_get_week_start()) at time zone 'Central European Standard Time'
+    select -1,'next week',dateadd(day,7,ftp.sf_get_week_start()) as sync
       from ftp_endpoint fe,ftp_schedule fs 
      where fe.ins_xx=@ins_xx and fe.xx=fs.end_xx
 end
@@ -248,11 +246,11 @@ go
 drop function sf_get_week_start
 go
 create function sf_get_week_start()
-returns datetime
+returns datetimeoffset
 as begin
-    declare @nowlocal datetime = getdate() --at time zone 'UTC' at time zone 'Central European Standard Time'
+    declare @nowlocal datetime = getdate()
 
-    return cast(cast(dateadd(day,1-datepart(dw,@nowlocal),@nowlocal) as date) as datetime)
+    return cast(cast(dateadd(day,1-datepart(dw,@nowlocal),@nowlocal) as date) as datetime) at time zone 'Central European Standard Time'
 end
 go
 
@@ -261,7 +259,7 @@ go
 create function sf_get_week_minute()
 returns smallint
 as begin
-    return datediff(mi,dbo.sf_get_week_start(),getdate())
+    return datediff(mi,ftp.sf_get_week_start(),getdate())
 end
 go
 
@@ -270,13 +268,13 @@ go
 create function sf_get_next_sync (
     @xx int
 )
-returns datetime2
+returns datetimeoffset
 as begin
-    declare @week_start datetime2, @ret datetime2,
+    declare @week_start datetimeoffset, @ret datetimeoffset,
             @week_minute smallint
 
-     select @week_start=dbo.sf_get_week_start(),
-            @week_minute=dbo.sf_get_week_minute()
+     select @week_start=ftp.sf_get_week_start(),
+            @week_minute=ftp.sf_get_week_minute()
 
     select @ret=case
         when @week_minute<job_start then dateadd(minute,job_start,@week_start)
