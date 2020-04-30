@@ -246,14 +246,15 @@ create procedure [ftp].[sp_log_download] (
 end
 go
 
-
-
 drop function [ftp].[sf_get_week_start]
 go
 create function [ftp].[sf_get_week_start]()
-returns datetime
+returns datetimeoffset
 as begin
-    return (select cast(cast(dateadd(day, 1 - datepart(dw, getdate()), getdate()) as date) as datetime))
+    return (select cast(cast(dateadd(day, 1 - datepart(dw, getdate()), getdate()) as date) as datetime)
+   at time zone fi.timezone
+      from [sys].[dm_exec_sessions] es, [ftp].[ftp_instance] fi
+     where es.session_id=@@spid and es.host_name=fi.hostname collate database_default)
 end
 go
 
@@ -280,23 +281,56 @@ create function [ftp].[sf_get_next_sync] (
 )
 returns datetimeoffset
 as begin
-    declare @week_start datetime, @week_minute smallint, @is_local tinyint
+    declare @week_start datetime, @week_minute smallint
 
      select @week_start = [ftp].[sf_get_week_start](),
-            @week_minute = [ftp].[sf_get_week_minute](),
-            @is_local = charindex('LOCAL', @@SERVERNAME)
+            @week_minute = [ftp].[sf_get_week_minute]()
 
     return (select case
-        when @week_minute < job_start then case when @is_local > 0 then aux2.startlocal else cast(aux2.startlocal as datetime) end
-        when aux2.startlocal < aux2.retlocal and aux2.missed < aux2.retlocal then aux2.missed
-        else aux2.retlocal end
-    from (select aux.job_start, aux.startlocal, aux.missed,
-            case when @is_local > 0 then aux.pulse at time zone aux.timezone else aux.pulse end as retlocal
-          from (select fs.job_start, fi.timezone,
+        when @week_minute < job_start then aux.startlocal
+        when aux.startlocal < aux.retlocal and aux.missed < aux.retlocal then aux.missed
+        else aux.retlocal end
+    from (select fs.job_start,
                 dateadd(minute, job_start, @week_start) at time zone fi.timezone as startlocal,
                 dateadd(minute, job_stride, refresh_date) at time zone fi.timezone as missed,
-                (select dateadd(minute, job_start + ceiling(cast(@week_minute - job_start as float) / job_stride) * job_stride, @week_start)) as pulse
+                (select dateadd(minute, job_start + ceiling(cast(@week_minute - job_start as float) / job_stride) * job_stride, @week_start)) at time zone fi.timezone as retlocal
             from [ftp].[ftp_endpoint] fe, [ftp].[ftp_schedule] fs, [ftp].[ftp_instance] fi, [sys].[dm_exec_sessions] es
-           where fe.xx = fs.end_xx and fs.xx = @xx and es.session_id = @@spid and es.host_name=fi.hostname collate database_default) aux) aux2)
+           where fe.xx = fs.end_xx and fs.xx = @xx and es.session_id = @@spid and es.host_name=fi.hostname collate database_default) aux)
+end
+go
+
+---------------- FOR (LocalDB)\MSSQLLocalDB -------------------------
+
+drop function [ftp].[sf_get_week_minute_local]
+go
+create function [ftp].[sf_get_week_minute_local]()
+returns smallint
+as begin
+    return (select datediff(mi, [ftp].[sf_get_week_start](), getdate() at time zone 'Central European Standard Time'))
+end
+go
+
+drop function [ftp].[sf_get_next_sync_local]
+go
+create function [ftp].[sf_get_next_sync_local] (
+    @xx int
+)
+returns datetimeoffset
+as begin
+    declare @week_start datetime, @week_minute smallint
+
+     select @week_start = [ftp].[sf_get_week_start](),
+            @week_minute = [ftp].[sf_get_week_minute_local]()
+
+    return (select case
+        when @week_minute < job_start then aux.startlocal at time zone aux.timezone
+        when aux.startlocal < aux.retlocal and aux.missed < aux.retlocal then aux.missed at time zone aux.timezone
+        else aux.retlocal at time zone aux.timezone end
+    from (select fs.job_start,fi.timezone,
+                dateadd(minute, job_start, @week_start) as startlocal,
+                dateadd(minute, job_stride, refresh_date) as missed,
+                (select dateadd(minute, job_start + ceiling(cast(@week_minute - job_start as float) / job_stride) * job_stride, @week_start)) as retlocal
+            from [ftp].[ftp_endpoint] fe, [ftp].[ftp_schedule] fs, [ftp].[ftp_instance] fi, [sys].[dm_exec_sessions] es
+           where fe.xx = fs.end_xx and fs.xx = @xx and es.session_id = @@spid and es.host_name=fi.hostname collate database_default) aux)
 end
 go
