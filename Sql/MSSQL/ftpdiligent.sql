@@ -301,12 +301,21 @@ go
 
 ---------------- FOR (LocalDB)\MSSQLLocalDB -------------------------
 
+drop function [ftp].[sf_get_week_start_local]
+go
+create function [ftp].[sf_get_week_start_local]()
+returns datetimeoffset
+as begin
+    return (select cast(cast(dateadd(day, 1 - datepart(dw, getdate()), getdate()) as date) as datetime))
+end
+go
+
 drop function [ftp].[sf_get_week_minute_local]
 go
 create function [ftp].[sf_get_week_minute_local]()
 returns smallint
 as begin
-    return (select datediff(mi, [ftp].[sf_get_week_start](), getdate() at time zone 'Central European Standard Time'))
+    return (select datediff(mi, [ftp].[sf_get_week_start_local](), getdate()))
 end
 go
 
@@ -319,13 +328,13 @@ returns datetimeoffset
 as begin
     declare @week_start datetime, @week_minute smallint
 
-     select @week_start = [ftp].[sf_get_week_start](),
+     select @week_start = [ftp].[sf_get_week_start_local](),
             @week_minute = [ftp].[sf_get_week_minute_local]()
 
     return (select case
-        when @week_minute < job_start then aux.startlocal at time zone aux.timezone
-        when aux.startlocal < aux.retlocal and aux.missed < aux.retlocal then aux.missed at time zone aux.timezone
-        else aux.retlocal at time zone aux.timezone end
+        when @week_minute < job_start then aux.startlocal
+        when aux.startlocal < aux.retlocal and aux.missed < aux.retlocal then aux.missed
+        else aux.retlocal end
     from (select fs.job_start,fi.timezone,
                 dateadd(minute, job_start, @week_start) as startlocal,
                 dateadd(minute, job_stride, refresh_date) as missed,
