@@ -17,7 +17,11 @@ namespace FtpDiligent
     /// </summary>
     public class FtpUtilityException : Exception
     {
-        private static readonly uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
+        private static readonly uint FORMAT_MESSAGE_FROM_SYSTEM    = 0x00001000;
+        private static readonly uint FORMAT_MESSAGE_FROM_HMODULE   = 0x00000800;
+        private static readonly uint FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200;
+        private static readonly uint FORMAT_MESSAGE_FLAGS = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_IGNORE_INSERTS;
+        private IntPtr _wininet = FtpUtility.GetModuleHandle("wininet.dll");
 
         #region reflection
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -49,8 +53,10 @@ namespace FtpDiligent
         {
             _iWin32Error = Marshal.GetLastWin32Error();
             var sbSystemMsg = new StringBuilder(iSysMsgLength);
-            FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, IntPtr.Zero, _iWin32Error, 0, sbSystemMsg, iSysMsgLength, IntPtr.Zero);
-            _sFtpMessage = $"{DateTime.Now:dd/MM/yyyy HH:mm)} {sMsg}, {sbSystemMsg}";
+            FormatMessage(FORMAT_MESSAGE_FLAGS, _wininet, _iWin32Error, 0, sbSystemMsg, iSysMsgLength, IntPtr.Zero);
+            if (sbSystemMsg.Length == 0)
+                sbSystemMsg.Append($"(winerr = {_iWin32Error})");
+            _sFtpMessage = $"{DateTime.Now:dd/MM/yyyy HH:mm)} {sMsg}, {sbSystemMsg}".TrimEnd();
         }
 
         public FtpUtilityException(string sMsg, int iWin32Error)
@@ -61,8 +67,8 @@ namespace FtpDiligent
                 InternetGetLastResponseInfo(out _iWin32Error, sbSystemMsg, ref length);
             } else
                 _iWin32Error = iWin32Error;
-            FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, IntPtr.Zero, _iWin32Error, 0, sbSystemMsg, iSysMsgLength, IntPtr.Zero);
-            _sFtpMessage = $"{DateTime.Now:dd/MM/yyyy HH:mm} {sMsg}, {sbSystemMsg}";
+            FormatMessage(FORMAT_MESSAGE_FLAGS, _wininet, _iWin32Error, 0, sbSystemMsg, iSysMsgLength, IntPtr.Zero);
+            _sFtpMessage = $"{DateTime.Now:dd/MM/yyyy HH:mm} {sMsg}, {sbSystemMsg}".TrimEnd();
         }
         #endregion
     }

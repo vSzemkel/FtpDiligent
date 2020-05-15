@@ -24,7 +24,7 @@ namespace FtpDiligent
         /// <summary>
         /// Nazwa aplikacyjnego EventLogu
         /// </summary>
-        private const string m_eventLog = "FtpDiligent";
+        public const string m_eventLog = "FtpDiligent";
 
         /// <summary>
         /// Długość logu transferowanych plików

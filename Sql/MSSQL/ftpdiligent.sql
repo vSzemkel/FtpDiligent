@@ -117,11 +117,12 @@ create procedure [ftp].[sp_modify_endpoint] (
   else if @mode=1
     update [ftp].[ftp_endpoint]
     set host=@host,userid=@userid,passwd=@passwd,remote_dir=@remdir,
-        local_dir=@locdir,direction=direction,transfer_mode=@transfer_mode
+        local_dir=@locdir,direction=@direction,transfer_mode=@transfer_mode
     where xx=@xx
   else begin
-     delete from [ftp].[ftp_schedule] where end_xx=@xx and deleted=1;
-     delete from [ftp].[ftp_endpoint] where xx=@xx;
+     delete from [ftp].[ftp_file] where end_xx=@xx or sch_xx in (select xx from [ftp].[ftp_schedule] where end_xx=@xx and deleted=1)
+     delete from [ftp].[ftp_schedule] where end_xx=@xx and deleted=1
+     delete from [ftp].[ftp_endpoint] where xx=@xx
   end
 end
 go

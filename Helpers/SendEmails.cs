@@ -8,7 +8,7 @@
 namespace FtpDiligent
 {
     using System;
-
+    using System.Linq;
     using MailKit.Net.Smtp;
     using MimeKit;
 
@@ -65,8 +65,8 @@ namespace FtpDiligent
             try { 
                 var msg = new MimeMessage();
                 msg.Subject = "Powiadomienie o b³êdzie transferu plików";
-                msg.To.Add(new MailboxAddress(m_errorsMailTo));
-                var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@agora.pl");
+                msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => new MailboxAddress(s)));
+                var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@sendgrid.net");
                 msg.Sender = senderMailbox;
                 msg.From.Add(senderMailbox);
 

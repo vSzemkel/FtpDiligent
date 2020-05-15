@@ -15,7 +15,6 @@ namespace FtpDiligent
     using System.Runtime.InteropServices;
     using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
-
     [StructLayout(LayoutKind.Sequential)]
     public class WIN32_FIND_DATA
     {
@@ -39,42 +38,24 @@ namespace FtpDiligent
     /// <summary>
     /// Umo¿liwia przegl¹danie zasobów serwera FTP i pobieranie plików
     /// </summary>
-    public sealed class FtpUtility : IDisposable
+    public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
     {
         #region fields
         private bool bDisposed = false;
         private IntPtr hFtpConn = IntPtr.Zero;
         private IntPtr hFtpSess = IntPtr.Zero;
         private IntPtr iContext;
-
-        private string m_sHost;
-        private string m_sUser;
-        private string m_sPass;
-        private string m_sRemoteDir;
-        private string m_sLocalDir;
-        private DateTime m_dtLastRefresh;
-        private eSyncFileMode m_SyncMode;
-        private eFtpTransferMode m_TransferMode;
-
-        private FtpDispatcher m_Disp;
-        private MainWindow m_mainWnd;
-        private MainWindow.ShowError m_showError;
         #endregion
 
         #region constructor
         /// <summary>
-        /// Konstruktor FtpUtility
+        /// Konstruktor FtpUtility sterowanego przez <see>FtpDispatcher</see>
         /// </summary>
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="dispatcher">Obiekt steruj¹cy w¹tkami</param>
         /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
         public FtpUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
-        {
-            m_SyncMode = mode;
-            m_Disp = dispatcher;
-            m_mainWnd = dispatcher.m_mainWnd;
-            m_showError = m_mainWnd.m_showError;
-            FromFtpEndpoint(endpoint);
+            : base(endpoint, dispatcher, mode) {
         }
 
         /// <summary>
@@ -83,11 +64,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="window">G³ówne okno aplikacji</param>
         public FtpUtility(FtpEndpointModel endpoint, MainWindow window)
-        {
-            m_mainWnd = window;
-            m_showError = window.m_showError;
-            m_SyncMode = eSyncFileMode.AllFiles;
-            FromFtpEndpoint(endpoint);
+            : base(endpoint, window) { 
         }
         #endregion
 
@@ -161,6 +138,9 @@ namespace FtpDiligent
 
         [DllImport("wininet.dll", SetLastError = true)]
         public static extern UInt32 FtpGetFileSize(IntPtr hFile, ref UInt32 lpdwFileSizeHigh);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr GetModuleHandle(string lpModuleName);
         #endregion
 
         #region public methods
@@ -223,7 +203,7 @@ namespace FtpDiligent
             if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
                 throw new FtpUtilityException("B³¹d pobierania z zasobu " + m_sHost + m_sRemoteDir);
 
-            noFilesFound:
+noFilesFound:
             InternetCloseHandle(hFind);
             Dispose();
 
@@ -291,74 +271,31 @@ namespace FtpDiligent
 
             return status;
         }
-
-        /// <summary>
-        /// Nawi¹zuje po³¹czenie z endpointem i natychmiast je koñczy
-        /// </summary>
-        /// <returns>Stwierdza, czy dane u¿ywane do nawi¹zania po³¹czenia s¹ prawid³owe</returns>
-        public bool CheckConnection(ref string sErrInfo)
-        {
-            try {
-                System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-                sw.Start();
-
-                Connect();
-                Dispose();
-
-                sw.Stop();
-                sErrInfo = "Po³¹czenie zosta³o nawi¹zane";
-                if (sw.ElapsedMilliseconds >= 100)
-                    sErrInfo += $" w ci¹gu {(decimal)sw.ElapsedMilliseconds / 1000:##0.##} [s]";
-
-                return true;
-            } catch (FtpUtilityException fue) {
-                sErrInfo = $"{fue.Message}; iWin32Error = {fue.iWin32Error}";
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Podaje œcie¿kê do lokalnego katalogu roboczego
-        /// </summary>
-        public string GetLocalDirectory() => m_sLocalDir;
         #endregion
 
-        #region private methods
-        /// <summary>
-        /// Inicjalizuje w³asnoœci zale¿ne od endpointu
-        /// </summary>
-        /// <param name="endpoint">DAne endpointu</param>
-        private void FromFtpEndpoint(FtpEndpointModel endpoint)
-        {
-            m_sHost = endpoint.host;
-            m_sUser = endpoint.uid;
-            m_sPass = endpoint.pwd;
-            m_sRemoteDir = endpoint.remDir;
-            m_sLocalDir = endpoint.locDir;
-            m_dtLastRefresh = endpoint.lastSync;
-            m_TransferMode = endpoint.mode;
-        }
-
+        #region protected override methods
         /// <summary>
         /// Otwiera po³¹czenie z serwerem FTP, autoryzuje siê i nawi¹zuje sesjê
         /// </summary>
         /// <returns>True, a jeœli siê nie uda, rzuca wyj¹tek</returns>
-        private bool Connect()
+        protected override bool Connect()
         {
             iContext = IntPtr.Zero;
 
-            hFtpConn = InternetOpen("FtpGetWorker" + System.Configuration.ConfigurationManager.AppSettings["InstanceId"], INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
+            hFtpConn = InternetOpen($"{MainWindow.m_eventLog} {m_mainWnd.m_instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
             if (hFtpConn == IntPtr.Zero) throw new FtpUtilityException("InternetOpen failed");
 
             hFtpSess = InternetConnect(hFtpConn, m_sHost, iPort, m_sUser, m_sPass, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, iContext);
-            if (hFtpSess == IntPtr.Zero) throw new FtpUtilityException("InternetConnect to " + m_sHost + " failed");
+            if (hFtpSess == IntPtr.Zero) throw new FtpUtilityException($"InternetConnect to {m_sHost} failed");
 
             if (!FtpSetCurrentDirectory(hFtpSess, m_sRemoteDir))
-                throw new FtpUtilityException("Remote directory " + m_sHost + m_sRemoteDir + " does not exist");
+                throw new FtpUtilityException($"Remote directory {m_sHost}{m_sRemoteDir} does not exist");
 
             return true;
         }
+        #endregion
 
+        #region private methods
         /// <summary>
         /// Pobiera plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
         /// </summary>
@@ -390,8 +327,10 @@ namespace FtpDiligent
                     break;
             }
 
-            if (!FtpGetFile(hFtpSess, pFD.cFileName, m_sLocalDir + pFD.cFileName, false, FILE_ATTRIBUTE_NORMAL, (uint)m_TransferMode, iContext))
-                throw new FtpUtilityException("Kopiowanie " + m_sHost + m_sRemoteDir + "/" + pFD.cFileName + " do " + m_sLocalDir + " nie powiod³o siê");
+            if (!FtpGetFile(hFtpSess, pFD.cFileName, m_sLocalDir + pFD.cFileName, false, FILE_ATTRIBUTE_NORMAL, (uint)m_TransferMode, iContext)) {
+                var dirsep = m_sRemoteDir.EndsWith('/')? string.Empty : "/";
+                throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiod³o siê");
+            }
 
             if (m_mainWnd.m_checkLocalStorage) {
                 bool bStatus = CheckLocalStorage(pFD.cFileName, size);
@@ -451,20 +390,6 @@ namespace FtpDiligent
         }
 
         /// <summary>
-        /// Sprawdza, czy w zasobie lokalnym istnieje ju¿ plik o zadanej nazwie i rozmiarze
-        /// </summary>
-        /// <param name="sFileName">Nazwa liku</param>
-        /// <param name="sLength">D³ugoœæ pliku</param>
-        /// <returns>Czy istnieje plik o zadanych cechach w katalogu lokalnym</returns>
-        private bool CheckLocalStorage(string sFileName, long sLength)
-        {
-            FileInfo fi = new FileInfo(m_sLocalDir + sFileName);
-            if (!fi.Exists) return false;
-
-            return fi.Length == sLength;
-        }
-
-        /// <summary>
         /// Sprawdza, czy w zasobie zdalnym istnieje ju¿ plik o zadanej nazwie i rozmiarze
         /// </summary>
         /// <param name="sFileName">Nazwa liku</param>
@@ -480,24 +405,6 @@ namespace FtpDiligent
             InternetCloseHandle(hFile);
             uiFileSize += lpdwFileSizeHigh << 32;
             return uiFileSize == sLength;
-        }
-
-        /// <summary>
-        /// Sprawdza istnienie lokalnego katalogu
-        /// </summary>
-        /// <returns>Czy istnieje</returns>
-        private bool CheckLocalDirectory()
-        {
-            if (!Directory.Exists(m_sLocalDir)) {
-                string sMsg = "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir;
-                if (m_showError != null) {
-                    m_showError(eSeverityCode.Error, sMsg);
-                    return false;
-                } else
-                    throw new FtpUtilityException(sMsg);
-            }
-
-            return true;
         }
 
         /// <summary>

@@ -81,7 +81,7 @@ namespace FtpDiligent
         {
             var endpoint = lvSerwery.SelectedItem as FtpEndpoint;
             var collection = lvSerwery.Items as IEditableCollectionView;
-            if (MessageBoxResult.Yes == MessageBox.Show("Czy usunąć serwer " + endpoint.Host, "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question)) {
+            if (MessageBoxResult.Yes == MessageBox.Show($"Czy usunąć serwer {endpoint.Host}{endpoint.RemoteDirectory} ?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question)) {
                 var errmsg = FtpDiligentDatabaseClient.ModifyEndpoint(endpoint.GetModel(), eDbOperation.Delete);
                 if (string.IsNullOrEmpty(errmsg))
                     collection.Remove(endpoint);
@@ -104,20 +104,21 @@ namespace FtpDiligent
             if (endpoint != null) {
                 Cursor = Cursors.Wait;
 
-                var fu = new FtpUtility(endpoint.GetModel(), m_mainWnd);
-                string sErrMsg = string.Empty;
-                bool ftpCheck = fu.CheckConnection(ref sErrMsg);
-
-                Cursor = Cursors.Arrow;
-
-                string errmsg;
                 bool isErr = false;
-                if (ftpCheck) { errmsg = sErrMsg; } else { errmsg = "Niepoprawne parametry połączenia."; isErr = true; }
-                if (!System.IO.Directory.Exists(endpoint.LocalDirectory)) {
-                    errmsg += "\nKatalog lokalny nie istnieje"; 
-                    isErr = true; 
+                string errmsg = string.Empty;
+                var fu = IFtpUtility.Create(endpoint.GetModel(), m_mainWnd);
+
+                if (!fu.CheckConnection(ref errmsg)) {
+                    isErr = true;
+                    errmsg = "Niepoprawne parametry połączenia";
                 }
 
+                if (!fu.CheckLocalDirectory()) {
+                    isErr = true; 
+                    errmsg += "\nKatalog lokalny nie istnieje"; 
+                }
+
+                Cursor = Cursors.Arrow;
                 MessageBox.Show(errmsg, isErr ? "Ostrzeżenie" : "Info", MessageBoxButton.OK, isErr ? MessageBoxImage.Error : MessageBoxImage.Information);
             } else
                 MessageBox.Show("Nie wybrano serwera do sprawdzenia.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);

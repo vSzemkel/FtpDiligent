@@ -118,6 +118,16 @@ namespace FtpDiligent
             }
         }
 
+        public eFtpProtocol Protocol {
+            get { return _currentData.protocol; }
+            set {
+                if (_currentData.protocol != value) {
+                    _currentData.protocol = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
         public DateTime LastSyncTime {
             get { return _currentData.lastSync; }
             set {

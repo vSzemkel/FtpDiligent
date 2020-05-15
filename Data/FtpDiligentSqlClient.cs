@@ -34,8 +34,9 @@ namespace FtpDiligent
         public static string InitInstance(string hostname)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "exec sp_init_instance @name";
+            cmd.CommandText = "exec [ftp].[sp_init_instance] @name,@zone";
             cmd.Parameters.Add("name", SqlDbType.VarChar, 128).Value = hostname;
+            cmd.Parameters.Add("zone", SqlDbType.VarChar, 128).Value = TimeZoneInfo.Local.StandardName;
 
             var (ret, errmsg) = ExecuteScalar<int>(cmd);
             if (string.IsNullOrEmpty(errmsg))
@@ -52,7 +53,7 @@ namespace FtpDiligent
         public static (DataTable, string) GetEndpoints(int instance)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,direction,transfer_mode from ftp_endpoint where ins_xx=@ins and disabled is null order by host";
+            cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,direction,transfer_mode from [ftp].[ftp_endpoint] where ins_xx=@ins and disabled is null order by host";
             cmd.Parameters.Add("ins", SqlDbType.Int).Value = instance;
 
             return ExecuteReader(cmd);
@@ -92,7 +93,7 @@ namespace FtpDiligent
         public static (DataTable, string) GetSchedules(int endpoint)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "select xx,end_xx,name,job_start,job_stop,job_stride,disabled from ftp_schedule where end_xx=@edp and deleted is null order by job_start";
+            cmd.CommandText = "select xx,end_xx,name,job_start,job_stop,job_stride,disabled from [ftp].[ftp_schedule] where end_xx=@edp and deleted is null order by job_start";
             cmd.Parameters.Add("edp", SqlDbType.Int).Value = endpoint;
 
             return ExecuteReader(cmd);
@@ -130,7 +131,7 @@ namespace FtpDiligent
         public static string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "exec sp_modify_endpoint @mode,@xx,@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@transdir,@transmode";
+            cmd.CommandText = "exec [ftp].[sp_modify_endpoint] @mode,@xx,@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@transdir,@transmode";
             var par = cmd.Parameters;
             par.Add("mode", SqlDbType.Int).Value = (int)mode;
             par.Add("xx", SqlDbType.Int).Value = endpoint.xx;
@@ -158,7 +159,7 @@ namespace FtpDiligent
         public static string ModifySchedule(FtpScheduleModel schedule, eDbOperation mode)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "exec sp_modify_schedule @mode,@xx,@end_xx,@nazwa,@start,@stop,@stride,@disabled";
+            cmd.CommandText = "exec [ftp].[sp_modify_schedule] @mode,@xx,@end_xx,@nazwa,@start,@stop,@stride,@disabled";
             var par = cmd.Parameters;
             par.Add("mode", SqlDbType.Int).Value = (int)mode;
             par.Add("xx", SqlDbType.Int).Value = schedule.xx;
@@ -190,19 +191,19 @@ namespace FtpDiligent
             var ret = new FtpScheduleModel();
             SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
             SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "exec sp_select_next_sync @ins_xx";
+            cmd.CommandText = "exec [ftp].[sp_select_next_sync] @ins_xx";
             cmd.Parameters.Add("ins_xx", SqlDbType.Int).Value = instance;
 
             try {
                 conn.Open();
-                var odr = cmd.ExecuteReader(CommandBehavior.SingleRow);
-                if (!odr.Read())
+                var sdr = cmd.ExecuteReader(CommandBehavior.SingleRow);
+                if (!sdr.Read())
                     return (ret, "0");
 
-                ret.xx = odr.GetInt32(0);
-                ret.name = odr.GetString(1);
-                ret.nextSyncTime = odr.GetDateTimeOffset(2).LocalDateTime;
-                odr.Close();
+                ret.xx = sdr.GetInt32(0);
+                ret.name = sdr.GetString(1);
+                ret.nextSyncTime = sdr.GetDateTimeOffset(2).LocalDateTime;
+                sdr.Close();
             } catch (SqlException oex) {
                 return (ret, oex.Message);
             } catch (Exception sex) {
@@ -228,23 +229,23 @@ namespace FtpDiligent
             SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.Parameters.Add("sch_xx", SqlDbType.Int).Value = schedule;
-            cmd.CommandText = "exec sp_endpoint_for_schedule @sch_xx";
+            cmd.CommandText = "exec [ftp].[sp_endpoint_for_schedule] @sch_xx";
 
             try {
                 await conn.OpenAsync();
-                var odr = await cmd.ExecuteReaderAsync(CommandBehavior.SingleRow);
-                if (!odr.Read())
+                var sdr = await cmd.ExecuteReaderAsync(CommandBehavior.SingleRow);
+                if (!sdr.Read())
                     return (ret, "0");
-                ret.host = odr.GetString(0);
-                ret.uid = odr.GetString(1);
-                ret.pwd = odr.GetString(2);
-                ret.remDir = odr.GetString(3);
-                ret.locDir = odr.GetString(4);
-                ret.lastSync = odr.GetDateTimeOffset(5).LocalDateTime;
+                ret.host = sdr.GetString(0);
+                ret.uid = sdr.GetString(1);
+                ret.pwd = sdr.GetString(2);
+                ret.remDir = sdr.GetString(3);
+                ret.locDir = sdr.GetString(4);
+                ret.lastSync = sdr.GetDateTime(5);
                 ret.nextSync = DateTime.Now;
-                ret.direction = (eFtpDirection)odr.GetByte(6);
-                ret.mode = (eFtpTransferMode)odr.GetByte(7);
-                odr.Close();
+                ret.direction = (eFtpDirection)sdr.GetByte(6);
+                ret.mode = (eFtpTransferMode)sdr.GetByte(7);
+                sdr.Close();
             } catch (SqlException oex) {
                 return (ret, oex.Message);
             } catch (Exception sex) {
@@ -265,7 +266,7 @@ namespace FtpDiligent
         {
             SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
             SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "exec sp_log_activation @xx,@sync_time";
+            cmd.CommandText = "exec [ftp].[sp_log_activation] @xx,@sync_time";
             cmd.Parameters.Add("xx", SqlDbType.Int).Value = sync.xx;
             cmd.Parameters.Add("sync_time", SqlDbType.DateTime2).Value = sync.syncTime;
 
@@ -281,7 +282,7 @@ namespace FtpDiligent
         {
             SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
             SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "exec sp_log_download @transdir,@xx,@sync_time,@file_name,@file_size,@file_date";
+            cmd.CommandText = "exec [ftp].[sp_log_download] @transdir,@xx,@sync_time,@file_name,@file_size,@file_date";
             var par = cmd.Parameters;
             par.Add("transdir", SqlDbType.TinyInt).Value = sync.direction;
             par.Add("xx", SqlDbType.Int).Value = sync.xx;
@@ -311,7 +312,7 @@ namespace FtpDiligent
         {
             SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
             SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "exec sp_check_file @ins_xx,@file_name,@file_size,@file_date";
+            cmd.CommandText = "exec [ftp].[sp_check_file] @ins_xx,@file_name,@file_size,@file_date";
             var par = cmd.Parameters;
             par.Add("ins_xx", SqlDbType.Int).Value = file.Instance;
             par.Add("file_name", SqlDbType.VarChar, 256).Value = file.FileName;
@@ -335,8 +336,8 @@ namespace FtpDiligent
 
             try {
                 cmd.Connection.Open();
-                var odr = cmd.ExecuteReader(CommandBehavior.SingleResult);
-                ret.Load(odr);
+                var sdr = cmd.ExecuteReader(CommandBehavior.SingleResult);
+                ret.Load(sdr);
             } catch (SqlException oex) {
                 return (null, oex.Message);
             } catch (Exception sex) {

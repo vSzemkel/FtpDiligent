@@ -29,7 +29,7 @@ namespace FtpDiligent
         /// <summary>
         /// Klient usługi FTP
         /// </summary>
-        private FtpUtility m_ftpUtility;
+        private IFtpUtility m_ftpUtility;
 
         /// <summary>
         /// Instancja watchera dostarczana przez framework
@@ -61,7 +61,7 @@ namespace FtpDiligent
         public FtpHotfolderWatcher(FtpEndpointModel endpoint, MainWindow window)
         {
             m_mainWnd = window;
-            m_ftpUtility = new FtpUtility(endpoint, window);
+            m_ftpUtility = IFtpUtility.Create(endpoint, window);
             m_log.xx = -endpoint.xx;
             m_log.syncTime = DateTime.Now;
             m_log.direction = eFtpDirection.HotfolderPut;
@@ -175,12 +175,18 @@ namespace FtpDiligent
             var llFileSizes = new List<long>();
             var ldFileDates = new List<DateTime>();
             var files = o as FileInfo[];
-            foreach (FileInfo fi in files)
-                if (m_ftpUtility.UploadHotFile(fi)) {
-                    lsFileNames.Add(fi.Name);
-                    llFileSizes.Add(fi.Length);
-                    ldFileDates.Add(fi.LastWriteTime);
-                }
+            try {
+                foreach (FileInfo fi in files)
+                    if (m_ftpUtility.UploadHotFile(fi)) {
+                        lsFileNames.Add(fi.Name);
+                        llFileSizes.Add(fi.Length);
+                        ldFileDates.Add(fi.LastWriteTime);
+                    }
+            } catch (FtpUtilityException fex) {
+                m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, fex.Message);
+            } catch (System.Exception se) {
+                m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, se.Message);
+            }
 
             m_log.fileNames = lsFileNames.ToArray();
             m_log.fileSizes = llFileSizes.ToArray();

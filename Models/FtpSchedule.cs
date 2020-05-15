@@ -88,8 +88,7 @@ namespace FtpDiligent
             set {
                 if (_currentData.startSpan.Days != (int)value) {
                     _currentData.startSpan += new TimeSpan((int)value - _currentData.startSpan.Days, 0, 0, 0);
-                    NotifyPropertyChanged("Repeats");
-                    NotifyPropertyChanged("StartString");
+                    NotityScheduleChange();
                 }
             }
         }
@@ -99,8 +98,7 @@ namespace FtpDiligent
             set {
                 if (_currentData.startSpan != value) {
                     _currentData.startSpan = new TimeSpan(_currentData.startSpan.Days, value.Hours, value.Minutes, value.Seconds);
-                    NotifyPropertyChanged("Repeats");
-                    NotifyPropertyChanged("StartString");
+                    NotityScheduleChange();
                 }
             }
         }
@@ -115,6 +113,7 @@ namespace FtpDiligent
                 if (TimeSpan.TryParse(value, out newSpan)) {
                     var oldSpan = StartTime;
                     StartTime = new TimeSpan(oldSpan.Days, newSpan.Hours, newSpan.Minutes, 0);
+                    NotifyPropertyChanged("StartString");
                 }
             }
 
@@ -129,8 +128,7 @@ namespace FtpDiligent
             set {
                 if (_currentData.stopSpan.Days != (int)value) {
                     _currentData.stopSpan += new TimeSpan((int)value - _currentData.stopSpan.Days, 0, 0, 0);
-                    NotifyPropertyChanged("Repeats");
-                    NotifyPropertyChanged("StopString");
+                    NotityScheduleChange();
                 }
             }
         }
@@ -140,8 +138,7 @@ namespace FtpDiligent
             set {
                 if (_currentData.stopSpan != value) {
                     _currentData.stopSpan = new TimeSpan(_currentData.stopSpan.Days, value.Hours, value.Minutes, value.Seconds);
-                    NotifyPropertyChanged("Repeats");
-                    NotifyPropertyChanged("StopString");
+                    NotityScheduleChange();
                 }
             }
         }
@@ -156,6 +153,7 @@ namespace FtpDiligent
                 if (TimeSpan.TryParse(value, out newSpan)) {
                     var oldSpan = StopTime;
                     StopTime = new TimeSpan(oldSpan.Days, newSpan.Hours, newSpan.Minutes, 0);
+                    NotifyPropertyChanged("StopString");
                 }
             }
 
@@ -195,6 +193,16 @@ namespace FtpDiligent
 
         #region private
         private string FormatTimeSpan(TimeSpan ts) => $"{CultureInfo.CurrentUICulture.DateTimeFormat.DayNames[ts.Days]} {DateTime.Today + ts:HH:mm}";
+
+        /// <summary>
+        /// Aktualizuje wartości kolumn wyliczanych na podstawie czasu
+        /// </summary>
+        private void NotityScheduleChange()
+        {
+            NotifyPropertyChanged("Repeats");
+            NotifyPropertyChanged("StopString");
+            NotifyPropertyChanged("NextSyncString");
+        }
         #endregion
-}
+    }
 }

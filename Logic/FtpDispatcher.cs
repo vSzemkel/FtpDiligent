@@ -83,7 +83,7 @@ namespace FtpDiligent
                     iLastSchXX = schedule.xx;
                     dtLastScheduleTime = schedule.nextSyncTime;
                     if (schedule.xx > 0)
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Najbli¿szy transfer plików z harmonogramu " + schedule.name + " zaplanowano na " + schedule.nextSyncTime.ToString("dd/MM/yyyy HH:mm"));
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, $"Najbli¿szy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
                     else
                         m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Do koñca tygodnia nie zaplanowano ¿adnych transferów");
                 }
@@ -122,25 +122,25 @@ namespace FtpDiligent
 
             try {
                 FtpSyncModel log = new FtpSyncModel();
-                FtpUtility fu = new FtpUtility(endpoint, this, m_mainWnd.m_syncMode);
+                IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncMode);
                 DateTime dtNewRefreshTime = log.syncTime = endpoint.nextSync;
                 eFtpDirection eDirection = endpoint.direction;
                 string sHost = endpoint.host + endpoint.remDir;
                 log.xx = schedule;
 
                 if (schedule < 0) {
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, this.Teraz + " Rozpoczêto transfer plików z serwera " + sHost);
+                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"{this.Teraz} Rozpoczêto transfer plików z serwera {sHost}");
                     oldInProgress = InProgress;
                     InProgress = true;
                 } else
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, this.Teraz + " Rozpoczêto zaplanowany transfer plików z serwera " + sHost);
+                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"{this.Teraz} Rozpoczêto zaplanowany transfer plików z serwera {sHost}");
 
                 // transferuj pliki
 
                 #region pobieranie
                 if ((eDirection & eFtpDirection.Get) > 0) {
                     if (!fu.Download(ref log)) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, this.Teraz + " Pobieranie plików z serwera " + sHost + " zakoñczy³o siê niepowodzeniem");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"{this.Teraz} Pobieranie plików z serwera {sHost} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
@@ -150,11 +150,11 @@ namespace FtpDiligent
                     // loguj zmiany
                     if (log.fileNames.Length == 0) {
                         FtpDiligentDatabaseClient.LogActivation(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, this.Teraz + " Na serwerze " + sHost + " nie znaleziono plików odpowiednich do pobrania");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"{this.Teraz} Na serwerze {sHost} nie znaleziono plików odpowiednich do pobrania");
                     } else {
                         log.direction = eFtpDirection.Get;
                         FtpDiligentDatabaseClient.LogSync(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, this.Teraz + " Pobrano " + log.fileNames.Length + " plików z serwera " + sHost);
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"{this.Teraz} Pobrano {log.fileNames.Length} plików z serwera {sHost}");
                     }
                 }
                 #endregion
@@ -162,7 +162,7 @@ namespace FtpDiligent
                 #region wstawianie
                 if ((eDirection & eFtpDirection.Put) > 0) {
                     if (!fu.Upload(ref log)) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, this.Teraz + " Wstawianie plików na serwer " + sHost + " zakoñczy³o siê niepowodzeniem");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"{this.Teraz} Wstawianie plików na serwer {sHost} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
@@ -172,11 +172,11 @@ namespace FtpDiligent
                     // loguj zmiany
                     if (log.fileNames.Length == 0) {
                         FtpDiligentDatabaseClient.LogActivation(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, this.Teraz + " Nie znaleziono plików do wstawienia na serwer " + sHost);
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"{this.Teraz} Nie znaleziono plików do wstawienia na serwer {sHost}");
                     } else {
                         log.direction = eFtpDirection.Put;
                         FtpDiligentDatabaseClient.LogSync(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, this.Teraz + " Wstawiono " + log.fileNames.Length + " plików na serwer " + sHost);
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"{this.Teraz} Wstawiono {log.fileNames.Length} plików na serwer {sHost}");
                     }
                 }
                 #endregion

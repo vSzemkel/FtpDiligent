@@ -24,6 +24,7 @@ namespace FtpDiligent
         public int insXX;               // numer instancji workera
         public eFtpDirection direction; // kierunek transferu (GET lub PUT)
         public eFtpTransferMode mode;   // ASCII lub BIN
+        public eFtpProtocol protocol;   // FTP, SFTP, FTPS
         public DateTime lastSync;
         public DateTime nextSync;
     }
