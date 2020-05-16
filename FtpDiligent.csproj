@@ -32,4 +32,10 @@
     <Resource Include="Images\hot.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="FtpDiligent_RSA.pub">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

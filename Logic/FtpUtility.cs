@@ -332,7 +332,7 @@ noFilesFound:
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiod³o siê");
             }
 
-            if (m_mainWnd.m_checkLocalStorage) {
+            if (m_mainWnd.m_checkTransferedStorage) {
                 bool bStatus = CheckLocalStorage(pFD.cFileName, size);
                 if (!bStatus && File.Exists(m_sLocalDir + pFD.cFileName))
                     File.Delete(m_sLocalDir + pFD.cFileName);
@@ -375,16 +375,8 @@ noFilesFound:
             if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
                 throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod³o siê", iWin32Error);
 
-            if (m_mainWnd.m_checkLocalStorage) {
-                IntPtr hFile = FtpOpenFile(hFtpSess, pFI.Name, GENERIC_READ, 0, iContext);
-                if (hFile == IntPtr.Zero)
-                    throw new FtpUtilityException($"Otwarcie wstawionego pliku {pFI.Name} na {m_sHost}{m_sRemoteDir} nie powiod³o siê");
-                UInt32 lpdwFileSizeHigh = 0;
-                Int64 uiFileSize = (Int64)FtpGetFileSize(hFile, ref lpdwFileSizeHigh);
-                InternetCloseHandle(hFile);
-                uiFileSize += lpdwFileSizeHigh << 32;
-                return uiFileSize == pFI.Length;
-            }
+            if (m_mainWnd.m_checkTransferedStorage)
+                return CheckRemoteStorage(pFI.Name, pFI.Length);
 
             return true;
         }

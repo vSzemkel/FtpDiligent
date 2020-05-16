@@ -1,6 +1,6 @@
 ﻿
 // -----------------------------------------------------------------------
-// <copyright file="FtpDirection.cs" company="Agora SA">
+// <copyright file="FtpProtocol.cs" company="Agora SA">
 // <legal>Copyright (c) Development IT, maj 2020</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>

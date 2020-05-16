@@ -9,6 +9,7 @@ namespace FtpDiligent
 {
     using System;
     using System.Linq;
+
     using MailKit.Net.Smtp;
     using MimeKit;
 

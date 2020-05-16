@@ -47,9 +47,9 @@ namespace FtpDiligent
         public eSeverityCode m_traceLevel;
 
         /// <summary>
-        /// Czy po pobraniu pliku zweryfikować jego rozmiar
+        /// Czy po transferowniu pliku zweryfikować jego rozmiar
         /// </summary>
-        public bool m_checkLocalStorage;
+        public bool m_checkTransferedStorage;
 
         /// <summary>
         /// Co ile sekund sprawdzamy, czy pliki w hotfolderze są w pełni zapisane
@@ -248,7 +248,7 @@ namespace FtpDiligent
             Int32.TryParse(settings["HotfolderInterval"], out m_hotfolderInterval);
             m_traceLevel = (eSeverityCode)traceLevel;
             m_mailer = new SendEmails(settings["ErrorsMailTo"], settings["SendGridKey"]);
-            m_checkLocalStorage = bool.Parse(settings["CheckTransferedFile"]);
+            m_checkTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
             if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out m_syncMode)) {
                 ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");

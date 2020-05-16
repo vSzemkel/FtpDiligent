@@ -11,8 +11,8 @@ namespace FtpDiligent
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.IO.Compression;
     using System.Linq;
-    using System.Runtime.InteropServices;
 
     using Renci.SshNet;
     using Renci.SshNet.Common;
@@ -34,6 +34,11 @@ namespace FtpDiligent
         /// Klient us³ugi SFTP z biblioteki Renci.SshNet
         /// </summary>
         private SftpClient m_sftpClient;
+
+        /// <summary>
+        /// RSA primary key u¿ywany do komunikacji po SSH
+        /// </summary>
+        private string m_privateKey = "Siusiak";
         #endregion
 
         #region constructor/destructor
@@ -179,7 +184,11 @@ namespace FtpDiligent
         /// <returns>True, a jeœli siê nie uda, rzuca wyj¹tek</returns>
         protected override bool Connect()
         {
-            m_sftpClient = new SftpClient(m_sHost, m_sUser, m_sPass);
+            if (string.IsNullOrEmpty(m_sPass)) {
+                var gzip = GetSSHPrivateKey();
+                m_sftpClient = new SftpClient(m_sHost, m_sUser, new PrivateKeyFile(gzip));
+            } else
+                m_sftpClient = new SftpClient(m_sHost, m_sUser, m_sPass);
 
             try {
                 m_sftpClient.Connect();
@@ -231,7 +240,7 @@ namespace FtpDiligent
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod³o siê. {ex.Message}");
             }
 
-            if (m_mainWnd.m_checkLocalStorage) {
+            if (m_mainWnd.m_checkTransferedStorage) {
                 bool bStatus = CheckLocalStorage(file.Name, file.Length);
                 if (!bStatus && File.Exists(m_sLocalDir + file.Name))
                     File.Delete(m_sLocalDir + file.Name);
@@ -275,7 +284,7 @@ namespace FtpDiligent
             try {
                 var stream = File.OpenRead(pFI.FullName);
                 m_sftpClient.UploadFile(stream, remoteFilename);
-                if (m_mainWnd.m_checkLocalStorage)
+                if (m_mainWnd.m_checkTransferedStorage)
                     return CheckRemoteStorage(remoteFilename, pFI.Length);
             } catch (Exception ex) {
                 throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod³o siê. {ex.Message}");
@@ -296,6 +305,43 @@ namespace FtpDiligent
             return f.Length == length;
         }
 
+        /// <summary>
+        /// Stream z kluczem prywatnym
+        /// </summary>
+        /// <returns>Otwarty stream, który costanie zamkniêty w konstruktorze SftpClient</returns>
+        private GZipStream GetSSHPrivateKey()
+        {
+            // scrumble
+            byte[] compressedKey = Convert.FromBase64String(m_privateKey);
+            byte[] xorKey = System.Text.ASCIIEncoding.ASCII.GetBytes("Grizzli");
+            var keylen = xorKey.Length;
+            for (int i = 0; i < compressedKey.Length; ++i)
+                compressedKey[i] ^= xorKey[i % keylen];
+            // compress
+            var buff = new MemoryStream(compressedKey);
+            return new GZipStream(buff, CompressionMode.Decompress);
+        }
+
+        /// <summary>
+        /// Genrates one liner, recoverable private kay
+        /// </summary>
+        /// <returns>Single line string</returns>
+        private string GenerateScrumbledSSHPrivateKey()
+        {
+            // compress
+            var compressed = new MemoryStream();
+            GZipStream ds = new GZipStream(compressed, CompressionLevel.Optimal);
+            var stream = File.OpenRead(@"c:\Code\FtpDiligent\FtpDiligent_RSA");
+            stream.CopyTo(ds);
+            ds.Close();
+            // scrumble
+            var compressedKey = compressed.GetBuffer();
+            byte[] xorKey = System.Text.ASCIIEncoding.ASCII.GetBytes("Grizzli");
+            var xorKeyLen = xorKey.Length;
+            for (int i = 0; i < compressedKey.Length; ++i)
+                compressedKey[i] ^= xorKey[i % xorKeyLen];
+            return Convert.ToBase64String(compressedKey);
+        }
         #endregion
     }
 }
