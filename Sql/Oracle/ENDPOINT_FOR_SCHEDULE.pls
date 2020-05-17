@@ -6,7 +6,7 @@ create or replace PROCEDURE              "ENDPOINT_FOR_SCHEDULE" (
 begin
    if vsch_xx > 0 then
       open vCur for
-         select fe.host,fe.userid,fe.passwd,fe.remote_dir,fe.local_dir,fe.refresh_date,sysdate,fe.direction,fe.transfer_mode
+         select fe.host,fe.userid,fe.passwd,fe.remote_dir,fe.local_dir,fe.refresh_date,sysdate,fe.protocol,fe.direction,fe.transfer_mode
            from ftp_endpoint fe,ftp_schedule fs
           where fs.xx=vsch_xx and fs.end_xx=fe.xx;
 
@@ -18,7 +18,7 @@ begin
       commit;
    else
       open vCur for
-         select fe.host,fe.userid,fe.passwd,fe.remote_dir,fe.local_dir,fe.refresh_date,sysdate,fe.direction,fe.transfer_mode
+         select fe.host,fe.userid,fe.passwd,fe.remote_dir,fe.local_dir,fe.refresh_date,sysdate,fe.protocol,fe.direction,fe.transfer_mode
            from ftp_endpoint fe
           where fe.xx=-vsch_xx;
    end if;

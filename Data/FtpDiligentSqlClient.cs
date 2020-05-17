@@ -53,7 +53,7 @@ namespace FtpDiligent
         public static (DataTable, string) GetEndpoints(int instance)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,direction,transfer_mode from [ftp].[ftp_endpoint] where ins_xx=@ins and disabled is null order by host";
+            cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,protocol,direction,transfer_mode from [ftp].[ftp_endpoint] where ins_xx=@ins and disabled is null order by host";
             cmd.Parameters.Add("ins", SqlDbType.Int).Value = instance;
 
             return ExecuteReader(cmd);
@@ -77,8 +77,9 @@ namespace FtpDiligent
                     RemoteDirectory = dr[5].ToString(),
                     LocalDirectory = dr[6].ToString(),
                     LastSyncTime = (DateTime)dr[7],
-                    Direction = (eFtpDirection)dr[8],
-                    Mode = (eFtpTransferMode)dr[9]
+                    Protocol = (eFtpProtocol)dr[8],
+                    Direction = (eFtpDirection)dr[9],
+                    Mode = (eFtpTransferMode)dr[10]
                 });
             }
 
@@ -131,7 +132,7 @@ namespace FtpDiligent
         public static string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
         {
             SqlCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "exec [ftp].[sp_modify_endpoint] @mode,@xx,@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@transdir,@transmode";
+            cmd.CommandText = "exec [ftp].[sp_modify_endpoint] @mode,@xx,@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@transprot,@transdir,@transmode";
             var par = cmd.Parameters;
             par.Add("mode", SqlDbType.Int).Value = (int)mode;
             par.Add("xx", SqlDbType.Int).Value = endpoint.xx;
@@ -141,6 +142,7 @@ namespace FtpDiligent
             par.Add("passwd", SqlDbType.VarChar, 32).Value = endpoint.pwd;
             par.Add("remdir", SqlDbType.VarChar, 256).Value = endpoint.remDir;
             par.Add("locdir", SqlDbType.VarChar, 256).Value = endpoint.locDir;
+            par.Add("transprot", SqlDbType.TinyInt).Value = endpoint.protocol;
             par.Add("transdir", SqlDbType.TinyInt).Value = endpoint.direction;
             par.Add("transmode", SqlDbType.TinyInt).Value = endpoint.mode;
 
@@ -243,8 +245,9 @@ namespace FtpDiligent
                 ret.locDir = sdr.GetString(4);
                 ret.lastSync = sdr.GetDateTime(5);
                 ret.nextSync = DateTime.Now;
-                ret.direction = (eFtpDirection)sdr.GetByte(6);
-                ret.mode = (eFtpTransferMode)sdr.GetByte(7);
+                ret.protocol = (eFtpProtocol)sdr.GetByte(6);
+                ret.direction = (eFtpDirection)sdr.GetByte(7);
+                ret.mode = (eFtpTransferMode)sdr.GetByte(8);
                 sdr.Close();
             } catch (SqlException oex) {
                 return (ret, oex.Message);

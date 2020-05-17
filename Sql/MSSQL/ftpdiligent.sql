@@ -1,10 +1,9 @@
 
---------------------------------------------------------------------------
--- <copyright file="MainWindow.xaml.cs" company="Agora SA">
--- <legal>Copyright (c) Development IT, kwiecien 2020</legal>
--- <author>Marcin Buchwald</author>
--- </copyright>
---------------------------------------------------------------------------
+/* create login [ftp] with password = 'k8vSw1xo'        */
+/* create user [ftp] with default_schema=[ftp]          */
+/* MSSQLLocalDb: alter user dbo with default_schema=ftp */
+/* exec sp_addrolemember 'db_owner', 'ftp'              */
+/* create schema ftp with authorization ftp             */
 
 
 drop table if exists [ftp].[ftp_file]
@@ -38,6 +37,7 @@ create table [ftp].[ftp_endpoint] (
     local_dir varchar(256) not null,
     remote_dir varchar(256) not null,
     refresh_date datetime2 constraint df_endpoint_refresh default getdate() not null,
+    protocol tinyint not null,
     direction tinyint not null,
     transfer_mode tinyint not null,
     disabled bit,
@@ -107,17 +107,18 @@ create procedure [ftp].[sp_modify_endpoint] (
     @passwd varchar(32),
     @remdir varchar(256),
     @locdir varchar(256),
+    @protocol tinyint,
     @direction tinyint,
     @transfer_mode tinyint
 ) as begin
   if @mode=0
-     insert into [ftp].[ftp_endpoint] (ins_xx,host,userid,passwd,remote_dir,local_dir,direction,transfer_mode)
+     insert into [ftp].[ftp_endpoint] (ins_xx,host,userid,passwd,remote_dir,local_dir,protocol,direction,transfer_mode)
      output inserted.xx
-     values (@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@direction,@transfer_mode)
+     values (@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@protocol,@direction,@transfer_mode)
   else if @mode=1
     update [ftp].[ftp_endpoint]
     set host=@host,userid=@userid,passwd=@passwd,remote_dir=@remdir,
-        local_dir=@locdir,direction=@direction,transfer_mode=@transfer_mode
+        local_dir=@locdir,protocol=@protocol,direction=@direction,transfer_mode=@transfer_mode
     where xx=@xx
   else begin
      delete from [ftp].[ftp_file] where end_xx=@xx or sch_xx in (select xx from [ftp].[ftp_schedule] where end_xx=@xx and deleted=1)
@@ -180,11 +181,11 @@ create procedure [ftp].[sp_endpoint_for_schedule] (
     @xx int
 ) as begin
     if @xx > 0
-        select fe.host,fe.userid,fe.passwd,fe.remote_dir,fe.local_dir,fe.refresh_date,fe.direction,fe.transfer_mode
+        select fe.host,fe.userid,fe.passwd,fe.remote_dir,fe.local_dir,fe.refresh_date,fe.protocol,fe.direction,fe.transfer_mode
           from [ftp].[ftp_endpoint] fe,ftp_schedule fs
          where fs.xx=@xx and fs.end_xx=fe.xx
     else
-        select host,userid,passwd,remote_dir,local_dir,refresh_date,direction,transfer_mode
+        select host,userid,passwd,remote_dir,local_dir,refresh_date,protocol,direction,transfer_mode
           from [ftp].[ftp_endpoint] where xx=-@xx
 end
 go

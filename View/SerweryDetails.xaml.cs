@@ -40,8 +40,9 @@ namespace FtpDiligent
         {
             InitializeComponent();
 
-            cbDirection.ItemsSource = new eFtpDirection[] {eFtpDirection.Get, eFtpDirection.Put, eFtpDirection.Get|eFtpDirection.Put, eFtpDirection.HotfolderPut };
+            cbProtocol.ItemsSource = Enum.GetValues(typeof(eFtpProtocol));
             cbMode.ItemsSource = Enum.GetValues(typeof(eFtpTransferMode));
+            cbDirection.ItemsSource = new eFtpDirection[] {eFtpDirection.Get, eFtpDirection.Put, eFtpDirection.Get|eFtpDirection.Put, eFtpDirection.HotfolderPut };
         }
         #endregion
 

@@ -18,7 +18,7 @@
         <ListView Name="lvSerwery" Grid.ColumnSpan="2" Margin="10" ItemsSource="{Binding}" MouseDoubleClick="OnDoubleClick">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Serwer" Width="200"
+                    <GridViewColumn Header="Serwer" Width="190"
                           DisplayMemberBinding="{Binding Path=Host}"/>
                     <GridViewColumn Header="Użytkownik" Width="100"
                           DisplayMemberBinding="{Binding Path=Userid}"/>
@@ -28,10 +28,12 @@
                           DisplayMemberBinding="{Binding Path=RemoteDirectory}"/>
                     <GridViewColumn Header="Katalog lokalny" Width="150"
                           DisplayMemberBinding="{Binding Path=LocalDirectory}"/>
+                    <GridViewColumn Header="Protokół" Width="70"
+                          DisplayMemberBinding="{Binding Path=Protocol}"/>
+                    <GridViewColumn Header="Operacja"
+                          DisplayMemberBinding="{Binding Path=Direction}"/>
                     <GridViewColumn Header="Tryb"
                           DisplayMemberBinding="{Binding Path=Mode}"/>
-                    <GridViewColumn Header="Operacja" HeaderStringFormat=" {0} "
-                          DisplayMemberBinding="{Binding Path=Direction}"/>
                 </GridView>
             </ListView.View>
         </ListView>

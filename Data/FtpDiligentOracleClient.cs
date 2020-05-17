@@ -49,7 +49,7 @@ namespace FtpDiligent
         public static (DataTable, string) GetEndpoints(int instance)
         {
             OracleCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,direction,transfer_mode from ftp_endpoint where ins_xx=:ins and usuniety is null order by host";
+            cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,protocol,direction,transfer_mode from ftp_endpoint where ins_xx=:ins and usuniety is null order by host";
             cmd.Parameters.Add("ins", OracleDbType.Int32).Value = instance;
 
             return ExecuteReaderAsync(cmd).Result;
@@ -73,8 +73,9 @@ namespace FtpDiligent
                     RemoteDirectory = dr[5].ToString(),
                     LocalDirectory = dr[6].ToString(),
                     LastSyncTime = (DateTime)dr[7],
-                    Direction = (eFtpDirection)(short)dr[8],
-                    Mode = (eFtpTransferMode)(short)dr[9]
+                    Protocol = (eFtpProtocol)(short)dr[8],
+                    Direction = (eFtpDirection)(short)dr[9],
+                    Mode = (eFtpTransferMode)(short)dr[10]
                 });
             }
 
@@ -127,7 +128,7 @@ namespace FtpDiligent
         public static string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
         {
             OracleCommand cmd = guiConn.CreateCommand();
-            cmd.CommandText = "begin modify_endpoint(:mode,:xx,:ins_xx,:host,:userid,:passwd,:remdir,:locdir,:transdir,:transmode); end;";
+            cmd.CommandText = "begin modify_endpoint(:mode,:xx,:ins_xx,:host,:userid,:passwd,:remdir,:locdir,:transprot,:transdir,:transmode); end;";
             var par = cmd.Parameters;
             par.Add("mode", OracleDbType.Int32).Value = (int)mode;
             par.Add("xx", OracleDbType.Int32).Value = endpoint.xx;
@@ -137,6 +138,7 @@ namespace FtpDiligent
             par.Add("passwd", OracleDbType.Varchar2, 32).Value = endpoint.pwd;
             par.Add("remdir", OracleDbType.Varchar2, 256).Value = endpoint.remDir;
             par.Add("locdir", OracleDbType.Varchar2, 256).Value = endpoint.locDir;
+            par.Add("transprot", OracleDbType.Byte).Value = endpoint.protocol;
             par.Add("transdir", OracleDbType.Byte).Value = endpoint.direction;
             par.Add("transmode", OracleDbType.Byte).Value = endpoint.mode;
 
@@ -242,8 +244,9 @@ namespace FtpDiligent
                 ret.locDir = odr.GetString(4);
                 ret.lastSync = odr.GetDateTime(5);
                 ret.nextSync = odr.GetDateTime(6);
-                ret.direction = (eFtpDirection)odr.GetByte(7);
-                ret.mode = (eFtpTransferMode)odr.GetByte(8);
+                ret.protocol = (eFtpProtocol)odr.GetByte(7);
+                ret.direction = (eFtpDirection)odr.GetByte(8);
+                ret.mode = (eFtpTransferMode)odr.GetByte(9);
                 odr.Close();
             } catch (OracleException oex) {
                 return (ret, OracleMessageFormatter.FirstLine(oex.Message));

@@ -27,6 +27,9 @@
             <HeaderedContentControl Header="Katalog zdalny">
                 <TextBox Width="210" Text="{Binding Path=RemoteDirectory, Mode=TwoWay}"/>
             </HeaderedContentControl>
+            <HeaderedContentControl Header="Protokół">
+                <ComboBox Name="cbProtocol" Width="210" SelectedItem="{Binding Path=Protocol, Mode=TwoWay}"/>
+            </HeaderedContentControl>
             <HeaderedContentControl Header="Operacja">
                 <ComboBox Name="cbDirection" Width="210" SelectedItem="{Binding Path=Direction, Mode=TwoWay}"/>
             </HeaderedContentControl>

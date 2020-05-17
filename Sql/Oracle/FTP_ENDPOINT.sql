@@ -1,5 +1,5 @@
 --------------------------------------------------------
---  File created - pi¹tek-kwietnia-17-2020   
+--  File created - niedziela-maja-17-2020   
 --------------------------------------------------------
 --------------------------------------------------------
 --  DDL for Table FTP_ENDPOINT
@@ -14,6 +14,7 @@
 	"REMOTE_DIR" VARCHAR2(256 BYTE), 
 	"LOCAL_DIR" VARCHAR2(256 BYTE), 
 	"REFRESH_DATE" DATE DEFAULT sysdate, 
+	"PROTOCOL" NUMBER(1,0), 
 	"DIRECTION" NUMBER(1,0), 
 	"TRANSFER_MODE" NUMBER(1,0), 
 	"USUNIETY" NUMBER(1,0)
@@ -53,6 +54,9 @@
   BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE;
   ALTER TABLE "FTPGETWORK"."FTP_ENDPOINT" ADD CONSTRAINT "CK_MODE" CHECK (transfer_mode in (1,2)) ENABLE;
+  ALTER TABLE "FTPGETWORK"."FTP_ENDPOINT" MODIFY ("PROTOCOL" NOT NULL ENABLE);
+  ALTER TABLE "FTPGETWORK"."FTP_ENDPOINT" MODIFY ("DIRECTION" NOT NULL ENABLE);
+  ALTER TABLE "FTPGETWORK"."FTP_ENDPOINT" MODIFY ("TRANSFER_MODE" NOT NULL ENABLE);
 --------------------------------------------------------
 --  Ref Constraints for Table FTP_ENDPOINT
 --------------------------------------------------------
