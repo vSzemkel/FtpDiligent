@@ -26,6 +26,8 @@ namespace FtpDiligent
                     return new FtpUtility(endpoint, dispatcher, mode);
                 case eFtpProtocol.SFTP:
                     return new SFtpUtility(endpoint, dispatcher, mode);
+                case eFtpProtocol.FTPS:
+                    return new FtpsUtility(endpoint, dispatcher, mode);
             }
 
             return null;
@@ -43,6 +45,8 @@ namespace FtpDiligent
                     return new FtpUtility(endpoint, window);
                 case eFtpProtocol.SFTP:
                     return new SFtpUtility(endpoint, window);
+                case eFtpProtocol.FTPS:
+                    return new FtpsUtility(endpoint, window);
             }
 
             return null;

@@ -121,6 +121,23 @@ namespace FtpDiligent
 
             return fi.Length == sLength;
         }
+
+        /// <summary>
+        /// Sprawdza, czy wywołanie metody transferującej pliki nastąpiło w prawidłowym kontekście
+        /// </summary>
+        protected bool CheckDispatcher()
+        {
+            if (m_Disp == null && m_SyncMode == eSyncFileMode.UniqueDateAndSizeInDatabase) {
+                string sMsg = "Pobieranie plików w tym trybie wymaga dispatchera";
+                if (m_showError != null) {
+                    m_showError(eSeverityCode.Error, sMsg);
+                    return false;
+                } else
+                    throw new FtpUtilityException(sMsg);
+            }
+
+            return true;
+        }
         #endregion
 
         #region protected abstract methods

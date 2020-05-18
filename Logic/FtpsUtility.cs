@@ -1,6 +1,6 @@
 
 // -----------------------------------------------------------------------
-// <copyright file="SFtpUtility.cs" company="Agora SA">
+// <copyright file="FtpsUtility.cs" company="Agora SA">
 // <legal>Copyright (c) Development IT, maj 2020</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
@@ -11,18 +11,15 @@ namespace FtpDiligent
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.IO.Compression;
     using System.Linq;
 
-    using Renci.SshNet;
-    using Renci.SshNet.Common;
-    using Renci.SshNet.Sftp;
+    using FluentFTP;
 
     /// <summary>
     /// Umo¿liwia przegl¹danie zasobów serwera FTP i pobieranie plików
     /// poprzez transport oparty na protokole SSH (port 22)
     /// </summary>
-    public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
+    public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     {
         #region fields
         /// <summary>
@@ -31,14 +28,9 @@ namespace FtpDiligent
         private const int m_bufferSize = 1 << 12;
 
         /// <summary>
-        /// Klient us³ugi SFTP z biblioteki Renci.SshNet
+        /// Klient us³ugi FTPS z biblioteki FluentFTP
         /// </summary>
-        private SftpClient m_sftpClient;
-
-        /// <summary>
-        /// RSA primary key u¿ywany do komunikacji po SSH
-        /// </summary>
-        private string m_privateKey = System.Configuration.ConfigurationManager.AppSettings["SftpKey"];
+        private FtpClient m_ftpsClient;
         #endregion
 
         #region constructor/destructor
@@ -48,7 +40,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="dispatcher">Obiekt steruj¹cy w¹tkami</param>
         /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
-        public SFtpUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
+        public FtpsUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
             : base(endpoint, dispatcher, mode) {
         }
 
@@ -57,17 +49,17 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="window">G³ówne okno aplikacji</param>
-        public SFtpUtility(FtpEndpointModel endpoint, MainWindow window)
-            : base(endpoint, window) { 
+        public FtpsUtility(FtpEndpointModel endpoint, MainWindow window)
+            : base(endpoint, window) {
         }
 
         /// <summary>
         /// Destruktor zwalniaj¹cy zasoby
         /// </summary>
-        ~SFtpUtility()
+        ~FtpsUtility()
         {
-            if (m_sftpClient != null)
-                m_sftpClient.Dispose();
+            if (m_ftpsClient != null)
+                m_ftpsClient.Dispose();
         }
         #endregion
 
@@ -87,20 +79,20 @@ namespace FtpDiligent
             var lsFileNames = new List<string>();
             var llFileSizes = new List<long>();
             var ldFileDates = new List<DateTime>();
-            var files = m_sftpClient.ListDirectory(m_sRemoteDir).Where(f => f.IsRegularFile).ToArray();
-            foreach (SftpFile f in files)
+            var files = m_ftpsClient.GetListing().Where(f => f.Type == FtpFileSystemObjectType.File).ToArray();
+            foreach (FtpListItem f in files)
                 if (GetFile(f)) {
                     lsFileNames.Add(f.Name);
-                    llFileSizes.Add(f.Length);
-                    ldFileDates.Add(f.LastWriteTime);
+                    llFileSizes.Add(f.Size);
+                    ldFileDates.Add(f.Modified);
                     if (m_showError != null)
-                        m_showError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Length}|{f.LastWriteTime.ToBinary()}");
+                        m_showError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Size}|{f.Modified.ToBinary()}");
                 }
 
             if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
                 m_showError(eSeverityCode.Message, $"{DateTime.Now:dd/MM/yyyy HH:mm} Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta³o przerwane przez u¿ytkownika");
 
-            m_sftpClient.Disconnect();
+            m_ftpsClient.Disconnect();
 
             log.fileNames = lsFileNames.ToArray();
             log.fileSizes = llFileSizes.ToArray();
@@ -138,7 +130,7 @@ namespace FtpDiligent
             if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
                 m_showError(eSeverityCode.Message, $"{DateTime.Now:dd/MM/yyyy HH:mm} Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta³o przerwane przez u¿ytkownika");
 
-            m_sftpClient.Disconnect();
+            m_ftpsClient.Disconnect();
 
             log.fileNames = lsFileNames.ToArray();
             log.fileSizes = llFileSizes.ToArray();
@@ -162,7 +154,7 @@ namespace FtpDiligent
             if (status)
                 m_showError.Invoke(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
 
-            m_sftpClient.Disconnect();
+            m_ftpsClient.Disconnect();
 
             return status;
         }
@@ -175,17 +167,21 @@ namespace FtpDiligent
         /// <returns>True, a jeœli siê nie uda, rzuca wyj¹tek</returns>
         protected override bool Connect()
         {
-            if (string.IsNullOrEmpty(m_sPass)) {
-                var gzip = GetSSHPrivateKey();
-                m_sftpClient = new SftpClient(m_sHost, m_sUser, new PrivateKeyFile(gzip));
-            } else
-                m_sftpClient = new SftpClient(m_sHost, m_sUser, m_sPass);
+            m_ftpsClient = new FtpClient(m_sHost, m_sUser, m_sPass);
+            m_ftpsClient.EncryptionMode = FtpEncryptionMode.Explicit;
+            m_ftpsClient.DataConnectionEncryption = true;
+            m_ftpsClient.ValidateAnyCertificate = true;
+
+            var transferMode = m_TransferMode == eFtpTransferMode.Binary 
+                    ? FtpDataType.Binary : FtpDataType.ASCII;
+            m_ftpsClient.DownloadDataType = transferMode;
+            m_ftpsClient.UploadDataType = transferMode;
 
             try {
-                m_sftpClient.Connect();
-                m_sftpClient.ChangeDirectory(m_sRemoteDir);
-            } catch (SftpPathNotFoundException) {
-                throw new FtpUtilityException($"Remote directory {m_sHost}{m_sRemoteDir} does not exist");
+                m_ftpsClient.Connect();
+                if (!m_ftpsClient.DirectoryExists(m_sRemoteDir))
+                    throw new FtpUtilityException($"Remote directory {m_sHost}{m_sRemoteDir} does not exist");
+                m_ftpsClient.SetWorkingDirectory(m_sRemoteDir);
             } catch (Exception ex) {
                 throw new FtpUtilityException($"InternetConnect to {m_sHost} failed. {ex.Message}");
             }
@@ -200,23 +196,23 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="file">struktura opisuj¹ca plik lub katalog</param>
         /// <returns>Czy dosz³o do pobrania pliku</returns>
-        private bool GetFile(SftpFile file)
+        private bool GetFile(FtpListItem file)
         {
-            if (file.Length == 0)
+            if (file.Size == 0)
                 return false;
 
-            DateTime lastWrite = file.LastWriteTime;
+            DateTime lastWrite = file.Modified;
             switch (m_SyncMode) {
                 case eSyncFileMode.NewerThenRefreshDate:
                     if (lastWrite < m_dtLastRefresh)
                         return false;
                     break;
                 case eSyncFileMode.UniqueDateAndSizeOnDisk:
-                    if (CheckLocalStorage(file.Name, file.Length))
+                    if (CheckLocalStorage(file.Name, file.Size))
                         return false;
                     break;
                 case eSyncFileMode.UniqueDateAndSizeInDatabase:
-                    if (m_Disp.CheckDatabase(file.Name, file.Length, lastWrite))
+                    if (m_Disp.CheckDatabase(file.Name, file.Size, lastWrite))
                         return false;
                     break;
                 case eSyncFileMode.AllFiles:
@@ -225,14 +221,14 @@ namespace FtpDiligent
             
             try {
                 var stream = File.Create(m_sLocalDir + file.Name, m_bufferSize);
-                m_sftpClient.DownloadFile(file.Name, stream);
+                m_ftpsClient.Download(stream, file.Name);
             } catch(Exception ex) {
                 var dirsep = m_sRemoteDir.EndsWith('/') ? string.Empty : "/";
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod³o siê. {ex.Message}");
             }
 
             if (m_mainWnd.m_checkTransferedStorage) {
-                bool bStatus = CheckLocalStorage(file.Name, file.Length);
+                bool bStatus = CheckLocalStorage(file.Name, file.Size);
                 if (!bStatus && File.Exists(m_sLocalDir + file.Name))
                     File.Delete(m_sLocalDir + file.Name);
                 return bStatus;
@@ -274,7 +270,7 @@ namespace FtpDiligent
 
             try {
                 var stream = File.OpenRead(pFI.FullName);
-                m_sftpClient.UploadFile(stream, remoteFilename);
+                m_ftpsClient.Upload(stream, remoteFilename, FtpRemoteExists.Overwrite);
                 if (m_mainWnd.m_checkTransferedStorage)
                     return CheckRemoteStorage(remoteFilename, pFI.Length);
             } catch (Exception ex) {
@@ -292,46 +288,7 @@ namespace FtpDiligent
         /// <returns>Czy istnieje plik o zadanych cechach w katalogu zdalnym</returns>
         private bool CheckRemoteStorage(string remoteName, long length)
         {
-            SftpFile f = m_sftpClient.Get(remoteName);
-            return f.Length == length;
-        }
-
-        /// <summary>
-        /// Stream z kluczem prywatnym
-        /// </summary>
-        /// <returns>Otwarty stream, który costanie zamkniêty w konstruktorze SftpClient</returns>
-        private GZipStream GetSSHPrivateKey()
-        {
-            // scrumble
-            byte[] compressedKey = Convert.FromBase64String(m_privateKey);
-            byte[] xorKey = System.Text.ASCIIEncoding.ASCII.GetBytes("Grizzli");
-            var keylen = xorKey.Length;
-            for (int i = 0; i < compressedKey.Length; ++i)
-                compressedKey[i] ^= xorKey[i % keylen];
-            // compress
-            var buff = new MemoryStream(compressedKey);
-            return new GZipStream(buff, CompressionMode.Decompress);
-        }
-
-        /// <summary>
-        /// Genrates one liner, recoverable private kay
-        /// </summary>
-        /// <returns>Single line string</returns>
-        private string GenerateScrumbledSSHPrivateKey()
-        {
-            // compress
-            var compressed = new MemoryStream();
-            GZipStream ds = new GZipStream(compressed, CompressionLevel.Optimal);
-            var stream = File.OpenRead(@"c:\Code\FtpDiligent\FtpDiligent_RSA");
-            stream.CopyTo(ds);
-            ds.Close();
-            // scrumble
-            var compressedKey = compressed.GetBuffer();
-            byte[] xorKey = System.Text.ASCIIEncoding.ASCII.GetBytes("Grizzli");
-            var xorKeyLen = xorKey.Length;
-            for (int i = 0; i < compressedKey.Length; ++i)
-                compressedKey[i] ^= xorKey[i % xorKeyLen];
-            return Convert.ToBase64String(compressedKey);
+            return m_ftpsClient.GetFileSize(remoteName) == length;
         }
         #endregion
     }

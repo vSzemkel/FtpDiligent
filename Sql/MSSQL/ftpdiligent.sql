@@ -1,9 +1,10 @@
 
-/* create login [ftp] with password = 'k8vSw1xo'        */
-/* create user [ftp] with default_schema=[ftp]          */
-/* MSSQLLocalDb: alter user dbo with default_schema=ftp */
-/* exec sp_addrolemember 'db_owner', 'ftp'              */
-/* create schema ftp with authorization ftp             */
+-- -----------------------------------------------------------------------
+-- <copyright file="ftpdiligent.sql" company="Agora SA">
+-- <legal>Copyright (c) Development IT, kwiecien-maj 2020</legal>
+-- <author>Marcin Buchwald</author>
+-- </copyright>
+-- -----------------------------------------------------------------------
 
 
 drop table if exists [ftp].[ftp_file]

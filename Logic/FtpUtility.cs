@@ -151,17 +151,9 @@ namespace FtpDiligent
         /// <returns>Tablice nazw pobranych plików oraz ich rozmiarów</returns>
         public bool Download(ref FtpSyncModel log)
         {
-            if (m_Disp == null && m_SyncMode == eSyncFileMode.UniqueDateAndSizeInDatabase) {
-                string sMsg = "Pobieranie plików w tym trybie wymaga dispatchera";
-                if (m_showError != null) {
-                    m_showError(eSeverityCode.Error, sMsg);
-                    return false;
-                } else
-                    throw new FtpUtilityException(sMsg);
-            }
-
-            if (!CheckLocalDirectory())
+            if (!CheckLocalDirectory() || !CheckDispatcher())
                 return false;
+
 
             Connect();
 
