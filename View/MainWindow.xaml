@@ -9,10 +9,45 @@
         Icon="/Images/ftpgetw.ico"
         Closed="Window_Closed">
     <TabControl Name="tcMain">
-        <TabItem Name="tabSterowanie" Header="Sterownie" />
-        <TabItem Name="tabSerwery" Header="Serwery" />
-        <TabItem Name="tabSerweryDetails" Header="Dane serwera" Visibility="Collapsed"/>
-        <TabItem Name="tabHarmonogramy" Header="Harmonogramy" />
-        <TabItem Name="tabHarmonogramyDetails" Header="Dane harmonogramu" Visibility="Collapsed" />
+        <TabItem Name="tabSterowanie">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="16" Source="/FtpDiligent;component/Images/sterowanie.png" />
+                    <TextBlock Text="Sterownie" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+        <TabItem Name="tabSerwery">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="16" Source="/FtpDiligent;component/Images/serwer.png" />
+                    <TextBlock Text="Serwery" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+        <TabItem Name="tabSerweryDetails" Visibility="Collapsed">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="16" Source="/FtpDiligent;component/Images/detail.png" />
+                    <TextBlock Text="Dane serwera" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+        <TabItem Name="tabHarmonogramy">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="16" Source="/FtpDiligent;component/Images/harmonogram.png" />
+                    <TextBlock Text="Harmonogramy" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+        <TabItem Name="tabHarmonogramyDetails" Visibility="Collapsed">
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="16" Source="/FtpDiligent;component/Images/detail.png" />
+                    <TextBlock Text="Dane harmonogramu" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
     </TabControl>
 </Window>
