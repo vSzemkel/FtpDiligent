@@ -30,6 +30,10 @@
     <Resource Include="Images\get.png" />
     <Resource Include="Images\put.png" />
     <Resource Include="Images\hot.png" />
+    <Resource Include="Images\sterowanie.png" />
+    <Resource Include="Images\serwer.png" />
+    <Resource Include="Images\harmonogram.png" />
+    <Resource Include="Images\detail.png" />
   </ItemGroup>
 
   <ItemGroup>

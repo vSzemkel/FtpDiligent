@@ -116,7 +116,7 @@ namespace FtpDiligent
         /// <returns>Status powodzenia operacji</returns>
         public bool Upload(ref FtpSyncModel log)
         {
-            if (!CheckLocalDirectory())
+            if (!CheckLocalDirectory() || !CheckDispatcher())
                 return false;
 
             Connect();
