@@ -6,6 +6,7 @@ FTP transfer manager/scheduler
 - Transfers: scheduled or hotfolder upload
 - Schedules: Weekly (start, stop, stride)
 - SyncModes: NewerThenRefreshDate, UniqueDateAndSizeOnDisk, UniqueDateAndSizeInDatabase, AllFiles
-- Client GUI: WPF, Microsoft.NET.Sdk.WindowsDesktop<br>
-<br>
-![Main WIndow](https://github.com/vSzemkel/FtpDiligent/blob/master/Images/screen.gif?raw=true)
+- Client GUI: WPF, Microsoft.NET.Sdk.WindowsDesktop
+- Diagnostics: GUI, EventLog, Email ([SendGrid](https://sendgrid.com/))
+
+![Main Window](https://github.com/vSzemkel/FtpDiligent/blob/master/Images/screen.gif?raw=true)
