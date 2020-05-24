@@ -31,14 +31,6 @@ namespace FtpDiligent
         /// Ustawiana na czas wykonywania transferu
         /// </summary>
         public bool InProgress { get; set; }
-
-        /// <summary>
-        /// Sformatowany zapis czasu bie¿¹cego do logów i komunikatów
-        /// </summary>
-        public string Teraz
-        {
-            get { return DateTime.Now.ToString("dd/MM/yyyy HH:mm"); }
-        }
         #endregion
 
         #region constructor
@@ -72,7 +64,7 @@ namespace FtpDiligent
                     if (errmsg == "0")
                         m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
                     else
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Error, $"{this.Teraz} {errmsg}");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
                     return;
                 }
 
@@ -92,7 +84,7 @@ namespace FtpDiligent
                     m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
 
                 if (schedule.xx > 0 && InProgress)
-                    ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, schedule.xx);
+                    ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, schedule);
             } // while
 
             if (!InProgress)
@@ -107,16 +99,17 @@ namespace FtpDiligent
         /// Jeœli dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
         /// jeœli ujemny, to identyfikator endpointu, dla którego transfer uruchomiono rêcznie
         /// </param>
-        public void ExecuteFtpTransfer(object iSchXX)
+        public void ExecuteFtpTransfer(object o)
         {
             bool oldInProgress = true;
-            int schedule = (int)iSchXX;
-            var (endpoint, errmsg) = FtpDiligentDatabaseClient.SelectEndpoint(schedule).Result;
+            FtpScheduleModel schedule = (FtpScheduleModel)o;
+            int key = schedule.xx;
+            var (endpoint, errmsg) = FtpDiligentDatabaseClient.SelectEndpoint(key).Result;
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
-                    errmsg = "Brak definicji endpointu dla harmonogramu: " + iSchXX;
+                    errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
 
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, $"{this.Teraz} {errmsg}");
+                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
                 return;
             }
 
@@ -126,25 +119,25 @@ namespace FtpDiligent
                 DateTime dtNewRefreshTime = log.syncTime = endpoint.nextSync;
                 eFtpDirection eDirection = endpoint.direction;
                 string sHost = endpoint.host + endpoint.remDir;
-                log.xx = schedule;
+                log.xx = key;
 
-                if (schedule < 0) {
+                if (key < 0) {
                     m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {sHost}");
                     oldInProgress = InProgress;
                     InProgress = true;
                 } else
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików z serwera {sHost}");
+                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {sHost}");
 
                 // transferuj pliki
 
                 #region pobieranie
                 if (eDirection.HasFlag(eFtpDirection.Get)) {
                     if (!fu.Download(ref log)) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"{this.Teraz} Pobieranie plików z serwera {sHost} zakoñczy³o siê niepowodzeniem");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Pobieranie plików z serwera {sHost} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
-                    if (schedule < 0)
+                    if (key < 0)
                         InProgress = oldInProgress;
 
                     // loguj zmiany
@@ -162,11 +155,11 @@ namespace FtpDiligent
                 #region wstawianie
                 if (eDirection.HasFlag(eFtpDirection.Put)) {
                     if (!fu.Upload(ref log)) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"{this.Teraz} Wstawianie plików na serwer {sHost} zakoñczy³o siê niepowodzeniem");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Wstawianie plików na serwer {sHost} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
-                    if (schedule < 0)
+                    if (key < 0)
                         InProgress = oldInProgress;
 
                     // loguj zmiany
@@ -202,9 +195,12 @@ namespace FtpDiligent
         /// <summary>
         /// Inicjuje w w¹tku z puli pêtlê przetwarzania ¿¹dañ pobrania plików z endpointów ftp
         /// </summary>
-        public void StartNow(int iEndXX)
+        /// <param name="endpoint">Endpoint, dla którego symulujemy wywo³anie z harmonogramu</param>
+        public void StartNow(FtpEndpoint endpoint)
         {
-            ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, -iEndXX);
+            ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, new FtpScheduleModel() {
+                xx = -endpoint.XX
+            });
         }
 
         /// <summary>
@@ -235,7 +231,7 @@ namespace FtpDiligent
 
             var (status, errmsg) = FtpDiligentDatabaseClient.VerifyFile(file);
             if (!string.IsNullOrEmpty(errmsg)) {
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, $"{this.Teraz} {errmsg}");
+                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
                 return false;
             }
 

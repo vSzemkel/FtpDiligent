@@ -129,7 +129,7 @@ namespace FtpDiligent
             var endpoint = lvSerwery.SelectedItem as FtpEndpoint;
             if (endpoint != null) {
                 m_mainWnd.m_dispatcher = new FtpDispatcher(m_mainWnd);
-                m_mainWnd.m_dispatcher.StartNow(endpoint.XX);
+                m_mainWnd.m_dispatcher.StartNow(endpoint);
                 m_mainWnd.tcMain.SelectedIndex = 0;
             }
         }

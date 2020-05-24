@@ -9,4 +9,5 @@ FTP transfer manager/scheduler
 - Client GUI: WPF, Microsoft.NET.Sdk.WindowsDesktop
 - Diagnostics: GUI, EventLog, Email ([SendGrid](https://sendgrid.com/))
 
+
 ![Main Window](https://github.com/vSzemkel/FtpDiligent/blob/master/Images/screen.gif?raw=true)
