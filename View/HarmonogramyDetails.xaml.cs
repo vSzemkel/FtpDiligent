@@ -49,19 +49,6 @@ namespace FtpDiligent
 
         #region UI handlers
         /// <summary>
-        /// Porzucenie zmian
-        /// </summary>
-        private void OnCancel(object sender, RoutedEventArgs e)
-        {
-            if (m_mode == eDbOperation.Insert)
-                m_schedules.CancelNew();
-            else
-                m_schedules.CancelEdit();
-
-            RestoreTabControl();
-        }
-
-        /// <summary>
         /// Zatwierdzenie zmian
         /// </summary>
         private void OnCommit(object sender, RoutedEventArgs e)
@@ -92,6 +79,32 @@ namespace FtpDiligent
                 RestoreTabControl();
             else
                 m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+        }
+
+        /// <summary>
+        /// Porzucenie zmian
+        /// </summary>
+        private void OnCancel(object sender, RoutedEventArgs e)
+        {
+            if (m_mode == eDbOperation.Insert)
+                m_schedules.CancelNew();
+            else
+                m_schedules.CancelEdit();
+
+            RestoreTabControl();
+        }
+
+        /// <summary>
+        /// Naciśniecie ESC jest równoznaczna z porzuceniem zmian
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape) {
+                e.Handled = true;
+                OnCancel(null, null);
+            }
         }
         #endregion
 

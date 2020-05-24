@@ -33,6 +33,11 @@ namespace FtpDiligent
         /// Lista ostatnio transferowanych plików
         /// </summary>
         public ObservableCollection<FtpFileModel> m_fileInfo = new ObservableCollection<FtpFileModel>();
+
+        /// <summary>
+        /// Lista ostatnio zarejestrowanych błędów i ostrzeżeń
+        /// </summary>
+        public ObservableCollection<FtpErrorModel> m_errInfo = new ObservableCollection<FtpErrorModel>();
         #endregion
 
         #region constructor
@@ -42,6 +47,7 @@ namespace FtpDiligent
 
             this.cbSyncMode.ItemsSource = Enum.GetValues(typeof(eSyncFileMode));
             this.lvFilesLog.ItemsSource = m_fileInfo;
+            this.lvErrLog.ItemsSource = m_errInfo;
         }
         #endregion
 
@@ -81,9 +87,9 @@ namespace FtpDiligent
         {
             MessageBoxResult drQuest = MessageBox.Show("Czy chcesz wyczyścić okienka logów?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (drQuest == MessageBoxResult.Yes) {
-                lbLog.Items.Clear();
-                lbErrLog.Items.Clear();
+                m_errInfo.Clear();
                 m_fileInfo.Clear();
+                lbLog.Items.Clear();
             }
         }
         #endregion

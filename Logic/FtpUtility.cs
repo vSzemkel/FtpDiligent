@@ -189,7 +189,7 @@ namespace FtpDiligent
                 }
 
             if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
-                m_showError(eSeverityCode.Message, $"{DateTime.Now:dd/MM/yyyy HH:mm} Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
+                m_showError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
 
             if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
                 throw new FtpUtilityException("B章d pobierania z zasobu " + m_sHost + m_sRemoteDir);
@@ -232,7 +232,7 @@ noFilesFound:
             }
 
             if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
-                m_showError(eSeverityCode.Message, $"{DateTime.Now:dd/MM/yyyy HH:mm} Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
+                m_showError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
 
             Dispose();
 

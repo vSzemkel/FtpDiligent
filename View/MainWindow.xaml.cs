@@ -177,35 +177,40 @@ namespace FtpDiligent
         private void ShowErrorInfoInternal(eSeverityCode code, string message)
         {
             switch (code) {
+                case eSeverityCode.NextSync:
+                    m_tbSterowanie.tbNextSync.Text = message;
+                    break;
                 case eSeverityCode.Message:
-                    m_tbSterowanie.lbLog.Items.Insert(0, message);
-                    if ((m_traceLevel & eSeverityCode.Message) > 0)
+                    m_tbSterowanie.lbLog.Items.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {message}");
+                    if (m_traceLevel.HasFlag(eSeverityCode.Message))
                         EventLog.WriteEntry(m_eventLog, message, EventLogEntryType.Information);
                     break;
                 case eSeverityCode.FileInfo:
                     BindFileInfo(message);
-                    if ((m_traceLevel & eSeverityCode.FileInfo) > 0)
+                    if (m_traceLevel.HasFlag(eSeverityCode.FileInfo))
                         EventLog.WriteEntry(m_eventLog, message, EventLogEntryType.SuccessAudit);
                     break;
                 case eSeverityCode.Warning:
-                    m_tbSterowanie.lbErrLog.Items.Insert(0, $"[WRN] {DateTime.Now:dd/MM/yyyy HH:mm} {message}");
-                    if ((m_traceLevel & eSeverityCode.Warning) > 0)
+                    m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                    if (m_traceLevel.HasFlag(eSeverityCode.Warning))
                         EventLog.WriteEntry(m_eventLog, message, EventLogEntryType.Warning);
                     break;
                 case eSeverityCode.TransferError:
                     m_mailer.Run(message);
                     goto case eSeverityCode.Error;
                 case eSeverityCode.Error:
-                    m_tbSterowanie.lbErrLog.Items.Insert(0, "[ERR] " + message);
-                    if ((m_traceLevel & eSeverityCode.Error) > 0)
+                    m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                    if (m_traceLevel.HasFlag(eSeverityCode.Error))
                         EventLog.WriteEntry(m_eventLog, message, EventLogEntryType.Error);
-                    break;
-                case eSeverityCode.NextSync:
-                    m_tbSterowanie.tbNextSync.Text = message;
                     break;
             }
         }
 
+        /// <summary>
+        /// Parsuje tekstową informację o przetworzonym pliku,
+        /// aktualizuje liste plików i licznik
+        /// </summary>
+        /// <param name="message">eFtpDirection|Name|Size|Date</param>
         private void BindFileInfo(string message)
         {
             var items = message.Split('|');
@@ -271,8 +276,8 @@ namespace FtpDiligent
             if (m_instance > 0)
                 return;
 
-            string localHost = Dns.GetHostName();
-            string errmsg = FtpDiligentDatabaseClient.InitInstance(localHost);
+            string localHostname = Dns.GetHostName();
+            string errmsg = FtpDiligentDatabaseClient.InitInstance(localHostname);
             if (string.IsNullOrEmpty(errmsg))
                 m_instance = IFtpDiligentDatabaseClient.m_lastInsertedKey;
             else

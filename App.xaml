@@ -7,6 +7,7 @@
         <local:SelectedItemEnabler x:Key="SelectedItemEnabler"/>
         <local:DayNameLocalisator x:Key="DayNameLocalisator"/>
         <local:ImageForOperation x:Key="ImageForOperation"/>
+        <local:ImageForError x:Key="ImageForError"/>
 
         <SolidColorBrush x:Key="TloGridu" Color="#FFF6D7FF"/>
         <LinearGradientBrush x:Key="Tlo" EndPoint="0.3,1" StartPoint="0.5,0">

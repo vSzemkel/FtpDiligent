@@ -97,8 +97,11 @@ namespace FtpDiligent
         protected void OnStage(object source, FileSystemEventArgs e)
         {
             lock (m_stagedFiles) {
-                if (m_stagedFiles.All(fi => fi.FullName != e.FullPath))
-                    m_stagedFiles.Add(new FileInfo(e.FullPath));
+                if (m_stagedFiles.All(fi => fi.FullName != e.FullPath)) {
+                    var fi = new FileInfo(e.FullPath);
+                    if (!fi.Attributes.HasFlag(FileAttributes.Directory))
+                        m_stagedFiles.Add(fi);
+                }
             }
         }
 

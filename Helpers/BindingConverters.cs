@@ -43,6 +43,25 @@ namespace FtpDiligent
         }
     }
 
+    public class ImageForError : IValueConverter
+    {
+        static Dictionary<eSeverityCode, string> mapping = new Dictionary<eSeverityCode, string>() {
+            {eSeverityCode.Warning, "/FtpDiligent;component/Images/warn.png" },
+            {eSeverityCode.Error, "/FtpDiligent;component/Images/err.png" },
+            {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" }
+        };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return mapping[(eSeverityCode)value];
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            return null;
+        }
+    }
+
     public class DayNameLocalisator : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

@@ -5,12 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:FtpDiligent"
              mc:Ignorable="d" 
-             d:DesignHeight="800" d:DesignWidth="980">
+             d:DesignHeight="770" d:DesignWidth="980">
     <Grid Background="{StaticResource Tlo}">
         <Grid.RowDefinitions>
             <RowDefinition Height="70"/>
             <RowDefinition/>
-            <RowDefinition Height="320"/>
+            <RowDefinition Height="350"/>
         </Grid.RowDefinitions>
         <Canvas>
             <TextBox Canvas.Left="10" Canvas.Top="10" Text="Tryb pobierania:" IsReadOnly="True"/>
@@ -22,27 +22,49 @@
         <Canvas Grid.Row="1">
             <TextBox Canvas.Left="10" Canvas.Top="10" Text="Komunikaty bieżące:" IsReadOnly="True"/>
             <TextBox Canvas.Left="160" Name="tbNextSync" Canvas.Top="10" IsReadOnly="True" Width="810" TextAlignment="Right"/>
-            <ListBox Canvas.Top="30" Name="lbLog" Height="310" Width="960" Canvas.Left="10"/>
+            <ListBox Canvas.Top="32" Name="lbLog" Height="280" Width="960" Canvas.Left="10"/>
         </Canvas>
         <Canvas Grid.Row="2">
             <TextBox Canvas.Left="10" Canvas.Top="12" Text="Informacje o błędach:" IsReadOnly="True"/>
-            <ListBox Canvas.Left="10" Canvas.Top="32" Name="lbErrLog" Height="280" Width="475"/>
+            <ListView Canvas.Left="10" Canvas.Top="32" Name="lvErrLog" Height="310" Width="475">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Status">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Source="{Binding Path=Category, Converter={StaticResource ImageForError}}" Width="18" Height="18"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Czas" Width="125"
+                          DisplayMemberBinding="{Binding Path=Time, StringFormat=dd/MM/yyyy HH:mm}"/>
+                        <GridViewColumn Header=" Komunikat" Width="2000"
+                          DisplayMemberBinding="{Binding Path=Message}">
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}" BasedOn="{StaticResource {x:Type GridViewColumnHeader}}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
             <TextBox Canvas.Left="495" Canvas.Top="12" Name="tbFilesCount" Text="{Binding Mode=OneWay, StringFormat=Przesłane pliki [{0}]:}" IsReadOnly="True"/>
-            <ListView Name="lvFilesLog" Canvas.Left="495" Canvas.Top="32" Height="280" Width="475" ItemsSource="{Binding}">
+            <ListView Name="lvFilesLog" Canvas.Left="495" Canvas.Top="32" Height="310" Width="475" ItemsSource="{Binding}">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Operacja">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Image Source="{Binding Path=Instance, Converter={StaticResource ImageForOperation}}" Width="20" Height="20"/>
+                                    <Image Source="{Binding Path=Instance, Converter={StaticResource ImageForOperation}}" Width="18" Height="18"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="Nazwa" Width="185"
+                        <GridViewColumn Header="Nazwa" Width="207"
                           DisplayMemberBinding="{Binding Path=FileName}"/>
                         <GridViewColumn Header="Rozmiar" Width="75"
                           DisplayMemberBinding="{Binding Path=FileSize}"/>
-                        <GridViewColumn Header="Ostatnia modyfikacja"
+                        <GridViewColumn Header="Zmodyfikowany" Width="120"
                           DisplayMemberBinding="{Binding Path=FileDate, StringFormat=dd/MM/yyyy HH:mm}"/>
                     </GridView>
                 </ListView.View>

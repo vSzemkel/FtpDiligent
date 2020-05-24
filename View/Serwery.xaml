@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:FtpDiligent"
              mc:Ignorable="d" 
-             d:DesignHeight="800" d:DesignWidth="980">
+             d:DesignHeight="770" d:DesignWidth="980">
     <Grid Background="{StaticResource Tlo}">
         <Grid.RowDefinitions>
             <RowDefinition/>
@@ -20,7 +20,7 @@
                 <GridView>
                     <GridViewColumn Header="Serwer" Width="190"
                           DisplayMemberBinding="{Binding Path=Host}"/>
-                    <GridViewColumn Header="Użytkownik" Width="100"
+                    <GridViewColumn Header="Użytkownik" Width="97"
                           DisplayMemberBinding="{Binding Path=Userid}"/>
                     <GridViewColumn Header="Hasło" Width="150"
                           DisplayMemberBinding="{Binding Path=Password}"/>
