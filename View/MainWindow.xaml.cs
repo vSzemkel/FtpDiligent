@@ -13,6 +13,7 @@ namespace FtpDiligent
     using System.Diagnostics;
     using System.Globalization;
     using System.Net;
+    using System.Threading;
     using System.Windows;
 
     /// <summary>
@@ -196,6 +197,7 @@ namespace FtpDiligent
                         EventLog.WriteEntry(m_eventLog, message, EventLogEntryType.Warning);
                     break;
                 case eSeverityCode.TransferError:
+                    RestartScheduler();
                     m_mailer.Run(message);
                     goto case eSeverityCode.Error;
                 case eSeverityCode.Error:
@@ -296,6 +298,19 @@ namespace FtpDiligent
             config.AppSettings.Settings.Remove("InstanceId");
             config.AppSettings.Settings.Add("InstanceId", m_instance.ToString());
             config.Save(ConfigurationSaveMode.Modified);
+        }
+
+        /// <summary>
+        /// Po wystapieniu eSeverityCode.TransferError restartuje scheduler
+        /// </summary>
+        private void RestartScheduler()
+        {
+            if (m_dispatcher?.m_filesTransfered > 0) {
+                m_dispatcher.Stop();
+                ShowErrorInfoInternal(eSeverityCode.Message, "Restarting dispatcher");
+                Thread.Sleep(5000);
+                m_dispatcher.Start();
+            }
         }
         #endregion
     }

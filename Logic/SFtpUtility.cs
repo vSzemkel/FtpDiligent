@@ -238,6 +238,9 @@ namespace FtpDiligent
                 return bStatus;
             }
 
+            if (m_Disp != null)
+                m_Disp.m_filesTransfered++;
+
             return true;
         }
 
@@ -280,6 +283,9 @@ namespace FtpDiligent
             } catch (Exception ex) {
                 throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod³o siê. {ex.Message}");
             }
+
+            if (m_Disp != null)
+                m_Disp.m_filesTransfered++;
 
             return true;
         }

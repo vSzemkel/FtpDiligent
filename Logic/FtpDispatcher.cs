@@ -15,6 +15,12 @@ namespace FtpDiligent
     {
         #region fields
         /// <summary>
+        /// Zlicza przetransportowane pliki.
+        /// Nie ma sensu restartowaæ dispatchera, który dot¹d nic nie przes³a³
+        /// </summary>
+        public int m_filesTransfered;
+
+        /// <summary>
         /// Referencja do g³ównego okna
         /// </summary>
         public MainWindow m_mainWnd;
@@ -101,7 +107,6 @@ namespace FtpDiligent
         /// </param>
         public void ExecuteFtpTransfer(object o)
         {
-            bool oldInProgress = true;
             FtpScheduleModel schedule = (FtpScheduleModel)o;
             int key = schedule.xx;
             var (endpoint, errmsg) = FtpDiligentDatabaseClient.SelectEndpoint(key).Result;
@@ -113,27 +118,25 @@ namespace FtpDiligent
                 return;
             }
 
-            try {
-                FtpSyncModel log = new FtpSyncModel();
-                IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncMode);
-                DateTime dtNewRefreshTime = log.syncTime = endpoint.nextSync;
-                eFtpDirection eDirection = endpoint.direction;
-                string sHost = endpoint.host + endpoint.remDir;
-                log.xx = key;
+            bool oldInProgress = true;
+            string remote = endpoint.host + endpoint.remDir;
+            FtpSyncModel log = new FtpSyncModel() { xx = key };
+            IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncMode);
+            DateTime dtNewRefreshTime = log.syncTime = endpoint.nextSync;
+            eFtpDirection eDirection = endpoint.direction;
 
-                if (key < 0) {
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {sHost}");
-                    oldInProgress = InProgress;
-                    InProgress = true;
-                } else
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {sHost}");
+            if (key < 0) {
+                m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {remote}");
+                oldInProgress = InProgress;
+                InProgress = true;
+            } else
+                m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {remote}");
 
-                // transferuj pliki
-
+            try { // transferuj pliki
                 #region pobieranie
                 if (eDirection.HasFlag(eFtpDirection.Get)) {
                     if (!fu.Download(ref log)) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Pobieranie plików z serwera {sHost} zakoñczy³o siê niepowodzeniem");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
@@ -141,13 +144,14 @@ namespace FtpDiligent
                         InProgress = oldInProgress;
 
                     // loguj zmiany
-                    if (log.fileNames.Length == 0) {
+                    int filesTransfered = log.fileNames.Length;
+                    if (filesTransfered == 0) {
                         FtpDiligentDatabaseClient.LogActivation(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Na serwerze {sHost} nie znaleziono plików odpowiednich do pobrania");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
                     } else {
                         log.direction = eFtpDirection.Get;
                         FtpDiligentDatabaseClient.LogSync(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Pobrano {log.fileNames.Length} plików z serwera {sHost}");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
                     }
                 }
                 #endregion
@@ -155,7 +159,7 @@ namespace FtpDiligent
                 #region wstawianie
                 if (eDirection.HasFlag(eFtpDirection.Put)) {
                     if (!fu.Upload(ref log)) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Wstawianie plików na serwer {sHost} zakoñczy³o siê niepowodzeniem");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
@@ -163,17 +167,17 @@ namespace FtpDiligent
                         InProgress = oldInProgress;
 
                     // loguj zmiany
-                    if (log.fileNames.Length == 0) {
+                    int filesTransfered = log.fileNames.Length;
+                    if (filesTransfered == 0) {
                         FtpDiligentDatabaseClient.LogActivation(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {sHost}");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
                     } else {
                         log.direction = eFtpDirection.Put;
                         FtpDiligentDatabaseClient.LogSync(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Wstawiono {log.fileNames.Length} plików na serwer {sHost}");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
                     }
                 }
                 #endregion
-
             } catch (FtpUtilityException fex) {
                 m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, fex.Message);
             } catch (Exception se) {
@@ -189,6 +193,7 @@ namespace FtpDiligent
         public void Start()
         {
             InProgress = true;
+            m_filesTransfered = 0;
             ThreadPool.QueueUserWorkItem(DispatchFtpThread);
         }
 
@@ -198,6 +203,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Endpoint, dla którego symulujemy wywo³anie z harmonogramu</param>
         public void StartNow(FtpEndpoint endpoint)
         {
+            m_filesTransfered = 0;
             ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, new FtpScheduleModel() {
                 xx = -endpoint.XX
             });
@@ -210,7 +216,7 @@ namespace FtpDiligent
         {
             InProgress = false;
             m_are.Set();
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Message, "Zatrzymano przetwarzanie.");
+            m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
         }
 
         /// <summary>

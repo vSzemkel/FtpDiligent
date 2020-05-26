@@ -330,6 +330,9 @@ noFilesFound:
                 return bStatus;
             }
 
+            if (m_Disp != null)
+                m_Disp.m_filesTransfered++;
+
             return true;
         }
 
@@ -368,6 +371,9 @@ noFilesFound:
 
             if (m_mainWnd.m_checkTransferedStorage)
                 return CheckRemoteStorage(pFI.Name, pFI.Length);
+
+            if (m_Disp != null)
+                m_Disp.m_filesTransfered++;
 
             return true;
         }
