@@ -59,7 +59,7 @@ namespace FtpDiligent
         {
             string hostWithBadDir = CheckLocDirs();
             if (string.IsNullOrEmpty(hostWithBadDir)) {
-                btRunSync.IsEnabled = cbSyncMode.IsEnabled = false;
+                btRunSync.IsEnabled = false;
                 btStopSync.IsEnabled = true;
                 m_mainWnd.m_dispatcher = new FtpDispatcher(m_mainWnd);
                 m_mainWnd.m_dispatcher.Start();
@@ -73,7 +73,7 @@ namespace FtpDiligent
         /// </summary>
         private void OnStopSync(object sender, RoutedEventArgs e)
         {
-            btRunSync.IsEnabled = cbSyncMode.IsEnabled = true;
+            btRunSync.IsEnabled = true;
             btStopSync.IsEnabled = false;
             m_mainWnd.m_dispatcher?.Stop();
             m_mainWnd.m_tbSerwery.StopHotfolders();

@@ -204,8 +204,6 @@ create procedure [ftp].[sp_select_next_sync] (
      order by sync,refresh_date,job_stride) t
  union all
     select -1,'next week',dateadd(day,7,[ftp].[sf_get_week_start]()) as sync
-      from [ftp].[ftp_endpoint] fe,[ftp].[ftp_schedule] fs
-     where fe.ins_xx=@ins_xx and fe.xx=fs.end_xx
 end
 go
 
@@ -276,7 +274,8 @@ go
 -- CASE1: job_stop < week_minute - function not called for CASE1
 -- CASE2: week_minute < job_start - function returns job_start as datetimeoffset
 -- CASE3: missed executions - function returns first missed datetimeoffset
--- CASE4: work in progress - function returns next sync time
+-- CASE4: scheduled execution lasted less then one minute or time misconfiguration
+-- CASE5: work in progress - function returns next sync time
 drop function [ftp].[sf_get_next_sync]
 go
 create function [ftp].[sf_get_next_sync] (
@@ -292,8 +291,10 @@ as begin
     return (select case
         when @week_minute < job_start then aux.startlocal
         when aux.startlocal < aux.retlocal and aux.missed < aux.retlocal then aux.missed
+        when aux.retlocal < aux.refresh then dateadd(minute, aux.job_stride, aux.retlocal)
         else aux.retlocal end
-    from (select fs.job_start,
+    from (select fs.job_start,fs.job_stride,
+                refresh_date at time zone fi.timezone as refresh,
                 dateadd(minute, job_start, @week_start) at time zone fi.timezone as startlocal,
                 dateadd(minute, job_stride, refresh_date) at time zone fi.timezone as missed,
                 (select dateadd(minute, job_start + ceiling(cast(@week_minute - job_start as float) / job_stride) * job_stride, @week_start)) at time zone fi.timezone as retlocal
@@ -337,10 +338,11 @@ as begin
     return (select case
         when @week_minute < job_start then aux.startlocal
         when aux.startlocal < aux.retlocal and aux.missed < aux.retlocal then aux.missed
+        when aux.retlocal < aux.refresh_date then dateadd(minute, aux.job_stride, aux.retlocal)
         else aux.retlocal end
-    from (select fs.job_start,fi.timezone,
-                dateadd(minute, job_start, @week_start) as startlocal,
-                dateadd(minute, job_stride, refresh_date) as missed,
+    from (select fs.job_start,fs.job_stride,fe.refresh_date,
+                 dateadd(minute, job_start, @week_start) as startlocal,
+                 dateadd(minute, job_stride, refresh_date) as missed,
                 (select dateadd(minute, job_start + ceiling(cast(@week_minute - job_start as float) / job_stride) * job_stride, @week_start)) as retlocal
             from [ftp].[ftp_endpoint] fe, [ftp].[ftp_schedule] fs, [ftp].[ftp_instance] fi, [sys].[dm_exec_sessions] es
            where fe.xx = fs.end_xx and fs.xx = @xx and es.session_id = @@spid and es.host_name=fi.hostname collate database_default) aux)

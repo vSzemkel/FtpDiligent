@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
         <Canvas>
             <TextBox Canvas.Left="10" Canvas.Top="10" Text="Tryb pobierania:" IsReadOnly="True"/>
-            <ComboBox Canvas.Left="10" Canvas.Top="30" Name="cbSyncMode" Width="200" Height="27"/>
+            <ComboBox Canvas.Left="10" Canvas.Top="30" Name="cbSyncMode" Width="200" Height="27" IsEnabled="{Binding IsEnabled, ElementName=btRunSync}"/>
             <Button Canvas.Left="498" Canvas.Top="23" Name="btRunSync" Content="Uruchom przesyłanie" Click="OnStartSync"/>
             <Button Canvas.Left="658" Canvas.Top="23" Name="btStopSync" Content="Zatrzymaj przesyłanie" IsEnabled="False" Click="OnStopSync"/>
             <Button Canvas.Left="818" Canvas.Top="23" Name="btClearLog" Content="Wyczyść komunikaty" Click="OnClearLog"/>

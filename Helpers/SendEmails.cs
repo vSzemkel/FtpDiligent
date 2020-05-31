@@ -38,8 +38,15 @@ namespace FtpDiligent
         #endregion
 
         #region constructor
-        public SendEmails(string errorsMailTo, string apiKey)
+        /// <summary>
+        /// Klasa pomocnicza do wysy³ania maili
+        /// </summary>
+        /// <param name="wnd">G³ówne okno aplikacji WPF</param>
+        /// <param name="errorsMailTo">Lista adresów odbiorców, rozdzialona œrednikami</param>
+        /// <param name="apiKey">Klucz prywatny do us³ugi SendGrid</param>
+        public SendEmails(MainWindow wnd, string errorsMailTo, string apiKey)
         {
+            m_mainWnd = wnd;
             m_sendGridKey = apiKey;
             m_errorsMailTo = errorsMailTo;
         }
@@ -48,7 +55,7 @@ namespace FtpDiligent
         /// <summary>
         /// Uruchamia wysy³kê maili przez us³ugê SendGrid
         /// </summary>
-        /// <param name="error">B³êd do wys³ania</param>
+        /// <param name="error">B³¹d do wys³ania</param>
         public void Run(string error)
         {
             if (!string.IsNullOrEmpty(m_errorsMailTo)) {
@@ -99,6 +106,7 @@ namespace FtpDiligent
                     client.Disconnect(true);
                 }
 
+                m_mainWnd.m_showError(eSeverityCode.Message, $"Wys³ano {msg.To.Count} powiadomienie/a mailowe.");
                 return true;
             } catch (Exception exc) {
                 m_mainWnd.m_showError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");

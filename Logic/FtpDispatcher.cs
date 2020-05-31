@@ -118,18 +118,15 @@ namespace FtpDiligent
                 return;
             }
 
-            bool oldInProgress = true;
             string remote = endpoint.host + endpoint.remDir;
             FtpSyncModel log = new FtpSyncModel() { xx = key };
             IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncMode);
             DateTime dtNewRefreshTime = log.syncTime = endpoint.nextSync;
             eFtpDirection eDirection = endpoint.direction;
 
-            if (key < 0) {
+            if (key < 0) 
                 m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {remote}");
-                oldInProgress = InProgress;
-                InProgress = true;
-            } else
+            else
                 m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {remote}");
 
             try { // transferuj pliki
@@ -139,9 +136,6 @@ namespace FtpDiligent
                         m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
-
-                    if (key < 0)
-                        InProgress = oldInProgress;
 
                     // loguj zmiany
                     int filesTransfered = log.fileNames.Length;
@@ -162,9 +156,6 @@ namespace FtpDiligent
                         m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
-
-                    if (key < 0)
-                        InProgress = oldInProgress;
 
                     // loguj zmiany
                     int filesTransfered = log.fileNames.Length;
@@ -203,10 +194,13 @@ namespace FtpDiligent
         /// <param name="endpoint">Endpoint, dla którego symulujemy wywo³anie z harmonogramu</param>
         public void StartNow(FtpEndpoint endpoint)
         {
+            bool oldInProgress = InProgress;
+            InProgress = true;
             m_filesTransfered = 0;
             ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, new FtpScheduleModel() {
                 xx = -endpoint.XX
             });
+            InProgress = oldInProgress;
         }
 
         /// <summary>

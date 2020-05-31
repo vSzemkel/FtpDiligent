@@ -254,7 +254,7 @@ namespace FtpDiligent
             Int32.TryParse(settings["InstanceID"], out m_instance);
             Int32.TryParse(settings["HotfolderInterval"], out m_hotfolderInterval);
             m_traceLevel = (eSeverityCode)traceLevel;
-            m_mailer = new SendEmails(settings["ErrorsMailTo"], settings["SendGridKey"]);
+            m_mailer = new SendEmails(this, settings["ErrorsMailTo"], settings["SendGridKey"]);
             m_checkTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
             if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out m_syncMode)) {
