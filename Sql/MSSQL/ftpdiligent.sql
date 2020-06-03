@@ -274,8 +274,8 @@ go
 -- CASE1: job_stop < week_minute - function not called for CASE1
 -- CASE2: week_minute < job_start - function returns job_start as datetimeoffset
 -- CASE3: missed executions - function returns first missed datetimeoffset
--- CASE4: scheduled execution lasted less then one minute or time misconfiguration
--- CASE5: work in progress - function returns next sync time
+-- CASE4: scheduled execution lasted less then one minute, returns next after planned
+-- CASE5: work in progress - function returns planned sync time
 drop function [ftp].[sf_get_next_sync]
 go
 create function [ftp].[sf_get_next_sync] (

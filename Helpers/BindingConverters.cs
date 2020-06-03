@@ -9,10 +9,9 @@
 namespace FtpDiligent
 {
     using System;
-    using System.Windows.Data;
-    using System.Globalization;
-    using System.Windows.Controls;
     using System.Collections.Generic;
+    using System.Globalization;
+    using System.Windows.Data;
 
     public class SelectedItemEnabler : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {

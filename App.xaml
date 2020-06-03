@@ -43,7 +43,6 @@
             </Setter>
         </Style>
 
-        <local:ListViewAlternatingRowStyleSelector x:Key="ListViewItemStyleSelector"/>
         <Style TargetType="{x:Type GridViewColumnHeader}">
             <Setter Property="Background" Value="#FF400351" />
             <Setter Property="Foreground" Value="WhiteSmoke" />
@@ -51,19 +50,18 @@
             <Setter Property="FontSize" Value="14"/>
         </Style>
         <Style TargetType="{x:Type ListView}">
-            <Setter Property="ItemContainerStyleSelector" Value="{StaticResource ListViewItemStyleSelector}"/>
-            <Setter Property="Background" Value="{StaticResource TloGridu}"></Setter>
+            <Setter Property="AlternationCount" Value="2" />
+            <Setter Property="Background" Value="{StaticResource TloGridu}" />
         </Style>
-        <Style x:Key="ListViewItemBase" TargetType="{x:Type ListViewItem}">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <AlternationConverter x:Key="ListViewBackgroundConverter">
+            <SolidColorBrush>WhiteSmoke</SolidColorBrush>
+            <SolidColorBrush>#FFFBEFFF</SolidColorBrush>
+        </AlternationConverter>
+        <Style TargetType="{x:Type ListViewItem}">
             <Setter Property="FontSize" Value="14"/>
-        </Style>
-        <Style x:Key="ListViewRow" TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ListViewItemBase}">
-            <Setter Property="Background" Value="WhiteSmoke"/>
-        </Style>
-        <Style x:Key="ListViewAlternatingRow" TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ListViewItemBase}">
-            <Setter Property="Background" Value="#FFFBEFFF"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="{Binding RelativeSource={RelativeSource Self}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource ListViewBackgroundConverter}}"/>
         </Style>
     </Application.Resources>
 </Application>

@@ -23,5 +23,10 @@ namespace FtpDiligent
         public DateTime nextSyncTime;
         public string name;
         public bool enabled;
+
+        /// <summary>
+        /// 32 bitowy hash pary [xx, nextSyncTime]
+        /// </summary>
+        public int Hash => (int)nextSyncTime.ToBinary() + (xx << 16);
     }
 }

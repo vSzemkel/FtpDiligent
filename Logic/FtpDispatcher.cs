@@ -61,8 +61,7 @@ namespace FtpDiligent
         /// <param name="o">Nie u¿ywany</param>
         private void DispatchFtpThread(object o)
         {
-            int iLastSchXX = -2;
-            DateTime dtLastScheduleTime = DateTime.MaxValue;
+            int lastSchedule = 0;
 
             while (InProgress) {
                 var (schedule, errmsg) = FtpDiligentDatabaseClient.GetNextSync(m_mainWnd.m_instance);
@@ -74,17 +73,17 @@ namespace FtpDiligent
                     return;
                 }
 
-                if (schedule.xx == iLastSchXX && schedule.nextSyncTime == dtLastScheduleTime) {
+                int currentSchedule = schedule.Hash;
+                if (currentSchedule == lastSchedule) {
                     Thread.Sleep(5000);
                     continue;
-                } else {
-                    iLastSchXX = schedule.xx;
-                    dtLastScheduleTime = schedule.nextSyncTime;
-                    if (schedule.xx > 0)
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, $"Najbli¿szy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
-                    else
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Do koñca tygodnia nie zaplanowano ¿adnych transferów");
                 }
+
+                lastSchedule = currentSchedule;
+                if (schedule.xx > 0)
+                    m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, $"Najbli¿szy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
+                else
+                    m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Do koñca tygodnia nie zaplanowano ¿adnych transferów");
 
                 if (DateTime.Now < schedule.nextSyncTime)
                     m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
@@ -119,9 +118,8 @@ namespace FtpDiligent
             }
 
             string remote = endpoint.host + endpoint.remDir;
-            FtpSyncModel log = new FtpSyncModel() { xx = key };
+            FtpSyncModel log = new FtpSyncModel() { xx = key, syncTime = endpoint.nextSync };
             IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncMode);
-            DateTime dtNewRefreshTime = log.syncTime = endpoint.nextSync;
             eFtpDirection eDirection = endpoint.direction;
 
             if (key < 0) 
