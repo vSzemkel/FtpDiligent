@@ -22,6 +22,11 @@ namespace FtpDiligent
         /// <param name="endpoint">Klucz rodzica</param>
         public FtpEndpoint()
         {
+            Host = string.Empty;
+            Userid = string.Empty;
+            Password = string.Empty;
+            RemoteDirectory = string.Empty;
+            LocalDirectory = string.Empty;
             Protocol = eFtpProtocol.FTP;
             Direction = eFtpDirection.Get;
             Mode = eFtpTransferMode.Binary;

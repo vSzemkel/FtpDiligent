@@ -104,17 +104,13 @@ namespace FtpDiligent
             if (endpoint != null) {
                 Cursor = Cursors.Wait;
 
-                bool isErr = false;
                 string errmsg = string.Empty;
                 var fu = IFtpUtility.Create(endpoint.GetModel(), m_mainWnd);
 
-                if (!fu.CheckConnection(ref errmsg)) {
-                    isErr = true;
-                    errmsg = "Niepoprawne parametry połączenia";
-                }
+                bool isErr = !fu.CheckConnection(ref errmsg);
 
                 if (!fu.CheckLocalDirectory()) {
-                    isErr = true; 
+                    isErr = true;
                     errmsg += "\nKatalog lokalny nie istnieje"; 
                 }
 

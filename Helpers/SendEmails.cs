@@ -73,7 +73,7 @@ namespace FtpDiligent
             try { 
                 var msg = new MimeMessage();
                 msg.Subject = "Powiadomienie o b³êdzie transferu plików";
-                msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => new MailboxAddress(s)));
+                msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => MailboxAddress.Parse(s)));
                 var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@sendgrid.net");
                 msg.Sender = senderMailbox;
                 msg.From.Add(senderMailbox);
