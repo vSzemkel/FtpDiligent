@@ -17,7 +17,7 @@ namespace FtpDiligent
 
     /// <summary>
     /// Umo¿liwia przegl¹danie zasobów serwera FTP i pobieranie plików
-    /// poprzez transport oparty na protokole SSH (port 22)
+    /// protoko³em FTP poprzez kana³ szyfrowany na poziomie TSL
     /// </summary>
     public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     {

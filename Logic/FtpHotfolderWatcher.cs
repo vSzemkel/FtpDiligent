@@ -108,7 +108,6 @@ namespace FtpDiligent
         /// <summary>
         /// Inicjalizacja watchera na podstawie parametrów konfiguracyjnych: ścieżki i rozmiaru bufora
         /// </summary>
-        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
         private void RegisterWatcher()
         {
             m_hotfolderWatcher = new FileSystemWatcher();

@@ -10,10 +10,17 @@ namespace FtpDiligent
 {
     using System;
     using System.Threading;
+    using System.Windows;
+    using System.Windows.Controls.Primitives;
 
     public sealed class FtpDispatcher
     {
         #region fields
+        /// <summary>
+        /// Ile czasu (ms) odczekaæ po b³êdzie pobierania harmonogramu przed ponowieniem
+        /// </summary>
+        public const int m_retryWaitTime = 10 * 60 * 1000;
+
         /// <summary>
         /// Zlicza przetransportowane pliki.
         /// Nie ma sensu restartowaæ dispatchera, który dot¹d nic nie przes³a³
@@ -68,8 +75,13 @@ namespace FtpDiligent
                 if (!string.IsNullOrEmpty(errmsg)) {
                     if (errmsg == "0")
                         m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
-                    else
+                    else {
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Warning, "Wstrzymanie pracy na 10 minut po b³êdzie");
+                        lastSchedule = 0;
+                        Thread.Sleep(m_retryWaitTime);
+                        m_mainWnd.Dispatcher.Invoke(() => { m_mainWnd.m_tbSterowanie.btRunSync.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); });
+                    }
                     return;
                 }
 
