@@ -77,7 +77,7 @@ namespace FtpDiligent
                         m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
                     else {
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Warning, "Wstrzymanie pracy na 10 minut po b³êdzie");
+                        m_mainWnd.ShowErrorInfo(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po b³êdzie");
                         lastSchedule = 0;
                         Thread.Sleep(m_retryWaitTime);
                         m_mainWnd.Dispatcher.Invoke(() => { m_mainWnd.m_tbSterowanie.btRunSync.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); });
