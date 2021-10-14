@@ -147,18 +147,15 @@ namespace FtpDiligent
         /// <summary>
         /// £¹czy siê z endpointem i pobiera wszystkie pliki póŸniejsze ni¿ data ostatniego pobrania
         /// </summary>
-        /// <param name="log">Informacja o skopiowanych plikach</param>
-        /// <returns>Tablice nazw pobranych plików oraz ich rozmiarów</returns>
-        public bool Download(ref FtpSyncModel log)
+        /// <returns>Informacja o skopiowanych plikach</returns>
+        public FtpSyncFileModel[] Download()
         {
             if (!CheckLocalDirectory() || !CheckDispatcher())
-                return false;
+                return null;
 
             Connect();
 
-            var lsFileNames = new List<string>();
-            var llFileSizes = new List<long>();
-            var ldFileDates = new List<DateTime>();
+            var ret = new List<FtpSyncFileModel>();
             var pFD = new WIN32_FIND_DATA();
             IntPtr hFind = FtpFindFirstFile(hFtpSess, IntPtr.Zero, pFD, INTERNET_FLAG_RELOAD, iContext);
             if (hFind == IntPtr.Zero) {
@@ -171,9 +168,12 @@ namespace FtpDiligent
             if (GetFile(pFD)) {
                 var size = FoundSize2Long(pFD);
                 var last = FoundTime2DateTime(pFD.ftLastWriteTime);
-                lsFileNames.Add(pFD.cFileName);
-                llFileSizes.Add(size);
-                ldFileDates.Add(last);
+                ret.Add(new FtpSyncFileModel() {
+                    Name = pFD.cFileName,
+                    Size = size,
+                    Modified = last,
+                    MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
+                });
                 if (m_showError != null)
                     m_showError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
             }
@@ -181,9 +181,12 @@ namespace FtpDiligent
                 if (GetFile(pFD)) {
                     var size = FoundSize2Long(pFD);
                     var last = FoundTime2DateTime(pFD.ftLastWriteTime);
-                    lsFileNames.Add(pFD.cFileName);
-                    llFileSizes.Add(size);
-                    ldFileDates.Add(last);
+                    ret.Add(new FtpSyncFileModel() {
+                        Name = pFD.cFileName,
+                        Size = size,
+                        Modified = last,
+                        MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
+                    });
                     if (m_showError != null)
                         m_showError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
                 }
@@ -198,34 +201,30 @@ noFilesFound:
             InternetCloseHandle(hFind);
             Dispose();
 
-            log.fileNames = lsFileNames.ToArray();
-            log.fileSizes = llFileSizes.ToArray();
-            log.fileDates = ldFileDates.ToArray();
-
-            return true;
+            return ret.ToArray();
         }
 
         /// <summary>
         /// £¹czy siê z endpointem i wstawia wszystkie pliki z lokalnego katalogu
         /// </summary>
-        /// <param name="log">Informacja o skopiowanych plikach</param>
-        /// <returns>Status powodzenia operacji</returns>
-        public bool Upload(ref FtpSyncModel log)
+        /// <returns>Informacja o skopiowanych plikach</returns>
+        public FtpSyncFileModel[] Upload()
         {
             if (!CheckLocalDirectory() || !CheckDispatcher())
-                return false;
+                return null;
 
             Connect();
 
-            var lsFileNames = new List<string>();
-            var llFileSizes = new List<long>();
-            var ldFileDates = new List<DateTime>();
+            var ret = new List<FtpSyncFileModel>();
             foreach (string sFileName in Directory.GetFiles(m_sLocalDir)) {
                 var fi = new FileInfo(sFileName);
                 if (m_Disp.InProgress && PutFile(fi)) {
-                    lsFileNames.Add(fi.Name);
-                    llFileSizes.Add(fi.Length);
-                    ldFileDates.Add(fi.LastWriteTime);
+                    ret.Add(new FtpSyncFileModel() {
+                        Name = fi.Name,
+                        Size = fi.Length,
+                        Modified = fi.LastWriteTime,
+                        MD5 = fi.FullName.ComputeMD5()
+                    });
                     if (m_showError != null)
                         m_showError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
                 }
@@ -236,11 +235,7 @@ noFilesFound:
 
             Dispose();
 
-            log.fileNames = lsFileNames.ToArray();
-            log.fileSizes = llFileSizes.ToArray();
-            log.fileDates = ldFileDates.ToArray();
-
-            return true;
+            return ret.ToArray();
         }
 
         /// <summary>
@@ -318,20 +313,21 @@ noFilesFound:
                     break;
             }
 
-            if (!FtpGetFile(hFtpSess, pFD.cFileName, m_sLocalDir + pFD.cFileName, false, FILE_ATTRIBUTE_NORMAL, (uint)m_TransferMode, iContext)) {
+            string localPath = m_sLocalDir + pFD.cFileName;
+            if (!FtpGetFile(hFtpSess, pFD.cFileName, localPath, false, FILE_ATTRIBUTE_NORMAL, (uint)m_TransferMode, iContext)) {
                 var dirsep = m_sRemoteDir.EndsWith('/')? string.Empty : "/";
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiod³o siê");
             }
 
-            if (m_mainWnd.m_checkTransferedStorage) {
-                bool bStatus = CheckLocalStorage(pFD.cFileName, size);
-                if (!bStatus && File.Exists(m_sLocalDir + pFD.cFileName))
-                    File.Delete(m_sLocalDir + pFD.cFileName);
-                return bStatus;
-            }
-
             if (m_Disp != null)
                 m_Disp.m_filesTransfered++;
+
+            if (m_mainWnd.m_checkTransferedStorage) {
+                bool bStatus = CheckLocalStorage(pFD.cFileName, size);
+                if (!bStatus && File.Exists(localPath))
+                    File.Delete(localPath);
+                return bStatus;
+            }
 
             return true;
         }
@@ -369,11 +365,11 @@ noFilesFound:
             if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
                 throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod³o siê", iWin32Error);
 
-            if (m_mainWnd.m_checkTransferedStorage)
-                return CheckRemoteStorage(pFI.Name, pFI.Length);
-
             if (m_Disp != null)
                 m_Disp.m_filesTransfered++;
+
+            if (m_mainWnd.m_checkTransferedStorage)
+                return CheckRemoteStorage(pFI.Name, pFI.Length);
 
             return true;
         }

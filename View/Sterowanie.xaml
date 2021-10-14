@@ -21,7 +21,7 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <TextBox Margin="10 10 0 0" Text="Tryb pobierania:" Width="90" HorizontalAlignment="Left" IsReadOnly="True"/>
-            <ComboBox Grid.Row="1" Margin="10 2 0 10" Name="cbSyncMode" Width="200" Height="26" IsEnabled="{Binding IsEnabled, ElementName=btRunSync}"/>
+            <ComboBox Grid.Row="1" Margin="10 2 0 10" Name="cbSyncMode" Width="200" Height="26" SelectedValue="{Binding Path=m_syncModeProp, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, ElementName=btRunSync}"/>
             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Margin="0 2 0 10" Name="btRunSync" Content="Uruchom przesyłanie" Click="OnStartSync"/>
                 <Button Margin="10 2 0 10" Name="btStopSync" Content="Zatrzymaj przesyłanie" IsEnabled="False" Click="OnStopSync"/>

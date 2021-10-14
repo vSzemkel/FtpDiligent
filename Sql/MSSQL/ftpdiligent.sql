@@ -68,6 +68,7 @@ create table [ftp].[ftp_file] (
     file_name varchar(128) not null,
     file_size bigint not null,
     file_date datetime2 not null,
+    md5 binary(16) not null,
     completion_date datetime2 constraint df_file_completion default getdate(),
     direction tinyint not null,
     transfer_mode tinyint not null,
@@ -229,19 +230,20 @@ create procedure [ftp].[sp_log_download] (
     @refresh_date datetime2,
     @file_name varchar(128),
     @file_size bigint,
-    @file_date datetime2
+    @file_date datetime2,
+    @md5 binary(16)
 ) as begin
     if @xx > 0 begin
         update [ftp].[ftp_endpoint] set refresh_date=@refresh_date
          where xx in (select end_xx from [ftp].[ftp_schedule] where xx=@xx)
-        insert into [ftp].[ftp_file] (sch_xx,file_name,file_size,file_date,manual_sync,direction,transfer_mode)
-             select @xx,@file_name,@file_size,@file_date,null,@direction,transfer_mode
+        insert into [ftp].[ftp_file] (sch_xx,file_name,file_size,file_date,md5,manual_sync,direction,transfer_mode)
+             select @xx,@file_name,@file_size,@file_date,@md5,null,@direction,transfer_mode
                from [ftp].[ftp_endpoint] fe,[ftp].[ftp_schedule] fs
               where fe.xx=fs.end_xx and fs.xx=@xx
     end else begin
         update [ftp].[ftp_endpoint] set refresh_date=@refresh_date where xx=-@xx
-        insert into [ftp].[ftp_file] (end_xx,file_name,file_size,file_date,manual_sync,direction,transfer_mode)
-             select -@xx,@file_name,@file_size,@file_date,1,@direction,transfer_mode
+        insert into [ftp].[ftp_file] (end_xx,file_name,file_size,file_date,md5,manual_sync,direction,transfer_mode)
+             select -@xx,@file_name,@file_size,@file_date,@md5,1,@direction,transfer_mode
                from [ftp].[ftp_endpoint] where xx=-@xx
     end
 end

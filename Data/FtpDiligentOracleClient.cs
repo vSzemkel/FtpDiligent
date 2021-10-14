@@ -9,6 +9,7 @@
 namespace FtpDiligent
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Data;
     using System.Threading.Tasks;
@@ -292,10 +293,23 @@ namespace FtpDiligent
             par.Add("file_names", OracleDbType.Varchar2, 256).CollectionType = OracleCollectionType.PLSQLAssociativeArray;
             par.Add("file_sizes", OracleDbType.Int64).CollectionType = OracleCollectionType.PLSQLAssociativeArray;
             par.Add("file_dates", OracleDbType.Date).CollectionType = OracleCollectionType.PLSQLAssociativeArray;
-            par[3].Value = sync.fileNames;
-            par[4].Value = sync.fileSizes;
-            par[5].Value = sync.fileDates;
-            par[3].Size = par[4].Size = par[5].Size = sync.fileNames.Length;
+
+            var ind = 0;
+            var size = sync.files.Length;
+            var fileNames = new string[size];
+            var fileSizes = new long[size];
+            var fileDates = new DateTime[size];
+            foreach (var fi in sync.files) {
+                fileNames[ind] = fi.Name;
+                fileSizes[ind] = fi.Size;
+                fileDates[ind] = fi.Modified;
+                ++ind;
+            }
+
+            par[3].Value = fileNames;
+            par[4].Value = fileSizes;
+            par[5].Value = fileDates;
+            par[3].Size = par[4].Size = par[5].Size = size;
 
             return await ExecuteNonQueryAsync(cmd);
         }

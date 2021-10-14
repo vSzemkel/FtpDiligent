@@ -33,7 +33,14 @@ namespace FtpDiligent
         /// <returns></returns>
         public static string InitInstance(string hostname)
         {
-            SqlCommand cmd = guiConn.CreateCommand();
+            SqlCommand cmd = null;
+            try {
+                cmd = guiConn.CreateCommand();
+            } catch (TypeInitializationException tix) {
+                System.Windows.MessageBox.Show(tix.InnerException.Message, "FtpDiligentSqlClient.InitInstance", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Stop);
+                Environment.Exit(1);
+            }
+
             cmd.CommandText = "exec [ftp].[sp_init_instance] @name,@zone";
             cmd.Parameters.Add("name", SqlDbType.VarChar, 128).Value = hostname;
             cmd.Parameters.Add("zone", SqlDbType.VarChar, 128).Value = TimeZoneInfo.Local.StandardName;
@@ -285,7 +292,7 @@ namespace FtpDiligent
         {
             SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
             SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "exec [ftp].[sp_log_download] @transdir,@xx,@sync_time,@file_name,@file_size,@file_date";
+            cmd.CommandText = "exec [ftp].[sp_log_download] @transdir,@xx,@sync_time,@file_name,@file_size,@file_date,@md5";
             var par = cmd.Parameters;
             par.Add("transdir", SqlDbType.TinyInt).Value = sync.direction;
             par.Add("xx", SqlDbType.Int).Value = sync.xx;
@@ -293,12 +300,14 @@ namespace FtpDiligent
             par.Add("file_name", SqlDbType.VarChar, 256);
             par.Add("file_size", SqlDbType.BigInt);
             par.Add("file_date", SqlDbType.DateTime2);
+            par.Add("md5", SqlDbType.Binary, 16);
 
             string ret = string.Empty;
-            for (int i = 0; i < sync.fileNames.Length; ++i) {
-                par[3].Value = sync.fileNames[i];
-                par[4].Value = sync.fileSizes[i];
-                par[5].Value = sync.fileDates[i];
+            foreach (var fi in sync.files) {
+                par[3].Value = fi.Name;
+                par[4].Value = fi.Size;
+                par[5].Value = fi.Modified;
+                par[6].Value = fi.MD5;
                 ret = ExecuteNonQuery(cmd);
                 if (!string.IsNullOrEmpty(ret)) break;
             }

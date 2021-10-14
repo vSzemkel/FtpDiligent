@@ -108,6 +108,7 @@ namespace FtpDiligent
         /// <summary>
         /// Inicjalizacja watchera na podstawie parametrów konfiguracyjnych: ścieżki i rozmiaru bufora
         /// </summary>
+        // [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
         private void RegisterWatcher()
         {
             m_hotfolderWatcher = new FileSystemWatcher();
@@ -173,26 +174,25 @@ namespace FtpDiligent
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Await.Warning", "CS4014:Await.Warning")]
         private void UploadFiles(object o)
         {
-            var lsFileNames = new List<string>();
-            var llFileSizes = new List<long>();
-            var ldFileDates = new List<DateTime>();
             var files = o as FileInfo[];
+            var log = new List<FtpSyncFileModel>();
             try {
                 foreach (FileInfo fi in files)
-                    if (m_ftpUtility.UploadHotFile(fi)) {
-                        lsFileNames.Add(fi.Name);
-                        llFileSizes.Add(fi.Length);
-                        ldFileDates.Add(fi.LastWriteTime);
-                    }
+                    if (m_ftpUtility.UploadHotFile(fi))
+                        log.Add(new FtpSyncFileModel() {
+                            Name = fi.Name,
+                            Size = fi.Length,
+                            Modified = fi.LastWriteTime,
+                            MD5 = fi.FullName.ComputeMD5()
+                        });
             } catch (FtpUtilityException fex) {
                 m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, fex.Message);
             } catch (System.Exception se) {
                 m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, se.Message);
             }
 
-            m_log.fileNames = lsFileNames.ToArray();
-            m_log.fileSizes = llFileSizes.ToArray();
-            m_log.fileDates = ldFileDates.ToArray();
+            m_log.files = log.ToArray();
+
             // not wait CS4014
             FtpDiligentDatabaseClient.LogSync(m_log);
         }

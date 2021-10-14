@@ -131,7 +131,7 @@ namespace FtpDiligent
 
             string remote = endpoint.host + endpoint.remDir;
             FtpSyncModel log = new FtpSyncModel() { xx = key, syncTime = endpoint.nextSync };
-            IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncMode);
+            IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncModeProp);
             eFtpDirection eDirection = endpoint.direction;
 
             if (key < 0) 
@@ -142,13 +142,14 @@ namespace FtpDiligent
             try { // transferuj pliki
                 #region pobieranie
                 if (eDirection.HasFlag(eFtpDirection.Get)) {
-                    if (!fu.Download(ref log)) {
+                    log.files = fu.Download();
+                    if (log.files == null) {
                         m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
                     // loguj zmiany
-                    int filesTransfered = log.fileNames.Length;
+                    int filesTransfered = log.files.Length;
                     if (filesTransfered == 0) {
                         FtpDiligentDatabaseClient.LogActivation(log);
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
@@ -162,13 +163,14 @@ namespace FtpDiligent
 
                 #region wstawianie
                 if (eDirection.HasFlag(eFtpDirection.Put)) {
-                    if (!fu.Upload(ref log)) {
+                    log.files = fu.Upload();
+                    if (log.files == null) {
                         m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
                     // loguj zmiany
-                    int filesTransfered = log.fileNames.Length;
+                    int filesTransfered = log.files.Length;
                     if (filesTransfered == 0) {
                         FtpDiligentDatabaseClient.LogActivation(log);
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");

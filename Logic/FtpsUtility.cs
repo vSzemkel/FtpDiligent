@@ -67,24 +67,24 @@ namespace FtpDiligent
         /// <summary>
         /// £¹czy siê z endpointem i pobiera wszystkie pliki póŸniejsze ni¿ data ostatniego pobrania
         /// </summary>
-        /// <param name="log">Informacja o skopiowanych plikach</param>
-        /// <returns>Tablice nazw pobranych plików oraz ich rozmiarów</returns>
-        public bool Download(ref FtpSyncModel log)
+        /// <returns>Informacja o skopiowanych plikach</returns>
+        public FtpSyncFileModel[] Download()
         {
             if (!CheckLocalDirectory() || !CheckDispatcher())
-                return false;
+                return null;
 
             Connect();
 
-            var lsFileNames = new List<string>();
-            var llFileSizes = new List<long>();
-            var ldFileDates = new List<DateTime>();
+            var ret = new List<FtpSyncFileModel>();
             var files = m_ftpsClient.GetListing().Where(f => f.Type == FtpFileSystemObjectType.File).ToArray();
             foreach (FtpListItem f in files)
                 if (GetFile(f)) {
-                    lsFileNames.Add(f.Name);
-                    llFileSizes.Add(f.Size);
-                    ldFileDates.Add(f.Modified);
+                    ret.Add(new FtpSyncFileModel() {
+                        Name = f.Name,
+                        Size = f.Size,
+                        Modified = f.Modified,
+                        MD5 = (m_sLocalDir + f.Name).ComputeMD5()
+                    });
                     if (m_showError != null)
                         m_showError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Size}|{f.Modified.ToBinary()}");
                 }
@@ -94,34 +94,30 @@ namespace FtpDiligent
 
             m_ftpsClient.Disconnect();
 
-            log.fileNames = lsFileNames.ToArray();
-            log.fileSizes = llFileSizes.ToArray();
-            log.fileDates = ldFileDates.ToArray();
-
-            return true;
+            return ret.ToArray();
         }
 
         /// <summary>
         /// £¹czy siê z endpointem i wstawia wszystkie pliki z lokalnego katalogu
         /// </summary>
-        /// <param name="log">Informacja o skopiowanych plikach</param>
-        /// <returns>Status powodzenia operacji</returns>
-        public bool Upload(ref FtpSyncModel log)
+        /// <returns>Informacja o skopiowanych plikach</returns>
+        public FtpSyncFileModel[] Upload()
         {
             if (!CheckLocalDirectory() || !CheckDispatcher())
-                return false;
+                return null;
 
             Connect();
 
-            var lsFileNames = new List<string>();
-            var llFileSizes = new List<long>();
-            var ldFileDates = new List<DateTime>();
+            var ret = new List<FtpSyncFileModel>();
             foreach (string sFileName in Directory.GetFiles(m_sLocalDir)) {
                 var fi = new FileInfo(sFileName);
                 if (m_Disp.InProgress && PutFile(fi)) {
-                    lsFileNames.Add(fi.Name);
-                    llFileSizes.Add(fi.Length);
-                    ldFileDates.Add(fi.LastWriteTime);
+                    ret.Add(new FtpSyncFileModel() {
+                        Name = fi.Name,
+                        Size = fi.Length,
+                        Modified = fi.LastWriteTime,
+                        MD5 = fi.FullName.ComputeMD5()
+                    });
                     if (m_showError != null)
                         m_showError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
                 }
@@ -132,11 +128,7 @@ namespace FtpDiligent
 
             m_ftpsClient.Disconnect();
 
-            log.fileNames = lsFileNames.ToArray();
-            log.fileSizes = llFileSizes.ToArray();
-            log.fileDates = ldFileDates.ToArray();
-
-            return true;
+            return ret.ToArray();
         }
 
         /// <summary>
@@ -219,10 +211,12 @@ namespace FtpDiligent
                 case eSyncFileMode.AllFiles:
                     break;
             }
-            
+
+            string localPath = m_sLocalDir + file.Name;
+
             try {
-                var stream = File.Create(m_sLocalDir + file.Name, m_bufferSize);
-                m_ftpsClient.Download(stream, file.Name);
+                using (var stream = File.Create(localPath, m_bufferSize))
+                    m_ftpsClient.Download(stream, file.Name);
             } catch(Exception ex) {
                 var dirsep = m_sRemoteDir.EndsWith('/') ? string.Empty : "/";
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod³o siê. {ex.Message}");
@@ -230,8 +224,8 @@ namespace FtpDiligent
 
             if (m_mainWnd.m_checkTransferedStorage) {
                 bool bStatus = CheckLocalStorage(file.Name, file.Size);
-                if (!bStatus && File.Exists(m_sLocalDir + file.Name))
-                    File.Delete(m_sLocalDir + file.Name);
+                if (!bStatus && File.Exists(localPath))
+                    File.Delete(localPath);
                 return bStatus;
             }
 

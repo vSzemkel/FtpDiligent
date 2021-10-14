@@ -21,7 +21,7 @@ namespace FtpDiligent
         /// <summary>
         /// Baza danych w firmowej serwerowni
         /// </summary>
-        public static readonly string Onprem = "ONPREM";
+        public static readonly string OnPrem = "ONPREM";
 
         /// <summary>
         /// Baza danych w chmurze publicznej

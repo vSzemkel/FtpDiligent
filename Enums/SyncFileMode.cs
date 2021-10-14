@@ -16,6 +16,7 @@ namespace FtpDiligent
         NewerThenRefreshDate = 0,
         UniqueDateAndSizeOnDisk,
         UniqueDateAndSizeInDatabase,
+        UniqueMD5Checksum,
         AllFiles
     }
 }

@@ -53,8 +53,8 @@ namespace FtpDiligent
         }
         #endregion
 
-        bool Download(ref FtpSyncModel log);
-        bool Upload(ref FtpSyncModel log);
+        FtpSyncFileModel[] Download();
+        FtpSyncFileModel[] Upload();
         bool UploadHotFile(FileInfo file);
         bool CheckConnection(ref string sErrInfo);
         bool CheckLocalDirectory();

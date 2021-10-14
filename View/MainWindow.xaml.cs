@@ -38,9 +38,9 @@ namespace FtpDiligent
         public int m_instance;
 
         /// <summary>
-        /// Algorytm klasyfikacji plikó do transferu
+        /// Algorytm klasyfikacji plików do transferu
         /// </summary>
-        public eSyncFileMode m_syncMode;
+        private eSyncFileMode m_syncMode;
 
         /// <summary>
         /// Poziom logowania komunikatów
@@ -100,6 +100,11 @@ namespace FtpDiligent
         #endregion
 
         #region properties
+        public eSyncFileMode m_syncModeProp { 
+            get => m_syncMode;
+            set { m_syncMode = value; }
+        }
+
         public SerweryDetails m_tbSerweryDetails {
             get {
                 if (_m_tbSerweryDetails == null) {
@@ -136,6 +141,7 @@ namespace FtpDiligent
             m_tbSterowanie.m_mainWnd = this;
             this.tabSterowanie.Content = m_tbSterowanie;
             m_tbSterowanie.tbFilesCount.DataContext = 0;
+            m_tbSterowanie.cbSyncMode.DataContext = this;
             m_tbSerwery.m_mainWnd = this;
             this.tabSerwery.Content = m_tbSerwery;
             m_tbHarmonogramy.m_mainWnd = this;
@@ -261,7 +267,6 @@ namespace FtpDiligent
                 ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
                 m_syncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
             }
-            m_tbSterowanie.cbSyncMode.SelectedItem = m_syncMode;
 
             try {
                 CultureInfo.CurrentUICulture = new CultureInfo(settings["CultureInfo"]);
