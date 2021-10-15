@@ -14,7 +14,7 @@ namespace FtpDiligent
     public enum eFtpProtocol : byte
     {
         FTP  = 1,
-        SFTP = 2,
-        FTPS = 3
+        FTPS = 2,
+        SFTP = 3
     }
 }

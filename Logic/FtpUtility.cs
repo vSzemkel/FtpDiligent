@@ -3,6 +3,7 @@
 // <copyright file="FtpUtility.cs" company="Agora SA">
 // <legal>Copyright (c) Development IT, kwiecien 2020</legal>
 // <author>Marcin Buchwald</author>
+// <retired>Not used, for demonstration purposes only</retired>
 // </copyright>
 // -----------------------------------------------------------------------
 

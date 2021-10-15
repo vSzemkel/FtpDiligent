@@ -42,8 +42,11 @@ icacls C:\Users\vSzemkel\.ssh\authorized_keys # ma być vSzemel(F), Administrato
 ssh vszemkel@hostname-or-ip
 
 /* Developers SQL instance credentials                  */
-/* create login [ftp] with password = 'k8vSw1xo'        */
+/* create login [ftp] with password = '***** ***'        */
 /* create user [ftp] with default_schema=[ftp]          */
 /* MSSQLLocalDb: alter user dbo with default_schema=ftp */
 /* exec sp_addrolemember 'db_owner', 'ftp'              */
 /* create schema ftp with authorization ftp             */
+
+# Plik konfiguracyjny musi się nazywać FtpDiligent.dll.config
+dotnet FtpDiligent.dll

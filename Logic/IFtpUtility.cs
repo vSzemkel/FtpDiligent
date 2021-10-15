@@ -23,11 +23,11 @@ namespace FtpDiligent
         {
             switch (endpoint.protocol) {
                 case eFtpProtocol.FTP:
-                    return new FtpUtility(endpoint, dispatcher, mode);
+                    return new FtpsUtility(endpoint, dispatcher, mode, false);
+                case eFtpProtocol.FTPS:
+                    return new FtpsUtility(endpoint, dispatcher, mode, true);
                 case eFtpProtocol.SFTP:
                     return new SFtpUtility(endpoint, dispatcher, mode);
-                case eFtpProtocol.FTPS:
-                    return new FtpsUtility(endpoint, dispatcher, mode);
             }
 
             return null;
@@ -42,11 +42,11 @@ namespace FtpDiligent
         {
             switch (endpoint.protocol) {
                 case eFtpProtocol.FTP:
-                    return new FtpUtility(endpoint, window);
+                    return new FtpsUtility(endpoint, window, false);
+                case eFtpProtocol.FTPS:
+                    return new FtpsUtility(endpoint, window, true);
                 case eFtpProtocol.SFTP:
                     return new SFtpUtility(endpoint, window);
-                case eFtpProtocol.FTPS:
-                    return new FtpsUtility(endpoint, window);
             }
 
             return null;

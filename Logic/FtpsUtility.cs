@@ -31,6 +31,11 @@ namespace FtpDiligent
         /// Klient us³ugi FTPS z biblioteki FluentFTP
         /// </summary>
         private FtpClient m_ftpsClient;
+
+        /// <summary>
+        /// Czy u¿yæ po³¹czenia szyfrowanego
+        /// </summary>
+        private bool m_secure;
         #endregion
 
         #region constructor/destructor
@@ -40,8 +45,10 @@ namespace FtpDiligent
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="dispatcher">Obiekt steruj¹cy w¹tkami</param>
         /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
-        public FtpsUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
+        /// <param name="secure">Czy u¿yæ po³¹czenia szyfrowanego</param>
+        public FtpsUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode, bool secure)
             : base(endpoint, dispatcher, mode) {
+            m_secure = secure;
         }
 
         /// <summary>
@@ -49,8 +56,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="window">G³ówne okno aplikacji</param>
-        public FtpsUtility(FtpEndpointModel endpoint, MainWindow window)
+        public FtpsUtility(FtpEndpointModel endpoint, MainWindow window, bool secure)
             : base(endpoint, window) {
+            m_secure = secure;
         }
 
         /// <summary>
@@ -161,7 +169,7 @@ namespace FtpDiligent
         {
             m_ftpsClient = new FtpClient(m_sHost, m_sUser, m_sPass);
             m_ftpsClient.DataConnectionType = FtpDataConnectionType.PASV;
-            m_ftpsClient.EncryptionMode = FtpEncryptionMode.Explicit;
+            m_ftpsClient.EncryptionMode = m_secure ? FtpEncryptionMode.Explicit : FtpEncryptionMode.None;
             m_ftpsClient.DataConnectionEncryption = true;
             m_ftpsClient.ValidateAnyCertificate = true;
 
