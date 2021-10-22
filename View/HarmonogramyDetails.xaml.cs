@@ -63,7 +63,7 @@ namespace FtpDiligent
                 schedule.Endpoint = m_mainWnd.m_tbHarmonogramy.m_selectedEndpoint.XX;
                 errmsg = FtpDiligentDatabaseClient.ModifySchedule(schedule.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg)) {
-                    schedule.XX = IFtpDiligentDatabaseClient.m_lastInsertedKey;
+                    schedule.XX = m_mainWnd.m_instance;
                     m_schedules.CommitNew();
                 }
             } else {

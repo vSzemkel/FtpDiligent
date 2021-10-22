@@ -283,11 +283,9 @@ namespace FtpDiligent
             if (m_instance > 0)
                 return;
 
-            string localHostname = Dns.GetHostName();
-            string errmsg = FtpDiligentDatabaseClient.InitInstance(localHostname);
-            if (string.IsNullOrEmpty(errmsg))
-                m_instance = IFtpDiligentDatabaseClient.m_lastInsertedKey;
-            else
+            string errmsg, localHostname = Dns.GetHostName();
+            (m_instance, errmsg) = FtpDiligentDatabaseClient.InitInstance(localHostname);
+            if (!string.IsNullOrEmpty(errmsg))
                 ShowErrorInfoInternal(eSeverityCode.Error, errmsg);
         }
 

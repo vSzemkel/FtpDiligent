@@ -9,19 +9,20 @@
 namespace FtpDiligent
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Data;
     using System.Threading.Tasks;
 
     using Oracle.ManagedDataAccess.Client;
 
-    class FtpDiligentOracleClient : IFtpDiligentDatabaseClient
+    class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
     {
         #region fields
         /// <summary>
         /// Połączenie do bazy danych wykorzystywane tylko w jednym wątku GUI
         /// </summary>
-        private static readonly OracleConnection guiConn = new OracleConnection(IFtpDiligentDatabaseClient.connStr);
+        private static readonly OracleConnection guiConn = new OracleConnection(connStr);
         #endregion
 
         #region public static STA
@@ -187,7 +188,7 @@ namespace FtpDiligent
         public static (FtpScheduleModel, string) GetNextSync(int instance)
         {
             var ret = new FtpScheduleModel();
-            OracleConnection conn = new OracleConnection(IFtpDiligentDatabaseClient.connStr);
+            OracleConnection conn = new OracleConnection(connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "begin select_next_sync(:ins_xx,:refCur); end;";
             cmd.Parameters.Add("ins_xx", OracleDbType.Int32).Value = instance;
@@ -225,7 +226,7 @@ namespace FtpDiligent
         public static async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
         {
             var ret = new FtpEndpointModel();
-            OracleConnection conn = new OracleConnection(IFtpDiligentDatabaseClient.connStr);
+            OracleConnection conn = new OracleConnection(connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.Parameters.Add("sch_xx", OracleDbType.Int32).Value = schedule;
             cmd.Parameters.Add("refCur", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
@@ -266,7 +267,7 @@ namespace FtpDiligent
         /// <returns>Komunikat o ewentualnym błędzie</returns>
         public static async Task<string> LogActivation(FtpSyncModel sync)
         {
-            OracleConnection conn = new OracleConnection(IFtpDiligentDatabaseClient.connStr);
+            OracleConnection conn = new OracleConnection(connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "begin log_nodownload(:sch_xx,:sync_time); end;";
             cmd.Parameters.Add("sch_xx", OracleDbType.Int32).Value = sync.xx;
@@ -282,7 +283,7 @@ namespace FtpDiligent
         /// <returns>Komunikat o ewentualnym błędzie</returns>
         public static async Task<string> LogSync(FtpSyncModel sync)
         {
-            OracleConnection conn = new OracleConnection(IFtpDiligentDatabaseClient.connStr);
+            OracleConnection conn = new OracleConnection(connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "begin log_download(:transdir,:sch_xx,:sync_fime,:file_names,:file_sizes,:file_dates); end;";
             var par = cmd.Parameters;
@@ -320,7 +321,7 @@ namespace FtpDiligent
         /// <returns>Komunikat o ewentualnym błędzie</returns>
         public static (bool,string) VerifyFile(FtpFileModel file)
         {
-            OracleConnection conn = new OracleConnection(IFtpDiligentDatabaseClient.connStr);
+            OracleConnection conn = new OracleConnection(connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "select check_file(:ins_xx,:file_name,:file_size,:file_date) from dual";
             var par = cmd.Parameters;
@@ -373,9 +374,9 @@ namespace FtpDiligent
 
             string errmsg = await ExecuteNonQueryAsync(cmd);
             if (string.IsNullOrEmpty(errmsg))
-                IFtpDiligentDatabaseClient.m_lastInsertedKey = (int)(Oracle.ManagedDataAccess.Types.OracleDecimal)par.Value;
+                m_lastInsertedKey = (int)(Oracle.ManagedDataAccess.Types.OracleDecimal)par.Value;
             else
-                IFtpDiligentDatabaseClient.m_lastInsertedKey = 0;
+                m_lastInsertedKey = 0;
 
             return errmsg;
         }

@@ -15,13 +15,13 @@ namespace FtpDiligent
 
     using Microsoft.Data.SqlClient;
 
-    class FtpDiligentSqlClient : IFtpDiligentDatabaseClient
+    class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
     {
         #region fields
         /// <summary>
         /// Połączenie do bazy danych wykorzystywane tylko w jednym wątku GUI
         /// </summary>
-        private static readonly SqlConnection guiConn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
+        private static readonly SqlConnection guiConn = new SqlConnection(connStr);
         #endregion
 
         #region public static STA
@@ -31,7 +31,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="hostname">Nazwa hosta</param>
         /// <returns></returns>
-        public static string InitInstance(string hostname)
+        public static (int, string) InitInstance(string hostname)
         {
             SqlCommand cmd = null;
             try {
@@ -45,11 +45,7 @@ namespace FtpDiligent
             cmd.Parameters.Add("name", SqlDbType.VarChar, 128).Value = hostname;
             cmd.Parameters.Add("zone", SqlDbType.VarChar, 128).Value = TimeZoneInfo.Local.StandardName;
 
-            var (ret, errmsg) = ExecuteScalar<int>(cmd);
-            if (string.IsNullOrEmpty(errmsg))
-                IFtpDiligentDatabaseClient.m_lastInsertedKey = ret;
-
-            return errmsg;
+            return ExecuteScalar<int>(cmd);
         }
 
         /// <summary>
@@ -198,7 +194,7 @@ namespace FtpDiligent
         public static (FtpScheduleModel, string) GetNextSync(int instance)
         {
             var ret = new FtpScheduleModel();
-            SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
+            SqlConnection conn = new SqlConnection(connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_select_next_sync] @ins_xx";
             cmd.Parameters.Add("ins_xx", SqlDbType.Int).Value = instance;
@@ -235,7 +231,7 @@ namespace FtpDiligent
         public static async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
         {
             var ret = new FtpEndpointModel();
-            SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
+            SqlConnection conn = new SqlConnection(connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.Parameters.Add("sch_xx", SqlDbType.Int).Value = schedule;
             cmd.CommandText = "exec [ftp].[sp_endpoint_for_schedule] @sch_xx";
@@ -274,7 +270,7 @@ namespace FtpDiligent
         /// <returns>Komunikat o ewentualnym błędzie</returns>
         public static string LogActivation(FtpSyncModel sync)
         {
-            SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
+            SqlConnection conn = new SqlConnection(connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_log_activation] @xx,@sync_time";
             cmd.Parameters.Add("xx", SqlDbType.Int).Value = sync.xx;
@@ -290,7 +286,7 @@ namespace FtpDiligent
         /// <returns>Komunikat o ewentualnym błędzie</returns>
         public static string LogSync(FtpSyncModel sync)
         {
-            SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
+            SqlConnection conn = new SqlConnection(connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_log_download] @transdir,@xx,@sync_time,@file_name,@file_size,@file_date,@md5";
             var par = cmd.Parameters;
@@ -322,7 +318,7 @@ namespace FtpDiligent
         /// <returns>Komunikat o ewentualnym błędzie</returns>
         public static (bool,string) VerifyFile(FtpFileModel file)
         {
-            SqlConnection conn = new SqlConnection(IFtpDiligentDatabaseClient.connStr);
+            SqlConnection conn = new SqlConnection(connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_check_file] @ins_xx,@file_name,@file_size,@file_date";
             var par = cmd.Parameters;
@@ -371,9 +367,9 @@ namespace FtpDiligent
         {
             var (key, errmsg) = ExecuteScalar<int>(cmd);
             if (string.IsNullOrEmpty(errmsg))
-                IFtpDiligentDatabaseClient.m_lastInsertedKey = key;
+                m_lastInsertedKey = key;
             else
-                IFtpDiligentDatabaseClient.m_lastInsertedKey = 0;
+                m_lastInsertedKey = 0;
 
             return errmsg;
         }
