@@ -14,12 +14,20 @@ namespace FtpDiligent
         /// <summary>
         /// Opis połączenia do bazy danych
         /// </summary>
-        public static readonly string connStr = System.Configuration.ConfigurationManager.ConnectionStrings[eDbLocation.Cloud].ConnectionString;
+        public static string connStr;
 
         /// <summary>
         /// Ostatnia wartość pobrana z sekwencji do natychmiastowego, jednowątkowego użycia
         /// </summary>
-        public static int m_lastInsertedKey = 0;
+        protected static int m_lastInsertedKey = 0;
+        #endregion
+
+        #region public
+        /// <summary>
+        /// Udostępnia identyfikator ostatnio utworzonego obiektu
+        /// </summary>
+        /// <returns>Wartość ostatnio wygenerowanego identyfikatora</returns>
+        public static int GetLastInsertedKey() => m_lastInsertedKey;
         #endregion
     }
 }

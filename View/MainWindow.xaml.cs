@@ -263,6 +263,8 @@ namespace FtpDiligent
             m_mailer = new SendEmails(this, settings["ErrorsMailTo"], settings["SendGridKey"]);
             m_checkTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
+            FtpDiligentDatabaseClient.connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Cloud].ConnectionString;
+
             if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out m_syncMode)) {
                 ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
                 m_syncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;

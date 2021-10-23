@@ -13,7 +13,7 @@ namespace FtpDiligent
     using System.Data;
     using System.Threading.Tasks;
 
-    interface IFtpDiligentDatabaseClient
+    public interface IFtpDiligentDatabaseClient
     {
         #region public STA
         /// <summary>
@@ -22,35 +22,35 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="hostname">Nazwa hosta</param>
         /// <returns></returns>
-        public Task<(int, string)> InitInstance(string hostname) => throw new NotImplementedException();
+        Task<(int, string)> InitInstance(string hostname) => throw new NotImplementedException();
 
         /// <summary>
         /// Pobiera endpointy dla bieżącej instancji
         /// </summary>
         /// <param name="instance">Identyfikator instancji</param>
         /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
-        public Task<(DataTable, string)> GetEndpoints(int instance) => throw new NotImplementedException();
+        Task<(DataTable, string)> GetEndpoints(int instance) => throw new NotImplementedException();
 
         /// <summary>
         /// Konwertuje obiekt typu DataTable na bindowalną w WPF kolekcję
         /// </summary>
         /// <param name="tab">Tabela z endpointami</param>
         /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-        public ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab) => throw new NotImplementedException();
+        ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab) => throw new NotImplementedException();
 
         /// <summary>
         /// Pobiera bieżący harmonogram dla wskazanej instancji FtpGetWorkera
         /// </summary>
         /// <param name="endpoint">Identyfikator endpointu FTP skonfigurowanego dla tej instancji</param>
         /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
-        public Task<(DataTable, string)> GetSchedules(int endpoint) => throw new NotImplementedException();
+        Task<(DataTable, string)> GetSchedules(int endpoint) => throw new NotImplementedException();
 
         /// <summary>
         /// Konwertuje obiekt typu DataTable na bindowalną w WPF kolekcję
         /// </summary>
         /// <param name="tab">Tabela z endpointami</param>
         /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-        public ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab) => throw new NotImplementedException();
+        ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab) => throw new NotImplementedException();
 
         /// <summary>
         /// Tworzenie, modyfikacja, usunięcie endpointu FTP
@@ -58,7 +58,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Definicja endpointu</param>
         /// <param name="mode">Rodzaj operacji</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public Task<string> ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode) => throw new NotImplementedException();
+        Task<string> ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode) => throw new NotImplementedException();
 
         /// <summary>
         /// Tworzenie, modyfikacja, usunięcie harmonogramu transferów FTP
@@ -66,7 +66,7 @@ namespace FtpDiligent
         /// <param name="schedule">Definicja harmonogramu</param>
         /// <param name="mode">Rodzaj operacji</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public Task<string> ModifySchedule(FtpScheduleModel schedule, eDbOperation mode) => throw new NotImplementedException();
+        Task<string> ModifySchedule(FtpScheduleModel schedule, eDbOperation mode) => throw new NotImplementedException();
         #endregion
 
         #region public MTA
@@ -78,7 +78,7 @@ namespace FtpDiligent
         /// Informacje o zadaniu, napis "0", gdy nic nie zaplanowano
         /// lub komunikat o błędzie z bazy danych
         /// </returns>
-        public Task<(FtpScheduleModel, string)> GetNextSync(int instance) => throw new NotImplementedException();
+        Task<(FtpScheduleModel, string)> GetNextSync(int instance) => throw new NotImplementedException();
 
         /// <summary>
         /// Pobiera informację o parametrach serwera do bieżącego zadania do wykonania
@@ -88,36 +88,36 @@ namespace FtpDiligent
         /// Informacje o endpoincie, napis "0", gdy nie ma endpointu dla harmonogramu
         /// lub komunikat o błędzie z bazy danych
         /// </returns>
-        public Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule) => throw new NotImplementedException();
+        Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule) => throw new NotImplementedException();
 
         /// <summary>
         /// Loguje wywołanie synchronizacji, która nie wykonała żadnych transferów
         /// </summary>
         /// <param name="sync">Informacja o uruchomieniu workera i skopiowanych plikach</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public Task<string> LogActivation(FtpSyncModel sync) => throw new NotImplementedException();
+        Task<string> LogActivation(FtpSyncModel sync) => throw new NotImplementedException();
 
         /// <summary>
         /// Loguje wywołanie synchronizacji, która wykonała transfery plików
         /// </summary>
         /// <param name="sync">Informacja o uruchomieniu workera i skopiowanych plikach</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public Task<string> LogSync(FtpSyncModel sync) => throw new NotImplementedException();
+        Task<string> LogSync(FtpSyncModel sync) => throw new NotImplementedException();
 
         /// <summary>
         /// Sprawdza, czy z danej instancji FtpGetWorkera pobrano już dany plik
         /// </summary>
         /// <param name="file">Dane pliku</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public Task<(bool,string)> VerifyFile(FtpFileModel file) => throw new NotImplementedException();
+        Task<(bool,string)> VerifyFile(FtpFileModel file) => throw new NotImplementedException();
 
         /// <summary>
         /// Wykonuje zapytanie w bazie danych
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Tabela z wynikiem lub komunikat o błędzie</returns>
-        public (DataTable, string) ExecuteReader(IDbCommand cmd) => throw new NotImplementedException();
-        public Task<(DataTable, string)> ExecuteReaderAsync(IDbCommand cmd) => throw new NotImplementedException();
+        (DataTable, string) ExecuteReader(IDbCommand cmd) => throw new NotImplementedException();
+        Task<(DataTable, string)> ExecuteReaderAsync(IDbCommand cmd) => throw new NotImplementedException();
 
         /// <summary>
         /// Wykonuje zapytanie w bazie danych i zapamiętuje w zmiennej 
@@ -126,24 +126,24 @@ namespace FtpDiligent
         /// <param name="cmd">Polecenie zapytania</param>
         /// <param name="index">Numer porządkowy parametru typu OUT</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public string ExecuteNonQueryStoreKey(IDbCommand cmd, int index) => throw new NotImplementedException();
-        public Task<string> ExecuteNonQueryStoreKeyAsync(IDbCommand cmd, int index) => throw new NotImplementedException();
+        string ExecuteNonQueryStoreKey(IDbCommand cmd, int index) => throw new NotImplementedException();
+        Task<string> ExecuteNonQueryStoreKeyAsync(IDbCommand cmd, int index) => throw new NotImplementedException();
 
         /// <summary>
         /// Wykonuje zapytanie w bazie danych
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public string ExecuteNonQuery(IDbCommand cmd) => throw new NotImplementedException();
-        public Task<string> ExecuteNonQueryAsync(IDbCommand cmd) => throw new NotImplementedException();
+        string ExecuteNonQuery(IDbCommand cmd) => throw new NotImplementedException();
+        Task<string> ExecuteNonQueryAsync(IDbCommand cmd) => throw new NotImplementedException();
 
         /// <summary>
         /// Wykonuje zapytanie w bazie danych zwracające pojedynczą wartość typu T
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Wartość typu T pobraną z bazy lub komunikat o ewentualnym błędzie</returns>
-        public (T, string) ExecuteScalar<T>(IDbCommand cmd) => throw new NotImplementedException();
-        public Task<(T, string)> ExecuteScalarAsync<T>(IDbCommand cmd) => throw new NotImplementedException();
+        (T, string) ExecuteScalar<T>(IDbCommand cmd) => throw new NotImplementedException();
+        Task<(T, string)> ExecuteScalarAsync<T>(IDbCommand cmd) => throw new NotImplementedException();
         #endregion
     }
 }

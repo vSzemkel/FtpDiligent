@@ -60,7 +60,7 @@ namespace FtpDiligent
                 SanitizeDirectories(ref endpoint);
                 errmsg = FtpDiligentDatabaseClient.ModifyEndpoint(endpoint.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg)) {
-                    endpoint.XX = m_mainWnd.m_instance;
+                    endpoint.XX = FtpDiligentDatabaseClient.GetLastInsertedKey();
                     m_endpoints.CommitNew();
                 }
             } else {

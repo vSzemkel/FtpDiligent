@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿
+// -----------------------------------------------------------------------
+// <copyright file="App.cs" company="Agora SA">
+// <legal>Copyright (c) Development IT, kwiecien 2020</legal>
+// <author>Marcin Buchwald</author>
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace FtpDiligent
 {
+    using System.Windows;
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
