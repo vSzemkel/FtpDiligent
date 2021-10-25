@@ -8,7 +8,6 @@
 
 namespace FtpDiligent
 {
-    using System;
     using System.ComponentModel;
     using System.Globalization;
     using System.Windows;
@@ -34,13 +33,20 @@ namespace FtpDiligent
         /// Lista harmonogramów zdefiniowanych dla bieżącego serwera
         /// </summary>
         public IEditableCollectionView m_schedules;
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database { get; set; }
         #endregion
 
         #region constructors
-        public HarmonogramyDetails()
+        public HarmonogramyDetails(MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
             InitializeComponent();
 
+            m_mainWnd = wnd;
+            m_database = database;
             var dayNames = CultureInfo.CurrentUICulture.DateTimeFormat.DayNames;
             cbStartDay.ItemsSource = dayNames;
             cbStopDay.ItemsSource = dayNames;
@@ -61,16 +67,16 @@ namespace FtpDiligent
                     return;
 
                 schedule.Endpoint = m_mainWnd.m_tbHarmonogramy.m_selectedEndpoint.XX;
-                errmsg = FtpDiligentDatabaseClient.ModifySchedule(schedule.GetModel(), m_mode);
+                errmsg = m_database.ModifySchedule(schedule.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg)) {
-                    schedule.XX = FtpDiligentDatabaseClient.GetLastInsertedKey();
+                    schedule.XX = m_database.GetLastInsertedKey();
                     m_schedules.CommitNew();
                 }
             } else {
                 var schedule = m_schedules.CurrentEditItem as FtpSchedule;
                 if (!ValidateSchedule(schedule))
                     return;
-                errmsg = FtpDiligentDatabaseClient.ModifySchedule(schedule.GetModel(), m_mode);
+                errmsg = m_database.ModifySchedule(schedule.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg))
                     m_schedules.CommitEdit();
             }

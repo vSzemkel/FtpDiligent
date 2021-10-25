@@ -10,7 +10,7 @@ namespace FtpDiligent
 {
     using System.IO;
 
-    interface IFtpUtility
+    public interface IFtpUtility
     {
         #region factory methods
         /// <summary>
@@ -19,7 +19,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="dispatcher">Obiekt sterujący wątkami</param>
         /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
-        public static IFtpUtility Create(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
+        static IFtpUtility Create(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
         {
             switch (endpoint.protocol) {
                 case eFtpProtocol.FTP:
@@ -38,7 +38,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="window">Główne okno aplikacji</param>
-        public static IFtpUtility Create(FtpEndpointModel endpoint, MainWindow window)
+        static IFtpUtility Create(FtpEndpointModel endpoint, MainWindow window)
         {
             switch (endpoint.protocol) {
                 case eFtpProtocol.FTP:

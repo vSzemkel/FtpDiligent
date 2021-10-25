@@ -14,12 +14,12 @@ namespace FtpDiligent
         /// <summary>
         /// Opis połączenia do bazy danych
         /// </summary>
-        public static string connStr;
+        public string m_connStr;
 
         /// <summary>
         /// Ostatnia wartość pobrana z sekwencji do natychmiastowego, jednowątkowego użycia
         /// </summary>
-        protected static int m_lastInsertedKey = 0;
+        protected int m_lastInsertedKey = 0;
         #endregion
 
         #region public
@@ -27,7 +27,7 @@ namespace FtpDiligent
         /// Udostępnia identyfikator ostatnio utworzonego obiektu
         /// </summary>
         /// <returns>Wartość ostatnio wygenerowanego identyfikatora</returns>
-        public static int GetLastInsertedKey() => m_lastInsertedKey;
+        public int GetLastInsertedKey() => m_lastInsertedKey;
         #endregion
     }
 }

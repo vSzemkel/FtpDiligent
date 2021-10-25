@@ -33,13 +33,20 @@ namespace FtpDiligent
         /// Lista serwerów zdefiniowanych dla bieżącej instancji
         /// </summary>
         public IEditableCollectionView m_endpoints;
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database { get; set; }
         #endregion
 
         #region constructors
-        public SerweryDetails()
+        public SerweryDetails(MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
             InitializeComponent();
 
+            m_mainWnd = wnd;
+            m_database = database;
             cbProtocol.ItemsSource = Enum.GetValues(typeof(eFtpProtocol));
             cbMode.ItemsSource = Enum.GetValues(typeof(eFtpTransferMode));
             cbDirection.ItemsSource = new eFtpDirection[] {eFtpDirection.Get, eFtpDirection.Put, eFtpDirection.Get|eFtpDirection.Put, eFtpDirection.HotfolderPut };
@@ -58,15 +65,15 @@ namespace FtpDiligent
                 var endpoint = m_endpoints.CurrentAddItem as FtpEndpoint;
                 endpoint.Instance = m_mainWnd.m_instance;
                 SanitizeDirectories(ref endpoint);
-                errmsg = FtpDiligentDatabaseClient.ModifyEndpoint(endpoint.GetModel(), m_mode);
+                errmsg = m_database.ModifyEndpoint(endpoint.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg)) {
-                    endpoint.XX = FtpDiligentDatabaseClient.GetLastInsertedKey();
+                    endpoint.XX = m_database.GetLastInsertedKey();
                     m_endpoints.CommitNew();
                 }
             } else {
                 var endpoint = m_endpoints.CurrentEditItem as FtpEndpoint;
                 SanitizeDirectories(ref endpoint);
-                errmsg = FtpDiligentDatabaseClient.ModifyEndpoint(endpoint.GetModel(), m_mode);
+                errmsg = m_database.ModifyEndpoint(endpoint.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg))
                     m_endpoints.CommitEdit();
             }

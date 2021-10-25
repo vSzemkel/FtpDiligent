@@ -21,26 +21,33 @@ namespace FtpDiligent
         /// <summary>
         /// Połączenie do bazy danych wykorzystywane tylko w jednym wątku GUI
         /// </summary>
-        private static readonly SqlConnection guiConn = new SqlConnection(connStr);
+        private readonly SqlConnection guiConn;
         #endregion
 
-        #region public static STA
+        #region constructor
+        public FtpDiligentSqlClient(string connStr)
+        {
+            try {
+                guiConn = new SqlConnection(connStr);
+            } catch (ArgumentException ex) {
+                System.Windows.MessageBox.Show(ex.Message, "FtpDiligentSqlClient", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Stop);
+                Environment.Exit(1);
+            }
+
+            m_connStr = connStr;
+        }
+        #endregion
+
+        #region public STA
         /// <summary>
         /// Inicjalizuje instancję dla konkretnego hosta
         /// Identyfikator instancji zapamiętuje w <see cref="m_lastInsertedKey"/>
         /// </summary>
         /// <param name="hostname">Nazwa hosta</param>
         /// <returns></returns>
-        public static (int, string) InitInstance(string hostname)
+        public (int, string) InitInstance(string hostname)
         {
-            SqlCommand cmd = null;
-            try {
-                cmd = guiConn.CreateCommand();
-            } catch (TypeInitializationException tix) {
-                System.Windows.MessageBox.Show(tix.InnerException.Message, "FtpDiligentSqlClient.InitInstance", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Stop);
-                Environment.Exit(1);
-            }
-
+            SqlCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_init_instance] @name,@zone";
             cmd.Parameters.Add("name", SqlDbType.VarChar, 128).Value = hostname;
             cmd.Parameters.Add("zone", SqlDbType.VarChar, 128).Value = TimeZoneInfo.Local.StandardName;
@@ -53,7 +60,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="instance">Identyfikator instancji</param>
         /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
-        public static (DataTable, string) GetEndpoints(int instance)
+        public (DataTable, string) GetEndpoints(int instance)
         {
             SqlCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,protocol,direction,transfer_mode from [ftp].[ftp_endpoint] where ins_xx=@ins and disabled is null order by host";
@@ -67,7 +74,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="tab">Tabela z endpointami</param>
         /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-        public static ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
+        public ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
         {
             var ret = new ObservableCollection<FtpEndpoint>();
             foreach (DataRow dr in tab.Rows) {
@@ -94,7 +101,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="endpoint">Identyfikator endpointu FTP skonfigurowanego dla tej instancji</param>
         /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
-        public static (DataTable, string) GetSchedules(int endpoint)
+        public (DataTable, string) GetSchedules(int endpoint)
         {
             SqlCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "select xx,end_xx,name,job_start,job_stop,job_stride,disabled from [ftp].[ftp_schedule] where end_xx=@edp and deleted is null order by job_start";
@@ -108,7 +115,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="tab">Tabela z endpointami</param>
         /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-        public static ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab)
+        public ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab)
         {
             var ret = new ObservableCollection<FtpSchedule>();
             foreach (DataRow dr in tab.Rows) {
@@ -132,7 +139,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Definicja endpointu</param>
         /// <param name="mode">Rodzaj operacji</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
+        public string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
         {
             SqlCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_modify_endpoint] @mode,@xx,@ins_xx,@host,@userid,@passwd,@remdir,@locdir,@transprot,@transdir,@transmode";
@@ -161,7 +168,7 @@ namespace FtpDiligent
         /// <param name="schedule">Definicja harmonogramu</param>
         /// <param name="mode">Rodzaj operacji</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ModifySchedule(FtpScheduleModel schedule, eDbOperation mode)
+        public string ModifySchedule(FtpScheduleModel schedule, eDbOperation mode)
         {
             SqlCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_modify_schedule] @mode,@xx,@end_xx,@nazwa,@start,@stop,@stride,@disabled";
@@ -182,7 +189,7 @@ namespace FtpDiligent
         }
         #endregion
 
-        #region public static MTA
+        #region public MTA
         /// <summary>
         /// Pobiera informację o najbliższym zadaniu do wykonania
         /// </summary>
@@ -191,10 +198,10 @@ namespace FtpDiligent
         /// Informacje o zadaniu, napis "0", gdy nic nie zaplanowano
         /// lub komunikat o błędzie z bazy danych
         /// </returns>
-        public static (FtpScheduleModel, string) GetNextSync(int instance)
+        public (FtpScheduleModel, string) GetNextSync(int instance)
         {
             var ret = new FtpScheduleModel();
-            SqlConnection conn = new SqlConnection(connStr);
+            SqlConnection conn = new SqlConnection(m_connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_select_next_sync] @ins_xx";
             cmd.Parameters.Add("ins_xx", SqlDbType.Int).Value = instance;
@@ -228,10 +235,10 @@ namespace FtpDiligent
         /// Informacje o endpoincie, napis "0", gdy nie ma endpointu dla harmonogramu
         /// lub komunikat o błędzie z bazy danych
         /// </returns>
-        public static async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
+        public async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
         {
             var ret = new FtpEndpointModel();
-            SqlConnection conn = new SqlConnection(connStr);
+            SqlConnection conn = new SqlConnection(m_connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.Parameters.Add("sch_xx", SqlDbType.Int).Value = schedule;
             cmd.CommandText = "exec [ftp].[sp_endpoint_for_schedule] @sch_xx";
@@ -268,9 +275,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="sync">Informacja o uruchomieniu workera i skopiowanych plikach</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string LogActivation(FtpSyncModel sync)
+        public string LogActivation(FtpSyncModel sync)
         {
-            SqlConnection conn = new SqlConnection(connStr);
+            SqlConnection conn = new SqlConnection(m_connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_log_activation] @xx,@sync_time";
             cmd.Parameters.Add("xx", SqlDbType.Int).Value = sync.xx;
@@ -284,9 +291,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="sync">Informacja o uruchomieniu workera i skopiowanych plikach</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string LogSync(FtpSyncModel sync)
+        public string LogSync(FtpSyncModel sync)
         {
-            SqlConnection conn = new SqlConnection(connStr);
+            SqlConnection conn = new SqlConnection(m_connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_log_download] @transdir,@xx,@sync_time,@file_name,@file_size,@file_date,@md5";
             var par = cmd.Parameters;
@@ -316,9 +323,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="file">Dane pliku</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static (bool,string) VerifyFile(FtpFileModel file)
+        public (bool,string) VerifyFile(FtpFileModel file)
         {
-            SqlConnection conn = new SqlConnection(connStr);
+            SqlConnection conn = new SqlConnection(m_connStr);
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "exec [ftp].[sp_check_file] @ins_xx,@file_name,@file_size,@file_date";
             var par = cmd.Parameters;
@@ -338,7 +345,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Tabela z wynikiem lub komunikat o błędzie</returns>
-        public static (DataTable, string) ExecuteReader(SqlCommand cmd)
+        public (DataTable, string) ExecuteReader(SqlCommand cmd)
         {
             var ret = new DataTable();
 
@@ -363,7 +370,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ExecuteNonQueryStoreKey(SqlCommand cmd)
+        public string ExecuteNonQueryStoreKey(SqlCommand cmd)
         {
             var (key, errmsg) = ExecuteScalar<int>(cmd);
             if (string.IsNullOrEmpty(errmsg))
@@ -379,7 +386,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ExecuteNonQuery(SqlCommand cmd)
+        public string ExecuteNonQuery(SqlCommand cmd)
         {
             var errmsg = string.Empty;
 
@@ -402,7 +409,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Wartość typu T pobraną z bazy lub komunikat o ewentualnym błędzie</returns>
-        public static (T, string) ExecuteScalar<T>(SqlCommand cmd)
+        public (T, string) ExecuteScalar<T>(SqlCommand cmd)
         {
             var errmsg = string.Empty;
 

@@ -10,6 +10,7 @@ namespace FtpDiligent
 {
     using System;
     using System.Collections.ObjectModel;
+    using System.Threading;
     using System.Windows;
     using System.Windows.Controls;
 
@@ -22,7 +23,7 @@ namespace FtpDiligent
         /// <summary>
         /// Referencja do głównego okna
         /// </summary>
-        public MainWindow m_mainWnd;
+        private MainWindow m_mainWnd;
 
         /// <summary>
         /// Liczba plików przesłanych w bieżącej sesji
@@ -38,13 +39,20 @@ namespace FtpDiligent
         /// Lista ostatnio zarejestrowanych błędów i ostrzeżeń
         /// </summary>
         public ObservableCollection<FtpErrorModel> m_errInfo = new ObservableCollection<FtpErrorModel>();
+
+        /// <summary>
+        /// Zarządza wątkami roboczymi
+        /// </summary>
+        public FtpDispatcher m_dispatcher;
         #endregion
 
         #region constructor
-        public Sterowanie()
+        public Sterowanie(MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
             InitializeComponent();
 
+            this.m_mainWnd = wnd;
+            this.m_dispatcher = new FtpDispatcher(wnd, database);
             this.cbSyncMode.ItemsSource = Enum.GetValues(typeof(eSyncFileMode));
             this.lvFilesLog.ItemsSource = m_fileInfo;
             this.lvErrLog.ItemsSource = m_errInfo;
@@ -61,8 +69,7 @@ namespace FtpDiligent
             if (string.IsNullOrEmpty(hostWithBadDir)) {
                 btRunSync.IsEnabled = false;
                 btStopSync.IsEnabled = true;
-                m_mainWnd.m_dispatcher = new FtpDispatcher(m_mainWnd);
-                m_mainWnd.m_dispatcher.Start();
+                m_dispatcher.Start();
                 m_mainWnd.m_tbSerwery.StartHotfolders();
             } else
                 MessageBox.Show($"Katalog lokalny {hostWithBadDir} jest niepoprawny", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -75,7 +82,7 @@ namespace FtpDiligent
         {
             btRunSync.IsEnabled = true;
             btStopSync.IsEnabled = false;
-            m_mainWnd.m_dispatcher?.Stop();
+            m_dispatcher.Stop();
             m_mainWnd.m_tbSerwery.StopHotfolders();
             m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, string.Empty);
         }
@@ -94,6 +101,21 @@ namespace FtpDiligent
         }
         #endregion
 
+        #region public
+        /// <summary>
+        /// Po wystapieniu eSeverityCode.TransferError restartuje scheduler
+        /// </summary>
+        public void RestartScheduler()
+        {
+            if (m_dispatcher.m_filesTransfered > 0) {
+                m_dispatcher.Stop();
+                m_mainWnd.m_showError(eSeverityCode.Message, "Restarting dispatcher");
+                Thread.Sleep(5000);
+                m_dispatcher.Start();
+            }
+        }
+        #endregion
+
         #region private
         /// <summary>
         /// Sprawdza, czy katalogi lokalne są prawidłowe
@@ -108,6 +130,5 @@ namespace FtpDiligent
             return string.Empty;
         }
         #endregion
-
     }
 }

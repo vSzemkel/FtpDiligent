@@ -33,12 +33,19 @@ namespace FtpDiligent
         /// Lista harmonogramów zdefiniowanych dla bieżącego serwera
         /// </summary>
         public ObservableCollection<FtpSchedule> m_schedules;
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database { get; set; }
         #endregion
 
         #region constructors
-        public Harmonogramy()
+        public Harmonogramy(MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
             InitializeComponent();
+            m_mainWnd = wnd;
+            m_database = database;
         }
         #endregion
 
@@ -69,7 +76,7 @@ namespace FtpDiligent
             var schedule = lvHarmonogramy.SelectedItem as FtpSchedule;
             var collection = lvHarmonogramy.Items as IEditableCollectionView;
             if (MessageBoxResult.Yes == MessageBox.Show("Czy usunąć harmonogram " + schedule.Name, "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question)) {
-                var errmsg = FtpDiligentDatabaseClient.ModifySchedule(schedule.GetModel(), eDbOperation.Delete);
+                var errmsg = m_database.ModifySchedule(schedule.GetModel(), eDbOperation.Delete);
                 if (string.IsNullOrEmpty(errmsg))
                     collection.Remove(schedule);
                 else
@@ -124,11 +131,11 @@ namespace FtpDiligent
             }
 
             //m_schedules = FtpDiligentDesignTimeClient.GetSchedules(endpoint);
-            var (tab, errmsg) = FtpDiligentDatabaseClient.GetSchedules(endpoint);
+            var (tab, errmsg) = m_database.GetSchedules(endpoint);
             if (!string.IsNullOrEmpty(errmsg))
                 m_mainWnd.m_showError(eSeverityCode.Error, errmsg);
             else
-                m_schedules = FtpDiligentDatabaseClient.GetSchedulesCollection(tab);
+                m_schedules = m_database.GetSchedulesCollection(tab);
 
             lvHarmonogramy.DataContext = m_schedules;
         }

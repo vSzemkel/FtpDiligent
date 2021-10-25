@@ -49,6 +49,11 @@ namespace FtpDiligent
         /// Dane o transferze zachowywane w bazie danych
         /// </summary>
         private FtpSyncModel m_log = new FtpSyncModel();
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database { get; set; }
         #endregion
 
         #region constructor
@@ -57,10 +62,11 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="endpoint">Parametry serwera</param>
         /// <param name="window">Główne okno aplikacji</param>
-        public FtpHotfolderWatcher(FtpEndpointModel endpoint, MainWindow window)
+        public FtpHotfolderWatcher(FtpEndpointModel endpoint, MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
-            m_mainWnd = window;
-            m_ftpUtility = IFtpUtility.Create(endpoint, window);
+            m_mainWnd = wnd;
+            m_database = database;
+            m_ftpUtility = IFtpUtility.Create(endpoint, wnd);
             m_log.xx = -endpoint.xx;
             m_log.syncTime = DateTime.Now;
             m_log.direction = eFtpDirection.HotfolderPut;
@@ -193,7 +199,7 @@ namespace FtpDiligent
             m_log.files = log.ToArray();
 
             // not wait CS4014
-            FtpDiligentDatabaseClient.LogSync(m_log);
+            m_database.LogSync(m_log);
         }
         #endregion
     }

@@ -13,7 +13,6 @@ namespace FtpDiligent
     using System.Diagnostics;
     using System.Globalization;
     using System.Net;
-    using System.Threading;
     using System.Windows;
 
     /// <summary>
@@ -58,11 +57,6 @@ namespace FtpDiligent
         public int m_hotfolderInterval;
 
         /// <summary>
-        /// Zarządza wątkami roboczymi
-        /// </summary>
-        public FtpDispatcher m_dispatcher;
-
-        /// <summary>
         /// Wysyła mailem powiadomienia o błędach
         /// </summary>
         public SendEmails m_mailer;
@@ -70,12 +64,12 @@ namespace FtpDiligent
         /// <summary>
         /// Zakładka Sterowanie
         /// </summary>
-        public Sterowanie m_tbSterowanie = new Sterowanie();
+        public Sterowanie m_tbSterowanie;
 
         /// <summary>
         /// Zakładka Serwery
         /// </summary>
-        public Serwery m_tbSerwery = new Serwery();
+        public Serwery m_tbSerwery;
 
         /// <summary>
         /// Zakładka do edycji danych serwera, leniwie inicjalizowana
@@ -85,7 +79,7 @@ namespace FtpDiligent
         /// <summary>
         /// Zakładka Harmonogramy
         /// </summary>
-        public Harmonogramy m_tbHarmonogramy = new Harmonogramy();
+        public Harmonogramy m_tbHarmonogramy;
 
         /// <summary>
         /// Zakładka do edycji danych harmonogramu, leniwie inicjalizowana
@@ -97,6 +91,11 @@ namespace FtpDiligent
         /// </summary>
         public delegate void ShowError(eSeverityCode code, string message);
         public ShowError m_showError;
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database;
         #endregion
 
         #region properties
@@ -108,7 +107,7 @@ namespace FtpDiligent
         public SerweryDetails m_tbSerweryDetails {
             get {
                 if (_m_tbSerweryDetails == null) {
-                    _m_tbSerweryDetails = new SerweryDetails();
+                    _m_tbSerweryDetails = new SerweryDetails(this, m_database);
                     _m_tbSerweryDetails.m_mainWnd = this;
                     tabSerweryDetails.Content = _m_tbSerweryDetails;
                 }
@@ -120,7 +119,7 @@ namespace FtpDiligent
         public HarmonogramyDetails m_tbHarmonogramyDetails {
             get {
                 if (_m_tbHarmonogramyDetails == null) {
-                    _m_tbHarmonogramyDetails = new HarmonogramyDetails();
+                    _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, m_database);
                     _m_tbHarmonogramyDetails.m_mainWnd = this;
                     tabHarmonogramyDetails.Content = _m_tbHarmonogramyDetails;
                 }
@@ -131,21 +130,23 @@ namespace FtpDiligent
         #endregion
 
         #region constructor
-        public MainWindow()
+        public MainWindow(IFtpDiligentDatabaseClient database)
         {
             InitializeComponent();
+            m_database = database;
+            m_tbSterowanie = new Sterowanie(this, database);
+            m_tbSterowanie.tbFilesCount.DataContext = 0;
+            m_tbSterowanie.cbSyncMode.DataContext = this;
+            this.tabSterowanie.Content = m_tbSterowanie;
+
+            m_tbSerwery = new Serwery(this, database);
+            this.tabSerwery.Content = m_tbSerwery;
+            m_tbHarmonogramy = new Harmonogramy(this, database);
+            this.tabHarmonogramy.Content = m_tbHarmonogramy;
+
             CheckEventLog();
             LoadConfig();
             CheckInstanceInitialization();
-
-            m_tbSterowanie.m_mainWnd = this;
-            this.tabSterowanie.Content = m_tbSterowanie;
-            m_tbSterowanie.tbFilesCount.DataContext = 0;
-            m_tbSterowanie.cbSyncMode.DataContext = this;
-            m_tbSerwery.m_mainWnd = this;
-            this.tabSerwery.Content = m_tbSerwery;
-            m_tbHarmonogramy.m_mainWnd = this;
-            this.tabHarmonogramy.Content = m_tbHarmonogramy;
 
             this.m_showError = this.ShowErrorInfo;
             this.Title = $"FtpDiligent [instance {m_instance}]";
@@ -203,7 +204,7 @@ namespace FtpDiligent
                         EventLog.WriteEntry(m_eventLog, message, EventLogEntryType.Warning);
                     break;
                 case eSeverityCode.TransferError:
-                    RestartScheduler();
+                    m_tbSterowanie.RestartScheduler();
                     m_mailer.Run(message);
                     goto case eSeverityCode.Error;
                 case eSeverityCode.Error:
@@ -263,8 +264,6 @@ namespace FtpDiligent
             m_mailer = new SendEmails(this, settings["ErrorsMailTo"], settings["SendGridKey"]);
             m_checkTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
-            FtpDiligentDatabaseClient.connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Cloud].ConnectionString;
-
             if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out m_syncMode)) {
                 ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
                 m_syncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
@@ -286,7 +285,7 @@ namespace FtpDiligent
                 return;
 
             string errmsg, localHostname = Dns.GetHostName();
-            (m_instance, errmsg) = FtpDiligentDatabaseClient.InitInstance(localHostname);
+            (m_instance, errmsg) = m_database.InitInstance(localHostname);
             if (!string.IsNullOrEmpty(errmsg))
                 ShowErrorInfoInternal(eSeverityCode.Error, errmsg);
         }
@@ -303,19 +302,6 @@ namespace FtpDiligent
             config.AppSettings.Settings.Remove("InstanceId");
             config.AppSettings.Settings.Add("InstanceId", m_instance.ToString());
             config.Save(ConfigurationSaveMode.Modified);
-        }
-
-        /// <summary>
-        /// Po wystapieniu eSeverityCode.TransferError restartuje scheduler
-        /// </summary>
-        private void RestartScheduler()
-        {
-            if (m_dispatcher?.m_filesTransfered > 0) {
-                m_dispatcher.Stop();
-                ShowErrorInfoInternal(eSeverityCode.Message, "Restarting dispatcher");
-                Thread.Sleep(5000);
-                m_dispatcher.Start();
-            }
         }
         #endregion
     }

@@ -27,6 +27,11 @@ namespace FtpDiligent
         public MainWindow m_mainWnd;
 
         /// <summary>
+        /// Zarządza wątkami roboczymi
+        /// </summary>
+        //public FtpDispatcher m_dispatcher;
+
+        /// <summary>
         /// Lista serwerów zdefiniowanych dla bieżącej instancji
         /// </summary>
         public ObservableCollection<FtpEndpoint> m_endpoints;
@@ -35,6 +40,11 @@ namespace FtpDiligent
         /// Lista monitorowanych hotfolderów
         /// </summary>
         private List<FtpHotfolderWatcher> m_hotfolders = new List<FtpHotfolderWatcher>();
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database { get; set; }
         #endregion
 
         #region properties
@@ -49,9 +59,11 @@ namespace FtpDiligent
         #endregion
 
         #region constructors
-        public Serwery()
+        public Serwery(MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
             InitializeComponent();
+            m_mainWnd = wnd;
+            m_database = database;
         }
         #endregion
 
@@ -82,7 +94,7 @@ namespace FtpDiligent
             var endpoint = lvSerwery.SelectedItem as FtpEndpoint;
             var collection = lvSerwery.Items as IEditableCollectionView;
             if (MessageBoxResult.Yes == MessageBox.Show($"Czy usunąć serwer {endpoint.Host}{endpoint.RemoteDirectory} ?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question)) {
-                var errmsg = FtpDiligentDatabaseClient.ModifyEndpoint(endpoint.GetModel(), eDbOperation.Delete);
+                var errmsg = m_database.ModifyEndpoint(endpoint.GetModel(), eDbOperation.Delete);
                 if (string.IsNullOrEmpty(errmsg))
                     collection.Remove(endpoint);
                 else
@@ -124,8 +136,8 @@ namespace FtpDiligent
         {
             var endpoint = lvSerwery.SelectedItem as FtpEndpoint;
             if (endpoint != null) {
-                m_mainWnd.m_dispatcher = new FtpDispatcher(m_mainWnd);
-                m_mainWnd.m_dispatcher.StartNow(endpoint);
+                var disp = new FtpDispatcher(this.m_mainWnd, this.m_database);
+                disp.StartNow(endpoint);
                 m_mainWnd.tcMain.SelectedIndex = 0;
             }
         }
@@ -144,12 +156,12 @@ namespace FtpDiligent
         public void LoadEndpoints()
         {
             //m_endpoints = FtpDiligentDesignTimeClient.GetEndpoints(m_mainWnd.m_instance);
-            var (tab, errmsg) = FtpDiligentDatabaseClient.GetEndpoints(m_mainWnd.m_instance);
+            var (tab, errmsg) = m_database.GetEndpoints(m_mainWnd.m_instance);
             if (!string.IsNullOrEmpty(errmsg)) {
                 m_mainWnd.m_showError(eSeverityCode.Error, errmsg);
                 m_endpoints = new ObservableCollection<FtpEndpoint>();
             } else
-                m_endpoints = FtpDiligentDatabaseClient.GetEndpointsCollection(tab);
+                m_endpoints = m_database.GetEndpointsCollection(tab);
 
             lvSerwery.DataContext = m_endpoints;
         }
@@ -161,7 +173,7 @@ namespace FtpDiligent
         {
             foreach (FtpEndpoint enp in m_endpoints)
                 if ((enp.Direction & eFtpDirection.HotfolderPut) > 0) {
-                    var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_mainWnd);
+                    var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_mainWnd, m_database);
                     fhw.StartWatching();
                     m_hotfolders.Add(fhw);
                 }

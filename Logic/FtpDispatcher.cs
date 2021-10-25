@@ -36,6 +36,11 @@ namespace FtpDiligent
         /// Do wstrzymywania w¹tku roboczego w oczekiwaniu na planowany czas uruchomienia
         /// </summary>
         private AutoResetEvent m_are = new AutoResetEvent(false);
+
+        /// <summary>
+        /// Klient bazy danych
+        /// </summary>
+        private IFtpDiligentDatabaseClient m_database { get; set; }
         #endregion
 
         #region properties
@@ -51,9 +56,10 @@ namespace FtpDiligent
         /// Konstruktor FtpDispatchera
         /// </summary>
         /// <param name="wnd">G³ówne okno aplikacji WPF</param>
-        public FtpDispatcher(MainWindow wnd)
+        public FtpDispatcher(MainWindow wnd, IFtpDiligentDatabaseClient database)
         {
             m_mainWnd = wnd;
+            m_database = database;
         }
         #endregion
 
@@ -71,7 +77,7 @@ namespace FtpDiligent
             int lastSchedule = 0;
 
             while (InProgress) {
-                var (schedule, errmsg) = FtpDiligentDatabaseClient.GetNextSync(m_mainWnd.m_instance);
+                var (schedule, errmsg) = m_database.GetNextSync(m_mainWnd.m_instance);
                 if (!string.IsNullOrEmpty(errmsg)) {
                     if (errmsg == "0")
                         m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
@@ -116,11 +122,11 @@ namespace FtpDiligent
         /// Jeœli dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
         /// jeœli ujemny, to identyfikator endpointu, dla którego transfer uruchomiono rêcznie
         /// </param>
-        public void ExecuteFtpTransfer(object o)
+        private void ExecuteFtpTransfer(object o)
         {
             FtpScheduleModel schedule = (FtpScheduleModel)o;
             int key = schedule.xx;
-            var (endpoint, errmsg) = FtpDiligentDatabaseClient.SelectEndpoint(key).Result;
+            var (endpoint, errmsg) = m_database.SelectEndpoint(key).Result;
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
                     errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
@@ -151,11 +157,11 @@ namespace FtpDiligent
                     // loguj zmiany
                     int filesTransfered = log.files.Length;
                     if (filesTransfered == 0) {
-                        FtpDiligentDatabaseClient.LogActivation(log);
+                        m_database.LogActivation(log);
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
                     } else {
                         log.direction = eFtpDirection.Get;
-                        FtpDiligentDatabaseClient.LogSync(log);
+                        m_database.LogSync(log);
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
                     }
                 }
@@ -172,11 +178,11 @@ namespace FtpDiligent
                     // loguj zmiany
                     int filesTransfered = log.files.Length;
                     if (filesTransfered == 0) {
-                        FtpDiligentDatabaseClient.LogActivation(log);
+                        m_database.LogActivation(log);
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
                     } else {
                         log.direction = eFtpDirection.Put;
-                        FtpDiligentDatabaseClient.LogSync(log);
+                        m_database.LogSync(log);
                         m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
                     }
                 }
@@ -241,7 +247,7 @@ namespace FtpDiligent
                 FileDate = dtDate
             };
 
-            var (status, errmsg) = FtpDiligentDatabaseClient.VerifyFile(file);
+            var (status, errmsg) = m_database.VerifyFile(file);
             if (!string.IsNullOrEmpty(errmsg)) {
                 m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
                 return false;

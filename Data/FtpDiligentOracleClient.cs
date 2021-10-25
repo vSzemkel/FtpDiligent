@@ -21,24 +21,38 @@ namespace FtpDiligent
         /// <summary>
         /// Połączenie do bazy danych wykorzystywane tylko w jednym wątku GUI
         /// </summary>
-        private static readonly OracleConnection guiConn = new OracleConnection(connStr);
+        private readonly OracleConnection guiConn;
         #endregion
 
-        #region public static STA
+        #region constructor
+        public FtpDiligentOracleClient(string connStr)
+        {
+            try {
+                guiConn = new OracleConnection(connStr);
+            } catch (ArgumentException ex) {
+                System.Windows.MessageBox.Show(ex.Message, "FtpDiligentSqlClient", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Stop);
+                Environment.Exit(1);
+            }
+
+            m_connStr = connStr;
+        }
+        #endregion
+
+        #region public STA
         /// <summary>
         /// Inicjalizuje instancję dla konkretnego hosta
         /// Identyfikator instancji zapamiętuje w <see cref="m_lastInsertedKey"/>
         /// </summary>
         /// <param name="hostname">Nazwa hosta</param>
         /// <returns></returns>
-        public static string InitInstance(string hostname)
+        public (int, string) InitInstance(string hostname)
         {
             OracleCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "begin init_instance(:name,:xx); end;";
             cmd.Parameters.Add("name", OracleDbType.Varchar2, 128).Value = hostname;
             cmd.Parameters.Add("xx", OracleDbType.Int32).Direction = ParameterDirection.Output;
 
-            return ExecuteNonQueryStoreKeyAsync(cmd, 1).Result;
+            return (m_lastInsertedKey, ExecuteNonQueryStoreKeyAsync(cmd, 1).Result);
         }
 
         /// <summary>
@@ -46,7 +60,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="instance">Identyfikator instancji</param>
         /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
-        public static (DataTable, string) GetEndpoints(int instance)
+        public (DataTable, string) GetEndpoints(int instance)
         {
             OracleCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "select xx,ins_xx,host,userid,passwd,remote_dir,local_dir,refresh_date,protocol,direction,transfer_mode from ftp_endpoint where ins_xx=:ins and usuniety is null order by host";
@@ -60,7 +74,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="tab">Tabela z endpointami</param>
         /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-        public static ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
+        public ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
         {
             var ret = new ObservableCollection<FtpEndpoint>();
             foreach (DataRow dr in tab.Rows) {
@@ -87,7 +101,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="endpoint">Identyfikator endpointu FTP skonfigurowanego dla tej instancji</param>
         /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
-        public static (DataTable, string) GetSchedules(int endpoint)
+        public (DataTable, string) GetSchedules(int endpoint)
         {
             OracleCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "select xx,end_xx,nazwa,job_start,job_stop,job_step,disabled from ftp_schedule where end_xx=:edp and usuniety is null order by job_start";
@@ -101,7 +115,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="tab">Tabela z endpointami</param>
         /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-        public static ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab)
+        public ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab)
         {
             var ret = new ObservableCollection<FtpSchedule>();
             foreach (DataRow dr in tab.Rows) {
@@ -125,7 +139,7 @@ namespace FtpDiligent
         /// <param name="endpoint">Definicja endpointu</param>
         /// <param name="mode">Rodzaj operacji</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
+        public string ModifyEndpoint(FtpEndpointModel endpoint, eDbOperation mode)
         {
             OracleCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "begin modify_endpoint(:mode,:xx,:ins_xx,:host,:userid,:passwd,:remdir,:locdir,:transprot,:transdir,:transmode); end;";
@@ -154,7 +168,7 @@ namespace FtpDiligent
         /// <param name="schedule">Definicja harmonogramu</param>
         /// <param name="mode">Rodzaj operacji</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static string ModifySchedule(FtpScheduleModel schedule, eDbOperation mode)
+        public string ModifySchedule(FtpScheduleModel schedule, eDbOperation mode)
         {
             OracleCommand cmd = guiConn.CreateCommand();
             cmd.CommandText = "begin modify_schedule2(:mode,:xx,:end_xx,:nazwa,:start,:stop,:stride,:disabled); end;";
@@ -175,7 +189,7 @@ namespace FtpDiligent
         }
         #endregion
 
-        #region public static MTA
+        #region public MTA
         /// <summary>
         /// Pobiera informację o najbliższym zadaniu do wykonania
         /// </summary>
@@ -184,10 +198,10 @@ namespace FtpDiligent
         /// Informacje o zadaniu, napis "0", gdy nic nie zaplanowano
         /// lub komunikat o błędzie z bazy danych
         /// </returns>
-        public static (FtpScheduleModel, string) GetNextSync(int instance)
+        public (FtpScheduleModel, string) GetNextSync(int instance)
         {
             var ret = new FtpScheduleModel();
-            OracleConnection conn = new OracleConnection(connStr);
+            OracleConnection conn = new OracleConnection(m_connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "begin select_next_sync(:ins_xx,:refCur); end;";
             cmd.Parameters.Add("ins_xx", OracleDbType.Int32).Value = instance;
@@ -222,10 +236,10 @@ namespace FtpDiligent
         /// Informacje o endpoincie, napis "0", gdy nie ma endpointu dla harmonogramu
         /// lub komunikat o błędzie z bazy danych
         /// </returns>
-        public static async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
+        public async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
         {
             var ret = new FtpEndpointModel();
-            OracleConnection conn = new OracleConnection(connStr);
+            OracleConnection conn = new OracleConnection(m_connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.Parameters.Add("sch_xx", OracleDbType.Int32).Value = schedule;
             cmd.Parameters.Add("refCur", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
@@ -264,9 +278,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="sync">Informacja o uruchomieniu workera i skopiowanych plikach</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static async Task<string> LogActivation(FtpSyncModel sync)
+        public async Task<string> LogActivation(FtpSyncModel sync)
         {
-            OracleConnection conn = new OracleConnection(connStr);
+            OracleConnection conn = new OracleConnection(m_connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "begin log_nodownload(:sch_xx,:sync_time); end;";
             cmd.Parameters.Add("sch_xx", OracleDbType.Int32).Value = sync.xx;
@@ -280,9 +294,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="sync">Informacja o uruchomieniu workera i skopiowanych plikach</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static async Task<string> LogSync(FtpSyncModel sync)
+        public async Task<string> LogSync(FtpSyncModel sync)
         {
-            OracleConnection conn = new OracleConnection(connStr);
+            OracleConnection conn = new OracleConnection(m_connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "begin log_download(:transdir,:sch_xx,:sync_fime,:file_names,:file_sizes,:file_dates); end;";
             var par = cmd.Parameters;
@@ -318,9 +332,9 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="file">Dane pliku</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static (bool,string) VerifyFile(FtpFileModel file)
+        public (bool,string) VerifyFile(FtpFileModel file)
         {
-            OracleConnection conn = new OracleConnection(connStr);
+            OracleConnection conn = new OracleConnection(m_connStr);
             OracleCommand cmd = conn.CreateCommand();
             cmd.CommandText = "select check_file(:ins_xx,:file_name,:file_size,:file_date) from dual";
             var par = cmd.Parameters;
@@ -340,7 +354,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Tabela z wynikiem lub komunikat o błędzie</returns>
-        public static async Task<(DataTable, string)> ExecuteReaderAsync(OracleCommand cmd)
+        public async Task<(DataTable, string)> ExecuteReaderAsync(OracleCommand cmd)
         {
             var ret = new DataTable();
 
@@ -366,7 +380,7 @@ namespace FtpDiligent
         /// <param name="cmd">Polecenie zapytania</param>
         /// <param name="index">Numer porządkowy parametru typu OUT</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static async Task<string> ExecuteNonQueryStoreKeyAsync(OracleCommand cmd, int index)
+        public async Task<string> ExecuteNonQueryStoreKeyAsync(OracleCommand cmd, int index)
         {
             var par = cmd.Parameters[index];
             par.Direction = ParameterDirection.InputOutput;
@@ -385,7 +399,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Komunikat o ewentualnym błędzie</returns>
-        public static async Task<string> ExecuteNonQueryAsync(OracleCommand cmd)
+        public async Task<string> ExecuteNonQueryAsync(OracleCommand cmd)
         {
             var errmsg = string.Empty;
 
@@ -408,7 +422,7 @@ namespace FtpDiligent
         /// </summary>
         /// <param name="cmd">Polecenie zapytania</param>
         /// <returns>Wartość typu T pobraną z bazy lub komunikat o ewentualnym błędzie</returns>
-        public static async Task<(T, string)> ExecuteScalarAsync<T>(OracleCommand cmd)
+        public async Task<(T, string)> ExecuteScalarAsync<T>(OracleCommand cmd)
         {
             var errmsg = string.Empty;
 
