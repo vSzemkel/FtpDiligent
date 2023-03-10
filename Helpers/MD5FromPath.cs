@@ -29,8 +29,7 @@ namespace FtpDiligent
         public static byte[] ComputeMD5(this string path)
         {
             try {
-                using (var stream = File.OpenRead(path))
-                {
+                using (var stream = File.OpenRead(path)) {
                     return generator.ComputeHash(stream);
                 }
             } catch {

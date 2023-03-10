@@ -6,7 +6,7 @@
 # Add Allow Rule in FTP Authorization Rules for [Read | Write] to vSzemkel
 # For FTPS define data port range in Ftp Firewall Support
 # Add Allow Rule in Ftp IP Address and Domain Restictions
-# Sonfig stored in file C:\Windows\System32\inetsrv\Config\applicationHost.config
+# Config stored in file C:\Windows\System32\inetsrv\Config\applicationHost.config
 Restart-Service ftpsvc
 
 # OpenSSH
@@ -27,7 +27,7 @@ Get-NetFirewallRule -Name *ssh*
 # There should be a firewall rule named "OpenSSH-Server-In-TCP", which should be enabled
 # If the firewall does not exist, create one
 New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
-# User key geenration
+# User key generation
 cd ~\.ssh\
 ssh-keygen
 Get-Service ssh-agent | Select StartType

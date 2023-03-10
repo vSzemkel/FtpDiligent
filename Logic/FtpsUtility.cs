@@ -84,7 +84,7 @@ namespace FtpDiligent
             Connect();
 
             var ret = new List<FtpSyncFileModel>();
-            var files = m_ftpsClient.GetListing().Where(f => f.Type == FtpFileSystemObjectType.File).ToArray();
+            var files = m_ftpsClient.GetListing().Where(f => f.Type == FtpObjectType.File).ToArray();
             foreach (FtpListItem f in files)
                 if (GetFile(f)) {
                     ret.Add(new FtpSyncFileModel() {
@@ -168,15 +168,15 @@ namespace FtpDiligent
         protected override bool Connect()
         {
             m_ftpsClient = new FtpClient(m_sHost, m_sUser, m_sPass);
-            m_ftpsClient.DataConnectionType = FtpDataConnectionType.PASV;
-            m_ftpsClient.EncryptionMode = m_secure ? FtpEncryptionMode.Explicit : FtpEncryptionMode.None;
-            m_ftpsClient.DataConnectionEncryption = true;
-            m_ftpsClient.ValidateAnyCertificate = true;
+            m_ftpsClient.Config.DataConnectionType = FtpDataConnectionType.PASV;
+            m_ftpsClient.Config.EncryptionMode = m_secure ? FtpEncryptionMode.Explicit : FtpEncryptionMode.None;
+            m_ftpsClient.Config.DataConnectionEncryption = true;
+            m_ftpsClient.Config.ValidateAnyCertificate = true;
 
             var transferMode = m_TransferMode == eFtpTransferMode.Binary 
                     ? FtpDataType.Binary : FtpDataType.ASCII;
-            m_ftpsClient.DownloadDataType = transferMode;
-            m_ftpsClient.UploadDataType = transferMode;
+            m_ftpsClient.Config.DownloadDataType = transferMode;
+            m_ftpsClient.Config.UploadDataType = transferMode;
 
             try {
                 m_ftpsClient.Connect();
@@ -224,7 +224,7 @@ namespace FtpDiligent
 
             try {
                 using (var stream = File.Create(localPath, m_bufferSize))
-                    m_ftpsClient.Download(stream, file.Name);
+                    m_ftpsClient.DownloadStream(stream, file.Name);
             } catch(Exception ex) {
                 var dirsep = m_sRemoteDir.EndsWith('/') ? string.Empty : "/";
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod³o siê. {ex.Message}");
@@ -276,7 +276,7 @@ namespace FtpDiligent
 
             try {
                 var stream = File.OpenRead(pFI.FullName);
-                m_ftpsClient.Upload(stream, remoteFilename, FtpRemoteExists.Overwrite);
+                m_ftpsClient.UploadStream(stream, remoteFilename, FtpRemoteExists.Overwrite);
                 if (m_mainWnd.m_checkTransferedStorage)
                     return CheckRemoteStorage(remoteFilename, pFI.Length);
             } catch (Exception ex) {
