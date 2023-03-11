@@ -148,10 +148,10 @@ namespace FtpDiligent
                             f.Close();
                         } catch (UnauthorizedAccessException) {
                             staged.Add(fi);
-                            MainWindow.s_showError(eSeverityCode.Message, $"Odczyt pliku {fi.FullName} zostanie ponowiony");
+                            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Odczyt pliku {fi.FullName} zostanie ponowiony");
                         } catch (Exception e) {
                             staged.Add(fi);
-                            MainWindow.s_showError(eSeverityCode.Warning, $"Nie udało się odczytać pliku {fi.FullName} {e.Message}");
+                            FtpDispatcherGlobals.ShowError(eSeverityCode.Warning, $"Nie udało się odczytać pliku {fi.FullName} {e.Message}");
                         }
 
                     }

@@ -136,7 +136,7 @@ namespace FtpDiligent
         {
             var endpoint = lvSerwery.SelectedItem as FtpEndpoint;
             if (endpoint != null) {
-                var disp = new FtpDispatcher(m_mainWnd.m_instance, m_mainWnd.m_syncModeProp, MainWindow.s_showError, this.m_database);
+                var disp = new FtpDispatcher(m_mainWnd.m_syncModeProp, FtpDispatcherGlobals.ShowError, this.m_database);
                 disp.StartNow(endpoint);
                 m_mainWnd.tcMain.SelectedIndex = 0;
             }
@@ -156,9 +156,9 @@ namespace FtpDiligent
         public void LoadEndpoints()
         {
             //m_endpoints = FtpDiligentDesignTimeClient.GetEndpoints(m_mainWnd.m_instance);
-            var (tab, errmsg) = m_database.GetEndpoints(m_mainWnd.m_instance);
+            var (tab, errmsg) = m_database.GetEndpoints(FtpDispatcherGlobals.Instance);
             if (!string.IsNullOrEmpty(errmsg)) {
-                MainWindow.s_showError(eSeverityCode.Error, errmsg);
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
                 m_endpoints = new ObservableCollection<FtpEndpoint>();
             } else
                 m_endpoints = m_database.GetEndpointsCollection(tab);

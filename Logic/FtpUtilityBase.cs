@@ -24,7 +24,6 @@ namespace FtpDiligent
         protected eFtpTransferMode m_TransferMode;
 
         protected FtpDispatcher m_Disp;
-        protected Action<eSeverityCode, string> m_showError;
         #endregion
 
         #region constructor
@@ -38,7 +37,6 @@ namespace FtpDiligent
         {
             m_SyncMode = mode;
             m_Disp = dispatcher;
-            m_showError = MainWindow.s_showError;
             FromFtpEndpoint(endpoint);
         }
 
@@ -49,7 +47,6 @@ namespace FtpDiligent
         /// <param name="window">Główne okno aplikacji</param>
         public FtpUtilityBase(FtpEndpointModel endpoint, MainWindow window)
         {
-            m_showError = MainWindow.s_showError;
             m_SyncMode = eSyncFileMode.AllFiles;
             FromFtpEndpoint(endpoint);
         }
@@ -69,8 +66,8 @@ namespace FtpDiligent
         {
             if (!Directory.Exists(m_sLocalDir)) {
                 string sMsg = "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir;
-                if (m_showError != null) {
-                    m_showError(eSeverityCode.Error, sMsg);
+                if (FtpDispatcherGlobals.ShowError != null) {
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Error, sMsg);
                     return false;
                 } else
                     throw new FtpUtilityException(sMsg);
@@ -126,8 +123,8 @@ namespace FtpDiligent
         {
             if (m_Disp == null && m_SyncMode == eSyncFileMode.UniqueDateAndSizeInDatabase) {
                 string sMsg = "Pobieranie plików w tym trybie wymaga dispatchera";
-                if (m_showError != null) {
-                    m_showError(eSeverityCode.Error, sMsg);
+                if (FtpDispatcherGlobals.ShowError != null) {
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Error, sMsg);
                     return false;
                 } else
                     throw new FtpUtilityException(sMsg);

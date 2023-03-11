@@ -17,11 +17,6 @@ namespace FtpDiligent
     {
         #region fields
         /// <summary>
-        /// Identyfikator instancji workera
-        /// </summary>
-        public int m_instance;
-
-        /// <summary>
         /// Algotytm synchronizacji
         /// </summary>
         private eSyncFileMode m_syncMode;
@@ -66,9 +61,8 @@ namespace FtpDiligent
         /// Konstruktor FtpDispatchera
         /// </summary>
         /// <param name="wnd">G³ówne okno aplikacji WPF</param>
-        public FtpDispatcher(int instance, eSyncFileMode syncMode, Action<eSeverityCode, string> showError, IFtpDiligentDatabaseClient database)
+        public FtpDispatcher(eSyncFileMode syncMode, Action<eSeverityCode, string> showError, IFtpDiligentDatabaseClient database)
         {
-            m_instance = instance;
             m_syncMode = syncMode;
             m_database = database;
             m_showError = showError;
@@ -89,7 +83,7 @@ namespace FtpDiligent
             int lastSchedule = 0;
 
             while (InProgress) {
-                var (schedule, errmsg) = m_database.GetNextSync(m_instance);
+                var (schedule, errmsg) = m_database.GetNextSync(FtpDispatcherGlobals.Instance);
                 if (!string.IsNullOrEmpty(errmsg)) {
                     if (errmsg == "0")
                         m_showError(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
@@ -253,7 +247,7 @@ namespace FtpDiligent
         public bool CheckDatabase(string sFileName, long lLength, DateTime dtDate)
         {
             var file = new FtpFileModel() {
-                Instance = m_instance,
+                Instance = FtpDispatcherGlobals.Instance,
                 FileName = sFileName,
                 FileSize = lLength,
                 FileDate = dtDate

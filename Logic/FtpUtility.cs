@@ -175,8 +175,8 @@ namespace FtpDiligent
                     Modified = last,
                     MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
                 });
-                if (m_showError != null)
-                    m_showError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
+                if (FtpDispatcherGlobals.ShowError != null)
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
             }
             while (InternetFindNextFile(hFind, pFD) && m_Disp.InProgress)
                 if (GetFile(pFD)) {
@@ -188,12 +188,12 @@ namespace FtpDiligent
                         Modified = last,
                         MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
                     });
-                    if (m_showError != null)
-                        m_showError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
+                    if (FtpDispatcherGlobals.ShowError != null)
+                        FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
                 }
 
-            if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
-                m_showError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
+            if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
 
             if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
                 throw new FtpUtilityException("B章d pobierania z zasobu " + m_sHost + m_sRemoteDir);
@@ -226,13 +226,13 @@ noFilesFound:
                         Modified = fi.LastWriteTime,
                         MD5 = fi.FullName.ComputeMD5()
                     });
-                    if (m_showError != null)
-                        m_showError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
+                    if (FtpDispatcherGlobals.ShowError != null)
+                        FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
                 }
             }
 
-            if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
-                m_showError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
+            if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta這 przerwane przez u篡tkownika");
 
             Dispose();
 
@@ -252,7 +252,7 @@ noFilesFound:
 
             bool status = PutFile(file);
             if (status)
-                m_showError.Invoke(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
+                FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
 
             Dispose();
 
@@ -269,7 +269,7 @@ noFilesFound:
         {
             iContext = IntPtr.Zero;
 
-            hFtpConn = InternetOpen($"{MainWindow.m_eventLog} {m_Disp.m_instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
+            hFtpConn = InternetOpen($"{FtpDispatcherGlobals.EventLog} {FtpDispatcherGlobals.Instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
             if (hFtpConn == IntPtr.Zero) throw new FtpUtilityException("InternetOpen failed");
 
             hFtpSess = InternetConnect(hFtpConn, m_sHost, iPort, m_sUser, m_sPass, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, iContext);
@@ -323,7 +323,7 @@ noFilesFound:
             if (m_Disp != null)
                 m_Disp.m_filesTransfered++;
 
-            if (MainWindow.s_checkTransferedStorage) {
+            if (FtpDispatcherGlobals.CheckTransferedStorage) {
                 bool bStatus = CheckLocalStorage(pFD.cFileName, size);
                 if (!bStatus && File.Exists(localPath))
                     File.Delete(localPath);
@@ -369,7 +369,7 @@ noFilesFound:
             if (m_Disp != null)
                 m_Disp.m_filesTransfered++;
 
-            if (MainWindow.s_checkTransferedStorage)
+            if (FtpDispatcherGlobals.CheckTransferedStorage)
                 return CheckRemoteStorage(pFI.Name, pFI.Length);
 
             return true;

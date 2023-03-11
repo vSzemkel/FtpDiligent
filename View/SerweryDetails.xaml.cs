@@ -63,7 +63,7 @@ namespace FtpDiligent
 
             if (m_mode == eDbOperation.Insert) {
                 var endpoint = m_endpoints.CurrentAddItem as FtpEndpoint;
-                endpoint.Instance = m_mainWnd.m_instance;
+                endpoint.Instance = FtpDispatcherGlobals.Instance;
                 SanitizeDirectories(ref endpoint);
                 errmsg = m_database.ModifyEndpoint(endpoint.GetModel(), m_mode);
                 if (string.IsNullOrEmpty(errmsg)) {

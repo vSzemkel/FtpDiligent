@@ -57,7 +57,7 @@ namespace FtpDiligent
             InitializeComponent();
 
             this.m_mainWnd = wnd;
-            this.m_dispatcher = new FtpDispatcher(wnd.m_instance, wnd.m_syncModeProp, MainWindow.s_showError, database);
+            this.m_dispatcher = new FtpDispatcher(wnd.m_syncModeProp, FtpDispatcherGlobals.ShowError, database);
             this.cbSyncMode.ItemsSource = Enum.GetValues(typeof(eSyncFileMode));
             this.lvFilesLog.ItemsSource = m_fileInfo;
             this.lvErrLog.ItemsSource = m_errInfo;
@@ -115,7 +115,7 @@ namespace FtpDiligent
         {
             if (m_dispatcher.m_filesTransfered > 0) {
                 m_dispatcher.Stop();
-                MainWindow.s_showError(eSeverityCode.Message, "Restarting dispatcher");
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Restarting dispatcher");
                 Thread.Sleep(5000);
                 m_dispatcher.Start();
             }

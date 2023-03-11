@@ -93,12 +93,12 @@ namespace FtpDiligent
                         Modified = f.LastWriteTime,
                         MD5 = (m_sLocalDir + f.Name).ComputeMD5()
                     });
-                    if (m_showError != null)
-                        m_showError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Length}|{f.LastWriteTime.ToBinary()}");
+                    if (FtpDispatcherGlobals.ShowError != null)
+                        FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Length}|{f.LastWriteTime.ToBinary()}");
                 }
 
-            if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
-                m_showError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta³o przerwane przez u¿ytkownika");
+            if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta³o przerwane przez u¿ytkownika");
 
             m_sftpClient.Disconnect();
 
@@ -126,13 +126,13 @@ namespace FtpDiligent
                         Modified = fi.LastWriteTime,
                         MD5 = fi.FullName.ComputeMD5()
                     });
-                    if (m_showError != null)
-                        m_showError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
+                    if (FtpDispatcherGlobals.ShowError != null)
+                        FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
                 }
             }
 
-            if (m_Disp != null && !m_Disp.InProgress && m_showError != null)
-                m_showError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta³o przerwane przez u¿ytkownika");
+            if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta³o przerwane przez u¿ytkownika");
 
             m_sftpClient.Disconnect();
 
@@ -152,7 +152,7 @@ namespace FtpDiligent
 
             bool status = PutFile(file);
             if (status)
-                m_showError.Invoke(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
+                FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
 
             m_sftpClient.Disconnect();
 
@@ -225,7 +225,7 @@ namespace FtpDiligent
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod³o siê. {ex.Message}");
             }
 
-            if (MainWindow.s_checkTransferedStorage) {
+            if (FtpDispatcherGlobals.CheckTransferedStorage) {
                 bool bStatus = CheckLocalStorage(file.Name, file.Length);
                 if (!bStatus && File.Exists(localPath))
                     File.Delete(localPath);
@@ -272,7 +272,7 @@ namespace FtpDiligent
             try {
                 var stream = File.OpenRead(pFI.FullName);
                 m_sftpClient.UploadFile(stream, remoteFilename);
-                if (MainWindow.s_checkTransferedStorage)
+                if (FtpDispatcherGlobals.CheckTransferedStorage)
                     return CheckRemoteStorage(remoteFilename, pFI.Length);
             } catch (Exception ex) {
                 throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod³o siê. {ex.Message}");
