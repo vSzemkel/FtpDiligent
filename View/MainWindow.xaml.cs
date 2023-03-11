@@ -49,7 +49,7 @@ namespace FtpDiligent
         /// <summary>
         /// Czy po transferowniu pliku zweryfikować jego rozmiar
         /// </summary>
-        public bool m_checkTransferedStorage;
+        static public bool s_checkTransferedStorage;
 
         /// <summary>
         /// Co ile sekund sprawdzamy, czy pliki w hotfolderze są w pełni zapisane
@@ -89,8 +89,7 @@ namespace FtpDiligent
         /// <summary>
         /// Wrapper do metody ShowErrorInfoInternal
         /// </summary>
-        public delegate void ShowError(eSeverityCode code, string message);
-        public ShowError m_showError;
+        public static Action<eSeverityCode, string> s_showError;
 
         /// <summary>
         /// Klient bazy danych
@@ -148,7 +147,7 @@ namespace FtpDiligent
             LoadConfig();
             CheckInstanceInitialization();
 
-            this.m_showError = this.ShowErrorInfo;
+            s_showError = (code, msg) => this.ShowErrorInfo(code, msg);
             this.Title = $"FtpDiligent [instance {m_instance}]";
 
             m_tbSerwery.LoadEndpoints();
@@ -172,7 +171,7 @@ namespace FtpDiligent
             if (Dispatcher.CheckAccess())
                 ShowErrorInfoInternal(code, message);
             else
-                Dispatcher.Invoke(m_showError, code, message);
+                Dispatcher.Invoke(s_showError, code, message);
         }
         #endregion
 
@@ -262,7 +261,7 @@ namespace FtpDiligent
             Int32.TryParse(settings["HotfolderInterval"], out m_hotfolderInterval);
             m_traceLevel = (eSeverityCode)traceLevel;
             m_mailer = new SendEmails(this, settings["ErrorsMailTo"], settings["SendGridKey"]);
-            m_checkTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
+            s_checkTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
             if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out m_syncMode)) {
                 ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");

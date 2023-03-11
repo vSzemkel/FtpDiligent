@@ -83,7 +83,7 @@ namespace FtpDiligent
 
                 return msg;
             } catch (Exception exc) {
-                m_mainWnd.m_showError(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
+                MainWindow.s_showError(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
                 return null;
             }
         }
@@ -106,10 +106,10 @@ namespace FtpDiligent
                     client.Disconnect(true);
                 }
 
-                m_mainWnd.m_showError(eSeverityCode.Message, $"Wys³ano {msg.To.Count} powiadomienie/a mailowe.");
+                MainWindow.s_showError(eSeverityCode.Message, $"Wys³ano {msg.To.Count} powiadomienie/a mailowe.");
                 return true;
             } catch (Exception exc) {
-                m_mainWnd.m_showError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
+                MainWindow.s_showError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
                 return false;
             }
         }

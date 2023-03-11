@@ -17,6 +17,16 @@ namespace FtpDiligent
     {
         #region fields
         /// <summary>
+        /// Identyfikator instancji workera
+        /// </summary>
+        public int m_instance;
+
+        /// <summary>
+        /// Algotytm synchronizacji
+        /// </summary>
+        private eSyncFileMode m_syncMode;
+
+        /// <summary>
         /// Ile czasu (ms) odczekaæ po b³êdzie pobierania harmonogramu przed ponowieniem
         /// </summary>
         public const int m_retryWaitTime = 10 * 60 * 1000;
@@ -28,11 +38,6 @@ namespace FtpDiligent
         public int m_filesTransfered;
 
         /// <summary>
-        /// Referencja do g³ównego okna
-        /// </summary>
-        public MainWindow m_mainWnd;
-
-        /// <summary>
         /// Do wstrzymywania w¹tku roboczego w oczekiwaniu na planowany czas uruchomienia
         /// </summary>
         private AutoResetEvent m_are = new AutoResetEvent(false);
@@ -41,6 +46,11 @@ namespace FtpDiligent
         /// Klient bazy danych
         /// </summary>
         private IFtpDiligentDatabaseClient m_database { get; set; }
+
+        /// <summary>
+        /// Callback do przekazywania komunikatów o b³êdach
+        /// </summary>
+        private Action<eSeverityCode, string> m_showError;
         #endregion
 
         #region properties
@@ -56,10 +66,12 @@ namespace FtpDiligent
         /// Konstruktor FtpDispatchera
         /// </summary>
         /// <param name="wnd">G³ówne okno aplikacji WPF</param>
-        public FtpDispatcher(MainWindow wnd, IFtpDiligentDatabaseClient database)
+        public FtpDispatcher(int instance, eSyncFileMode syncMode, Action<eSeverityCode, string> showError, IFtpDiligentDatabaseClient database)
         {
-            m_mainWnd = wnd;
+            m_instance = instance;
+            m_syncMode = syncMode;
             m_database = database;
+            m_showError = showError;
         }
         #endregion
 
@@ -77,16 +89,16 @@ namespace FtpDiligent
             int lastSchedule = 0;
 
             while (InProgress) {
-                var (schedule, errmsg) = m_database.GetNextSync(m_mainWnd.m_instance);
+                var (schedule, errmsg) = m_database.GetNextSync(m_instance);
                 if (!string.IsNullOrEmpty(errmsg)) {
                     if (errmsg == "0")
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
+                        m_showError(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
                     else {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po b³êdzie");
+                        m_showError(eSeverityCode.Error, errmsg);
+                        m_showError(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po b³êdzie");
                         lastSchedule = 0;
                         Thread.Sleep(m_retryWaitTime);
-                        m_mainWnd.Dispatcher.Invoke(() => { m_mainWnd.m_tbSterowanie.btRunSync.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); });
+                        Sterowanie.s_execute();
                     }
                     return;
                 }
@@ -99,9 +111,9 @@ namespace FtpDiligent
 
                 lastSchedule = currentSchedule;
                 if (schedule.xx > 0)
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, $"Najbli¿szy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
+                    m_showError(eSeverityCode.NextSync, $"Najbli¿szy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
                 else
-                    m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, "Do koñca tygodnia nie zaplanowano ¿adnych transferów");
+                    m_showError(eSeverityCode.NextSync, "Do koñca tygodnia nie zaplanowano ¿adnych transferów");
 
                 if (DateTime.Now < schedule.nextSyncTime)
                     m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
@@ -111,7 +123,7 @@ namespace FtpDiligent
             } // while
 
             if (!InProgress)
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Message, "Pobieranie przerwane przez u¿ytkownika");
+                m_showError(eSeverityCode.Message, "Pobieranie przerwane przez u¿ytkownika");
         }
 
         /// <summary>
@@ -131,26 +143,26 @@ namespace FtpDiligent
                 if (errmsg == "0")
                     errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
 
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                m_showError(eSeverityCode.Error, errmsg);
                 return;
             }
 
             string remote = endpoint.host + endpoint.remDir;
             FtpSyncModel log = new FtpSyncModel() { xx = key, syncTime = endpoint.nextSync };
-            IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_mainWnd.m_syncModeProp);
+            IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_syncMode);
             eFtpDirection eDirection = endpoint.direction;
 
             if (key < 0) 
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {remote}");
+                m_showError(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {remote}");
             else
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {remote}");
+                m_showError(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {remote}");
 
             try { // transferuj pliki
                 #region pobieranie
                 if (eDirection.HasFlag(eFtpDirection.Get)) {
                     log.files = fu.Download();
                     if (log.files == null) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakoñczy³o siê niepowodzeniem");
+                        m_showError(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
@@ -158,11 +170,11 @@ namespace FtpDiligent
                     int filesTransfered = log.files.Length;
                     if (filesTransfered == 0) {
                         m_database.LogActivation(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
+                        m_showError(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
                     } else {
                         log.direction = eFtpDirection.Get;
                         m_database.LogSync(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
+                        m_showError(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
                     }
                 }
                 #endregion
@@ -171,7 +183,7 @@ namespace FtpDiligent
                 if (eDirection.HasFlag(eFtpDirection.Put)) {
                     log.files = fu.Upload();
                     if (log.files == null) {
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakoñczy³o siê niepowodzeniem");
+                        m_showError(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakoñczy³o siê niepowodzeniem");
                         return;
                     }
 
@@ -179,18 +191,18 @@ namespace FtpDiligent
                     int filesTransfered = log.files.Length;
                     if (filesTransfered == 0) {
                         m_database.LogActivation(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
+                        m_showError(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
                     } else {
                         log.direction = eFtpDirection.Put;
                         m_database.LogSync(log);
-                        m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
+                        m_showError(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
                     }
                 }
                 #endregion
             } catch (FtpUtilityException fex) {
-                m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, fex.Message);
+                m_showError(eSeverityCode.TransferError, fex.Message);
             } catch (Exception se) {
-                m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, se.Message);
+                m_showError(eSeverityCode.TransferError, se.Message);
             }
         }
         #endregion
@@ -228,7 +240,7 @@ namespace FtpDiligent
         {
             InProgress = false;
             m_are.Set();
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
+            m_showError(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
         }
 
         /// <summary>
@@ -241,7 +253,7 @@ namespace FtpDiligent
         public bool CheckDatabase(string sFileName, long lLength, DateTime dtDate)
         {
             var file = new FtpFileModel() {
-                Instance = m_mainWnd.m_instance,
+                Instance = m_instance,
                 FileName = sFileName,
                 FileSize = lLength,
                 FileDate = dtDate
@@ -249,7 +261,7 @@ namespace FtpDiligent
 
             var (status, errmsg) = m_database.VerifyFile(file);
             if (!string.IsNullOrEmpty(errmsg)) {
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                m_showError(eSeverityCode.Error, errmsg);
                 return false;
             }
 

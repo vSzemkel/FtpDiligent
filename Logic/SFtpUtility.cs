@@ -225,7 +225,7 @@ namespace FtpDiligent
                 throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod³o siê. {ex.Message}");
             }
 
-            if (m_mainWnd.m_checkTransferedStorage) {
+            if (MainWindow.s_checkTransferedStorage) {
                 bool bStatus = CheckLocalStorage(file.Name, file.Length);
                 if (!bStatus && File.Exists(localPath))
                     File.Delete(localPath);
@@ -272,7 +272,7 @@ namespace FtpDiligent
             try {
                 var stream = File.OpenRead(pFI.FullName);
                 m_sftpClient.UploadFile(stream, remoteFilename);
-                if (m_mainWnd.m_checkTransferedStorage)
+                if (MainWindow.s_checkTransferedStorage)
                     return CheckRemoteStorage(remoteFilename, pFI.Length);
             } catch (Exception ex) {
                 throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod³o siê. {ex.Message}");

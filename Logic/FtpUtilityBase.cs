@@ -24,8 +24,7 @@ namespace FtpDiligent
         protected eFtpTransferMode m_TransferMode;
 
         protected FtpDispatcher m_Disp;
-        protected MainWindow m_mainWnd;
-        protected MainWindow.ShowError m_showError;
+        protected Action<eSeverityCode, string> m_showError;
         #endregion
 
         #region constructor
@@ -39,8 +38,7 @@ namespace FtpDiligent
         {
             m_SyncMode = mode;
             m_Disp = dispatcher;
-            m_mainWnd = dispatcher.m_mainWnd;
-            m_showError = m_mainWnd.m_showError;
+            m_showError = MainWindow.s_showError;
             FromFtpEndpoint(endpoint);
         }
 
@@ -51,8 +49,7 @@ namespace FtpDiligent
         /// <param name="window">Główne okno aplikacji</param>
         public FtpUtilityBase(FtpEndpointModel endpoint, MainWindow window)
         {
-            m_mainWnd = window;
-            m_showError = window.m_showError;
+            m_showError = MainWindow.s_showError;
             m_SyncMode = eSyncFileMode.AllFiles;
             FromFtpEndpoint(endpoint);
         }

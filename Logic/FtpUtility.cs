@@ -269,7 +269,7 @@ noFilesFound:
         {
             iContext = IntPtr.Zero;
 
-            hFtpConn = InternetOpen($"{MainWindow.m_eventLog} {m_mainWnd.m_instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
+            hFtpConn = InternetOpen($"{MainWindow.m_eventLog} {m_Disp.m_instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
             if (hFtpConn == IntPtr.Zero) throw new FtpUtilityException("InternetOpen failed");
 
             hFtpSess = InternetConnect(hFtpConn, m_sHost, iPort, m_sUser, m_sPass, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, iContext);
@@ -323,7 +323,7 @@ noFilesFound:
             if (m_Disp != null)
                 m_Disp.m_filesTransfered++;
 
-            if (m_mainWnd.m_checkTransferedStorage) {
+            if (MainWindow.s_checkTransferedStorage) {
                 bool bStatus = CheckLocalStorage(pFD.cFileName, size);
                 if (!bStatus && File.Exists(localPath))
                     File.Delete(localPath);
@@ -369,7 +369,7 @@ noFilesFound:
             if (m_Disp != null)
                 m_Disp.m_filesTransfered++;
 
-            if (m_mainWnd.m_checkTransferedStorage)
+            if (MainWindow.s_checkTransferedStorage)
                 return CheckRemoteStorage(pFI.Name, pFI.Length);
 
             return true;

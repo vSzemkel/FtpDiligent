@@ -44,6 +44,11 @@ namespace FtpDiligent
         /// Zarządza wątkami roboczymi
         /// </summary>
         public FtpDispatcher m_dispatcher;
+
+        /// <summary>
+        /// Umożliwia programowe uruchomienie transferu danych
+        /// </summary>
+        public static Action s_execute;
         #endregion
 
         #region constructor
@@ -52,10 +57,11 @@ namespace FtpDiligent
             InitializeComponent();
 
             this.m_mainWnd = wnd;
-            this.m_dispatcher = new FtpDispatcher(wnd, database);
+            this.m_dispatcher = new FtpDispatcher(wnd.m_instance, wnd.m_syncModeProp, MainWindow.s_showError, database);
             this.cbSyncMode.ItemsSource = Enum.GetValues(typeof(eSyncFileMode));
             this.lvFilesLog.ItemsSource = m_fileInfo;
             this.lvErrLog.ItemsSource = m_errInfo;
+            s_execute = () => this.OnStartSync(null, null);
         }
         #endregion
 
@@ -109,7 +115,7 @@ namespace FtpDiligent
         {
             if (m_dispatcher.m_filesTransfered > 0) {
                 m_dispatcher.Stop();
-                m_mainWnd.m_showError(eSeverityCode.Message, "Restarting dispatcher");
+                MainWindow.s_showError(eSeverityCode.Message, "Restarting dispatcher");
                 Thread.Sleep(5000);
                 m_dispatcher.Start();
             }

@@ -133,7 +133,7 @@ namespace FtpDiligent
             //m_schedules = FtpDiligentDesignTimeClient.GetSchedules(endpoint);
             var (tab, errmsg) = m_database.GetSchedules(endpoint);
             if (!string.IsNullOrEmpty(errmsg))
-                m_mainWnd.m_showError(eSeverityCode.Error, errmsg);
+                MainWindow.s_showError(eSeverityCode.Error, errmsg);
             else
                 m_schedules = m_database.GetSchedulesCollection(tab);
 
