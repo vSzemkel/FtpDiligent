@@ -6,18 +6,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
-{
-    using System;
+namespace FtpDiligent;
 
-    /// <summary>
-    /// Kierunki transferu dla endpointu
-    /// </summary>
-    [Flags]
-    public enum eFtpDirection : byte
-    {
-        Get = 1,
-        Put = 2,
-        HotfolderPut = 4
-    }
+using System;
+
+/// <summary>
+/// Kierunki transferu dla endpointu
+/// </summary>
+[Flags]
+public enum eFtpDirection : byte
+{
+    Get = 1,
+    Put = 2,
+    HotfolderPut = 4
 }

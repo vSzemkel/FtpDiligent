@@ -6,17 +6,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+/// <summary>
+/// Tryb kwalifikacji pliku do pobrania
+/// </summary>
+public enum eSyncFileMode : byte
 {
-    /// <summary>
-    /// Tryb kwalifikacji pliku do pobrania
-    /// </summary>
-    public enum eSyncFileMode : byte
-    {
-        NewerThenRefreshDate = 0,
-        UniqueDateAndSizeOnDisk,
-        UniqueDateAndSizeInDatabase,
-        UniqueMD5Checksum,
-        AllFiles
-    }
+    NewerThenRefreshDate = 0,
+    UniqueDateAndSizeOnDisk,
+    UniqueDateAndSizeInDatabase,
+    UniqueMD5Checksum,
+    AllFiles
 }

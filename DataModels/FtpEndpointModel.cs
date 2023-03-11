@@ -6,26 +6,25 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
-{
-    using System;
+namespace FtpDiligent;
 
-    /// <summary>
-    /// Endpoint FTP
-    /// </summary>
-    public struct FtpEndpointModel
-    {
-        public string host;
-        public string uid;
-        public string pwd;
-        public string remDir;
-        public string locDir;
-        public int xx;                  // identyfikator endpointu
-        public int insXX;               // numer instancji workera
-        public eFtpDirection direction; // kierunek transferu (GET lub PUT)
-        public eFtpTransferMode mode;   // ASCII lub BIN
-        public eFtpProtocol protocol;   // FTP, SFTP, FTPS
-        public DateTime lastSync;
-        public DateTime nextSync;
-    }
+using System;
+
+/// <summary>
+/// Endpoint FTP
+/// </summary>
+public struct FtpEndpointModel
+{
+    public string host;
+    public string uid;
+    public string pwd;
+    public string remDir;
+    public string locDir;
+    public int xx;                  // identyfikator endpointu
+    public int insXX;               // numer instancji workera
+    public eFtpDirection direction; // kierunek transferu (GET lub PUT)
+    public eFtpTransferMode mode;   // ASCII lub BIN
+    public eFtpProtocol protocol;   // FTP, SFTP, FTPS
+    public DateTime lastSync;
+    public DateTime nextSync;
 }

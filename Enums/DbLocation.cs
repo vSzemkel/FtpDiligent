@@ -6,26 +6,25 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+/// <summary>
+/// Typ wyliczeniowy służący do określania charakteru lokalizacji bazy danych
+/// </summary>
+struct eDbLocation
 {
     /// <summary>
-    /// Typ wyliczeniowy służący do określania charakteru lokalizacji bazy danych
+    /// Lokalna dla instalacji baza developerska
     /// </summary>
-    struct eDbLocation
-    {
-        /// <summary>
-        /// Lokalna dla instalacji baza developerska
-        /// </summary>
-        public static readonly string Local = "LOCAL";
+    public static readonly string Local = "LOCAL";
 
-        /// <summary>
-        /// Baza danych w firmowej serwerowni
-        /// </summary>
-        public static readonly string OnPrem = "ONPREM";
+    /// <summary>
+    /// Baza danych w firmowej serwerowni
+    /// </summary>
+    public static readonly string OnPrem = "ONPREM";
 
-        /// <summary>
-        /// Baza danych w chmurze publicznej
-        /// </summary>
-        public static readonly string Cloud = "AZURE";
-    }
+    /// <summary>
+    /// Baza danych w chmurze publicznej
+    /// </summary>
+    public static readonly string Cloud = "AZURE";
 }

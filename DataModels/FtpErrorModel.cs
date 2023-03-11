@@ -6,22 +6,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System;
+
+/// <summary>
+/// Dane transferowanego pliku
+/// </summary>
+public class FtpErrorModel
 {
-    using System;
+    public eSeverityCode Category { get; set; }
+    public DateTime Time { get; }
+    public string Message { get; set; }
 
-    /// <summary>
-    /// Dane transferowanego pliku
-    /// </summary>
-    public class FtpErrorModel
+    public FtpErrorModel()
     {
-        public eSeverityCode Category { get; set; }
-        public DateTime Time { get; }
-        public string Message { get; set; }
-
-        public FtpErrorModel()
-        {
-            Time = DateTime.Now;
-        }
+        Time = DateTime.Now;
     }
 }

@@ -6,15 +6,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+/// <summary>
+/// Protokol FTP uzywany do transportu
+/// </summary>
+public enum eFtpProtocol : byte
 {
-    /// <summary>
-    /// Protokol FTP uzywany do transportu
-    /// </summary>
-    public enum eFtpProtocol : byte
-    {
-        FTP  = 1,
-        FTPS = 2,
-        SFTP = 3
-    }
+    FTP  = 1,
+    FTPS = 2,
+    SFTP = 3
 }

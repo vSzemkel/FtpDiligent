@@ -6,73 +6,72 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Windows.Data;
+
+public class SelectedItemEnabler : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        return value != null;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) {
+        return null;
+    }
+}
+
+public class ImageForOperation : IValueConverter
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Globalization;
-    using System.Windows.Data;
+    static Dictionary<int, string> mapping = new Dictionary<int, string>() {
+        {1, "/FtpDiligent;component/Images/get.png" },
+        {2, "/FtpDiligent;component/Images/put.png" },
+        {4, "/FtpDiligent;component/Images/hot.png" }
+    };
 
-    public class SelectedItemEnabler : IValueConverter {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-            return value != null;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) {
-            return null;
-        }
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return mapping[(int)value];
     }
 
-    public class ImageForOperation : IValueConverter
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
-        static Dictionary<int, string> mapping = new Dictionary<int, string>() {
-            {1, "/FtpDiligent;component/Images/get.png" },
-            {2, "/FtpDiligent;component/Images/put.png" },
-            {4, "/FtpDiligent;component/Images/hot.png" }
-        };
+        return null;
+    }
+}
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return mapping[(int)value];
-        }
+public class ImageForError : IValueConverter
+{
+    static Dictionary<eSeverityCode, string> mapping = new Dictionary<eSeverityCode, string>() {
+        {eSeverityCode.Warning, "/FtpDiligent;component/Images/warn.png" },
+        {eSeverityCode.Error, "/FtpDiligent;component/Images/err.png" },
+        {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" }
+    };
 
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return mapping[(eSeverityCode)value];
     }
 
-    public class ImageForError : IValueConverter
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
-        static Dictionary<eSeverityCode, string> mapping = new Dictionary<eSeverityCode, string>() {
-            {eSeverityCode.Warning, "/FtpDiligent;component/Images/warn.png" },
-            {eSeverityCode.Error, "/FtpDiligent;component/Images/err.png" },
-            {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" }
-        };
+        return null;
+    }
+}
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return mapping[(eSeverityCode)value];
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
+public class DayNameLocalisator : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return CultureInfo.CurrentUICulture.DateTimeFormat.DayNames[(int)(DayOfWeek)value];
     }
 
-    public class DayNameLocalisator : IValueConverter
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return CultureInfo.CurrentUICulture.DateTimeFormat.DayNames[(int)(DayOfWeek)value];
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            string dayName = value as string;
-            int index = Array.FindIndex(CultureInfo.CurrentUICulture.DateTimeFormat.DayNames, (dn) => {return dn == dayName; });
-            return (DayOfWeek)index;
-        }
+        string dayName = value as string;
+        int index = Array.FindIndex(CultureInfo.CurrentUICulture.DateTimeFormat.DayNames, (dn) => {return dn == dayName; });
+        return (DayOfWeek)index;
     }
 }

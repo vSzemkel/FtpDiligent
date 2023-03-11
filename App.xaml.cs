@@ -6,32 +6,31 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System.Configuration;
+using System.Windows;
+
+using Autofac;
+
+/// <summary>
+/// Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application
 {
-    using System.Configuration;
-    using System.Windows;
+    public static IContainer container;
 
-    using Autofac;
-
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+    protected override void OnStartup(StartupEventArgs e)
     {
-        public static IContainer container;
+        var builder = new ContainerBuilder();
+        string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Local].ConnectionString;
+        builder.RegisterType<MainWindow>().SingleInstance();
+        builder.RegisterType<FtpDiligentSqlClient>()
+            .WithParameter(new NamedParameter("connStr", connStr))
+            .As<IFtpDiligentDatabaseClient>();
+        container = builder.Build();
 
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            var builder = new ContainerBuilder();
-            string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Cloud].ConnectionString;
-            builder.RegisterType<MainWindow>().SingleInstance();
-            builder.RegisterType<FtpDiligentSqlClient>()
-                .WithParameter(new NamedParameter("connStr", connStr))
-                .As<IFtpDiligentDatabaseClient>();
-            container = builder.Build();
-
-            using (var scope = container.BeginLifetimeScope())
-                scope.Resolve<MainWindow>().Show();
-        }
+        using (var scope = container.BeginLifetimeScope())
+            scope.Resolve<MainWindow>().Show();
     }
 }

@@ -6,261 +6,248 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls.Primitives;
+
+public sealed class FtpDispatcher
 {
-    using System;
-    using System.Threading;
-    using System.Windows;
-    using System.Windows.Controls.Primitives;
+    #region fields
+    /// <summary>
+    /// Ile czasu (ms) odczekaÄ‡ po bÅ‚Ä™dzie pobierania harmonogramu przed ponowieniem
+    /// </summary>
+    public const int m_retryWaitTime = 10 * 60 * 1000;
 
-    public sealed class FtpDispatcher
+    /// <summary>
+    /// Zlicza przetransportowane pliki.
+    /// Nie ma sensu restartowaÄ‡ dispatchera, ktÃ³ry dotÄ…d nic nie przesï¿½aï¿½
+    /// </summary>
+    public int m_filesTransfered;
+
+    /// <summary>
+    /// Do wstrzymywania wï¿½tku roboczego w oczekiwaniu na planowany czas uruchomienia
+    /// </summary>
+    private AutoResetEvent m_are = new AutoResetEvent(false);
+
+    /// <summary>
+    /// Klient bazy danych
+    /// </summary>
+    private IFtpDiligentDatabaseClient m_database { get; set; }
+    #endregion
+
+    #region properties
+    /// <summary>
+    /// Pozwala dostosowaï¿½ wyglï¿½d interfejsu do stanu przetwarzania
+    /// Ustawiana na czas wykonywania transferu
+    /// </summary>
+    public bool InProgress { get; set; }
+    #endregion
+
+    #region constructor
+    /// <summary>
+    /// Konstruktor FtpDispatchera
+    /// </summary>
+    /// <param name="wnd">Gï¿½ï¿½wne okno aplikacji WPF</param>
+    public FtpDispatcher(IFtpDiligentDatabaseClient database)
     {
-        #region fields
-        /// <summary>
-        /// Algotytm synchronizacji
-        /// </summary>
-        private eSyncFileMode m_syncMode;
+        m_database = database;
+    }
+    #endregion
 
-        /// <summary>
-        /// Ile czasu (ms) odczekaæ po b³êdzie pobierania harmonogramu przed ponowieniem
-        /// </summary>
-        public const int m_retryWaitTime = 10 * 60 * 1000;
+    #region private methods
+    /// <summary>
+    /// Implementacja pï¿½tli obsï¿½ugujï¿½cej ï¿½ï¿½dania pobrania plikï¿½w z endpointu ftp
+    /// Jeï¿½eli czas ï¿½ï¿½dania upï¿½ynï¿½ï¿½, wykonuje je bezzwï¿½ocznie, jeï¿½li nie, to zasypia 
+    /// do czasu wymagalnoï¿½ci ï¿½ï¿½dania. Zaimplementowano metodï¿½ wyjï¿½cia z pï¿½tli na
+    /// ï¿½yczenie uï¿½ytkownika po wywoï¿½aniu Stop(); Wartoï¿½ï¿½ iSchXX==-1 oznacza brak 
+    /// ï¿½ï¿½daï¿½ do koï¿½ca tygodnia, towarzyszy jej data poczï¿½tku nowego tygodnia.
+    /// </summary>
+    /// <param name="o">Nie uï¿½ywany</param>
+    private void DispatchFtpThread(object o)
+    {
+        int lastSchedule = 0;
 
-        /// <summary>
-        /// Zlicza przetransportowane pliki.
-        /// Nie ma sensu restartowaæ dispatchera, który dot¹d nic nie przes³a³
-        /// </summary>
-        public int m_filesTransfered;
-
-        /// <summary>
-        /// Do wstrzymywania w¹tku roboczego w oczekiwaniu na planowany czas uruchomienia
-        /// </summary>
-        private AutoResetEvent m_are = new AutoResetEvent(false);
-
-        /// <summary>
-        /// Klient bazy danych
-        /// </summary>
-        private IFtpDiligentDatabaseClient m_database { get; set; }
-
-        /// <summary>
-        /// Callback do przekazywania komunikatów o b³êdach
-        /// </summary>
-        private Action<eSeverityCode, string> m_showError;
-        #endregion
-
-        #region properties
-        /// <summary>
-        /// Pozwala dostosowaæ wygl¹d interfejsu do stanu przetwarzania
-        /// Ustawiana na czas wykonywania transferu
-        /// </summary>
-        public bool InProgress { get; set; }
-        #endregion
-
-        #region constructor
-        /// <summary>
-        /// Konstruktor FtpDispatchera
-        /// </summary>
-        /// <param name="wnd">G³ówne okno aplikacji WPF</param>
-        public FtpDispatcher(eSyncFileMode syncMode, Action<eSeverityCode, string> showError, IFtpDiligentDatabaseClient database)
-        {
-            m_syncMode = syncMode;
-            m_database = database;
-            m_showError = showError;
-        }
-        #endregion
-
-        #region private methods
-        /// <summary>
-        /// Implementacja pêtli obs³uguj¹cej ¿¹dania pobrania plików z endpointu ftp
-        /// Je¿eli czas ¿¹dania up³yn¹³, wykonuje je bezzw³ocznie, jeœli nie, to zasypia 
-        /// do czasu wymagalnoœci ¿¹dania. Zaimplementowano metodê wyjœcia z pêtli na
-        /// ¿yczenie u¿ytkownika po wywo³aniu Stop(); Wartoœæ iSchXX==-1 oznacza brak 
-        /// ¿¹dañ do koñca tygodnia, towarzyszy jej data pocz¹tku nowego tygodnia.
-        /// </summary>
-        /// <param name="o">Nie u¿ywany</param>
-        private void DispatchFtpThread(object o)
-        {
-            int lastSchedule = 0;
-
-            while (InProgress) {
-                var (schedule, errmsg) = m_database.GetNextSync(FtpDispatcherGlobals.Instance);
-                if (!string.IsNullOrEmpty(errmsg)) {
-                    if (errmsg == "0")
-                        m_showError(eSeverityCode.NextSync, "Nie zaplanowano ¿adnych pozycji w harmonogramie");
-                    else {
-                        m_showError(eSeverityCode.Error, errmsg);
-                        m_showError(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po b³êdzie");
-                        lastSchedule = 0;
-                        Thread.Sleep(m_retryWaitTime);
-                        Sterowanie.s_execute();
-                    }
-                    return;
-                }
-
-                int currentSchedule = schedule.Hash;
-                if (currentSchedule == lastSchedule) {
-                    Thread.Sleep(5000);
-                    continue;
-                }
-
-                lastSchedule = currentSchedule;
-                if (schedule.xx > 0)
-                    m_showError(eSeverityCode.NextSync, $"Najbli¿szy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
-                else
-                    m_showError(eSeverityCode.NextSync, "Do koñca tygodnia nie zaplanowano ¿adnych transferów");
-
-                if (DateTime.Now < schedule.nextSyncTime)
-                    m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
-
-                if (schedule.xx > 0 && InProgress)
-                    ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, schedule);
-            } // while
-
-            if (!InProgress)
-                m_showError(eSeverityCode.Message, "Pobieranie przerwane przez u¿ytkownika");
-        }
-
-        /// <summary>
-        /// Wykonuje transfer plików na podstawie zaplanowanej pozycji harmonogramu
-        /// Jest uruchamiana przez dispatcher o odpowiedniej porze i tylko dla poprawnych pozycji harmonogramu
-        /// </summary>
-        /// <param name="iSchXX">
-        /// Jeœli dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
-        /// jeœli ujemny, to identyfikator endpointu, dla którego transfer uruchomiono rêcznie
-        /// </param>
-        private void ExecuteFtpTransfer(object o)
-        {
-            FtpScheduleModel schedule = (FtpScheduleModel)o;
-            int key = schedule.xx;
-            var (endpoint, errmsg) = m_database.SelectEndpoint(key).Result;
+        while (InProgress) {
+            var (schedule, errmsg) = m_database.GetNextSync(FtpDispatcherGlobals.Instance);
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
-                    errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
-
-                m_showError(eSeverityCode.Error, errmsg);
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Nie zaplanowano ï¿½adnych pozycji w harmonogramie");
+                else {
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po bï¿½ï¿½dzie");
+                    lastSchedule = 0;
+                    Thread.Sleep(m_retryWaitTime);
+                    Sterowanie.s_execute();
+                }
                 return;
             }
 
-            string remote = endpoint.host + endpoint.remDir;
-            FtpSyncModel log = new FtpSyncModel() { xx = key, syncTime = endpoint.nextSync };
-            IFtpUtility fu = IFtpUtility.Create(endpoint, this, m_syncMode);
-            eFtpDirection eDirection = endpoint.direction;
+            int currentSchedule = schedule.Hash;
+            if (currentSchedule == lastSchedule) {
+                Thread.Sleep(5000);
+                continue;
+            }
 
-            if (key < 0) 
-                m_showError(eSeverityCode.Message, $"Rozpoczêto transfer plików z serwera {remote}");
+            lastSchedule = currentSchedule;
+            if (schedule.xx > 0)
+                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, $"Najbliï¿½szy transfer plikï¿½w z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
             else
-                m_showError(eSeverityCode.Message, $"Rozpoczêto zaplanowany transfer plików {schedule.name} z serwera {remote}");
+                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Do koï¿½ca tygodnia nie zaplanowano ï¿½adnych transferï¿½w");
 
-            try { // transferuj pliki
-                #region pobieranie
-                if (eDirection.HasFlag(eFtpDirection.Get)) {
-                    log.files = fu.Download();
-                    if (log.files == null) {
-                        m_showError(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakoñczy³o siê niepowodzeniem");
-                        return;
-                    }
+            if (DateTime.Now < schedule.nextSyncTime)
+                m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
 
-                    // loguj zmiany
-                    int filesTransfered = log.files.Length;
-                    if (filesTransfered == 0) {
-                        m_database.LogActivation(log);
-                        m_showError(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
-                    } else {
-                        log.direction = eFtpDirection.Get;
-                        m_database.LogSync(log);
-                        m_showError(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
-                    }
-                }
-                #endregion
+            if (schedule.xx > 0 && InProgress)
+                ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, schedule);
+        } // while
 
-                #region wstawianie
-                if (eDirection.HasFlag(eFtpDirection.Put)) {
-                    log.files = fu.Upload();
-                    if (log.files == null) {
-                        m_showError(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakoñczy³o siê niepowodzeniem");
-                        return;
-                    }
-
-                    // loguj zmiany
-                    int filesTransfered = log.files.Length;
-                    if (filesTransfered == 0) {
-                        m_database.LogActivation(log);
-                        m_showError(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
-                    } else {
-                        log.direction = eFtpDirection.Put;
-                        m_database.LogSync(log);
-                        m_showError(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
-                    }
-                }
-                #endregion
-            } catch (FtpUtilityException fex) {
-                m_showError(eSeverityCode.TransferError, fex.Message);
-            } catch (Exception se) {
-                m_showError(eSeverityCode.TransferError, se.Message);
-            }
-        }
-        #endregion
-
-        #region public methods
-        /// <summary>
-        /// Inicjuje w w¹tku z puli pêtlê przetwarzania ¿¹dañ pobrania plików z endpointów ftp
-        /// </summary>
-        public void Start()
-        {
-            InProgress = true;
-            m_filesTransfered = 0;
-            ThreadPool.QueueUserWorkItem(DispatchFtpThread);
-        }
-
-        /// <summary>
-        /// Inicjuje w w¹tku z puli pêtlê przetwarzania ¿¹dañ pobrania plików z endpointów ftp
-        /// </summary>
-        /// <param name="endpoint">Endpoint, dla którego symulujemy wywo³anie z harmonogramu</param>
-        public void StartNow(FtpEndpoint endpoint)
-        {
-            bool oldInProgress = InProgress;
-            InProgress = true;
-            m_filesTransfered = 0;
-            ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, new FtpScheduleModel() {
-                xx = -endpoint.XX
-            });
-            InProgress = oldInProgress;
-        }
-
-        /// <summary>
-        /// Przerywa oczekuj¹cy w¹tek i pozwala na zakoñczenie pracy dispatchera
-        /// </summary>
-        public void Stop()
-        {
-            InProgress = false;
-            m_are.Set();
-            m_showError(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
-        }
-
-        /// <summary>
-        /// U¿ywana w trybie: UniqueDateAndSizeInDatabase. Sprawdza, czy z danej instancji FtpGetWorkera pobrano ju¿ dany plik
-        /// </summary>
-        /// <param name="sFileName">Nazwa liku</param>
-        /// <param name="lLength">D³ugoœæ pliku</param>
-        /// <param name="dtDate">Data ostatniej modyfikacji pliku</param>
-        /// <returns>Czy z danej instancji FtpGetWorkera pobrano ju¿ dany plik</returns>
-        public bool CheckDatabase(string sFileName, long lLength, DateTime dtDate)
-        {
-            var file = new FtpFileModel() {
-                Instance = FtpDispatcherGlobals.Instance,
-                FileName = sFileName,
-                FileSize = lLength,
-                FileDate = dtDate
-            };
-
-            var (status, errmsg) = m_database.VerifyFile(file);
-            if (!string.IsNullOrEmpty(errmsg)) {
-                m_showError(eSeverityCode.Error, errmsg);
-                return false;
-            }
-
-            return status;
-        }
-        #endregion
+        if (!InProgress)
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Pobieranie przerwane przez uï¿½ytkownika");
     }
+
+    /// <summary>
+    /// Wykonuje transfer plikï¿½w na podstawie zaplanowanej pozycji harmonogramu
+    /// Jest uruchamiana przez dispatcher o odpowiedniej porze i tylko dla poprawnych pozycji harmonogramu
+    /// </summary>
+    /// <param name="iSchXX">
+    /// Jeï¿½li dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
+    /// jeï¿½li ujemny, to identyfikator endpointu, dla ktï¿½rego transfer uruchomiono rï¿½cznie
+    /// </param>
+    private void ExecuteFtpTransfer(object o)
+    {
+        FtpScheduleModel schedule = (FtpScheduleModel)o;
+        int key = schedule.xx;
+        var (endpoint, errmsg) = m_database.SelectEndpoint(key).Result;
+        if (!string.IsNullOrEmpty(errmsg)) {
+            if (errmsg == "0")
+                errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
+
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            return;
+        }
+
+        string remote = endpoint.host + endpoint.remDir;
+        FtpSyncModel log = new FtpSyncModel() { xx = key, syncTime = endpoint.nextSync };
+        IFtpUtility fu = IFtpUtility.Create(endpoint, this, FtpDispatcherGlobals.SyncMode);
+        eFtpDirection eDirection = endpoint.direction;
+
+        if (key < 0)
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpoczï¿½to transfer plikï¿½w z serwera {remote}");
+        else
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpoczï¿½to zaplanowany transfer plikï¿½w {schedule.name} z serwera {remote}");
+
+        try { // transferuj pliki
+            #region pobieranie
+            if (eDirection.HasFlag(eFtpDirection.Get)) {
+                log.files = fu.Download();
+                if (log.files == null) {
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Pobieranie plikï¿½w z serwera {remote} zakoï¿½czyï¿½o siï¿½ niepowodzeniem");
+                    return;
+                }
+
+                // loguj zmiany
+                int filesTransfered = log.files.Length;
+                if (filesTransfered == 0) {
+                    m_database.LogActivation(log);
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plikï¿½w odpowiednich do pobrania");
+                } else {
+                    log.direction = eFtpDirection.Get;
+                    m_database.LogSync(log);
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobrano {filesTransfered} plikï¿½w z serwera {remote}");
+                }
+            }
+            #endregion
+
+            #region wstawianie
+            if (eDirection.HasFlag(eFtpDirection.Put)) {
+                log.files = fu.Upload();
+                if (log.files == null) {
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Wstawianie plikï¿½w na serwer {remote} zakoï¿½czyï¿½o siï¿½ niepowodzeniem");
+                    return;
+                }
+
+                // loguj zmiany
+                int filesTransfered = log.files.Length;
+                if (filesTransfered == 0) {
+                    m_database.LogActivation(log);
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Nie znaleziono plikï¿½w do wstawienia na serwer {remote}");
+                } else {
+                    log.direction = eFtpDirection.Put;
+                    m_database.LogSync(log);
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawiono {filesTransfered} plikï¿½w na serwer {remote}");
+                }
+            }
+            #endregion
+        } catch (FtpUtilityException fex) {
+            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, fex.Message);
+        } catch (Exception se) {
+            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, se.Message);
+        }
+    }
+    #endregion
+
+    #region public methods
+    /// <summary>
+    /// Inicjuje w wï¿½tku z puli pï¿½tlï¿½ przetwarzania ï¿½ï¿½daï¿½ pobrania plikï¿½w z endpointï¿½w ftp
+    /// </summary>
+    public void Start()
+    {
+        InProgress = true;
+        m_filesTransfered = 0;
+        ThreadPool.QueueUserWorkItem(DispatchFtpThread);
+    }
+
+    /// <summary>
+    /// Inicjuje w wï¿½tku z puli pï¿½tlï¿½ przetwarzania ï¿½ï¿½daï¿½ pobrania plikï¿½w z endpointï¿½w ftp
+    /// </summary>
+    /// <param name="endpoint">Endpoint, dla ktï¿½rego symulujemy wywoï¿½anie z harmonogramu</param>
+    public void StartNow(FtpEndpoint endpoint)
+    {
+        bool oldInProgress = InProgress;
+        InProgress = true;
+        m_filesTransfered = 0;
+        ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, new FtpScheduleModel() {
+            xx = -endpoint.XX
+        });
+        InProgress = oldInProgress;
+    }
+
+    /// <summary>
+    /// Przerywa oczekujï¿½cy wï¿½tek i pozwala na zakoï¿½czenie pracy dispatchera
+    /// </summary>
+    public void Stop()
+    {
+        InProgress = false;
+        m_are.Set();
+        FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plikï¿½w.");
+    }
+
+    /// <summary>
+    /// Uï¿½ywana w trybie: UniqueDateAndSizeInDatabase. Sprawdza, czy z danej instancji FtpGetWorkera pobrano juï¿½ dany plik
+    /// </summary>
+    /// <param name="sFileName">Nazwa liku</param>
+    /// <param name="lLength">Dï¿½ugoï¿½ï¿½ pliku</param>
+    /// <param name="dtDate">Data ostatniej modyfikacji pliku</param>
+    /// <returns>Czy z danej instancji FtpGetWorkera pobrano juï¿½ dany plik</returns>
+    public bool CheckDatabase(string sFileName, long lLength, DateTime dtDate)
+    {
+        var file = new FtpFileModel() {
+            Instance = FtpDispatcherGlobals.Instance,
+            FileName = sFileName,
+            FileSize = lLength,
+            FileDate = dtDate
+        };
+
+        var (status, errmsg) = m_database.VerifyFile(file);
+        if (!string.IsNullOrEmpty(errmsg)) {
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            return false;
+        }
+
+        return status;
+    }
+    #endregion
 }

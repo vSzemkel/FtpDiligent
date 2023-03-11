@@ -6,22 +6,21 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
-{
-    using System;
-    using System.Diagnostics;
+namespace FtpDiligent;
 
-    /// <summary>
-    /// Rodzaje komunikatów diagnostycznych
-    /// </summary>
-    [Flags]
-    public enum eSeverityCode : byte
-    {
-        NextSync      = 0,                              // always on
-        Error         = EventLogEntryType.Error,        // 1
-        Warning       = EventLogEntryType.Warning,      // 2
-        Message       = EventLogEntryType.Information,  // 4
-        FileInfo      = EventLogEntryType.SuccessAudit, // 8
-        TransferError = 16,
-    }
+using System;
+using System.Diagnostics;
+
+/// <summary>
+/// Rodzaje komunikatów diagnostycznych
+/// </summary>
+[Flags]
+public enum eSeverityCode : byte
+{
+    NextSync      = 0,                              // always on
+    Error         = EventLogEntryType.Error,        // 1
+    Warning       = EventLogEntryType.Warning,      // 2
+    Message       = EventLogEntryType.Information,  // 4
+    FileInfo      = EventLogEntryType.SuccessAudit, // 8
+    TransferError = 16,
 }

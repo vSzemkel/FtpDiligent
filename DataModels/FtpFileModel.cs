@@ -6,18 +6,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
-{
-    using System;
+namespace FtpDiligent;
 
-    /// <summary>
-    /// Dane transferowanego pliku
-    /// </summary>
-    public struct FtpFileModel
-    {
-        public int Instance { get; set; } // identyfikator instancji workera
-        public string FileName { get; set; }
-        public long FileSize { get; set; }
-        public DateTime FileDate { get; set; }
-    }
+using System;
+
+/// <summary>
+/// Dane transferowanego pliku
+/// </summary>
+public struct FtpFileModel
+{
+    public int Instance { get; set; } // identyfikator instancji workera
+    public string FileName { get; set; }
+    public long FileSize { get; set; }
+    public DateTime FileDate { get; set; }
 }

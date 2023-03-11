@@ -6,14 +6,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+/// <summary>
+/// Tryb transferu plików
+/// </summary>
+public enum eFtpTransferMode : byte
 {
-    /// <summary>
-    /// Tryb transferu plików
-    /// </summary>
-    public enum eFtpTransferMode : byte
-    {
-        Ascii = 1,
-        Binary
-    }
+    Ascii = 1,
+    Binary
 }

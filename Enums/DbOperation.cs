@@ -6,24 +6,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+/// <summary>
+/// Typ wyliczeniowy służący do określania trybu wywołań procedur modyfikujących dane w bazie
+/// </summary>
+public enum eDbOperation : byte
 {
     /// <summary>
-    /// Typ wyliczeniowy służący do określania trybu wywołań procedur modyfikujących dane w bazie
+    /// Wstawienie rekordu
     /// </summary>
-    public enum eDbOperation : byte
-    {
-        /// <summary>
-        /// Wstawienie rekordu
-        /// </summary>
-        Insert = 0,
-        /// <summary>
-        /// Modyfikacja rekordu
-        /// </summary>
-        Update,
-        /// <summary>
-        /// Usunięcie rekordu
-        /// </summary>
-        Delete
-    }
+    Insert = 0,
+    /// <summary>
+    /// Modyfikacja rekordu
+    /// </summary>
+    Update,
+    /// <summary>
+    /// Usunięcie rekordu
+    /// </summary>
+    Delete
 }

@@ -6,58 +6,57 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System.IO;
+
+public interface IFtpUtility
 {
-    using System.IO;
-
-    public interface IFtpUtility
+    #region factory methods
+    /// <summary>
+    /// Konstruktor FtpUtility sterowanego przez <see>FtpDispatcher</see>
+    /// </summary>
+    /// <param name="endpoint">Parametry serwera</param>
+    /// <param name="dispatcher">Obiekt sterujący wątkami</param>
+    /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
+    static IFtpUtility Create(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
     {
-        #region factory methods
-        /// <summary>
-        /// Konstruktor FtpUtility sterowanego przez <see>FtpDispatcher</see>
-        /// </summary>
-        /// <param name="endpoint">Parametry serwera</param>
-        /// <param name="dispatcher">Obiekt sterujący wątkami</param>
-        /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
-        static IFtpUtility Create(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
-        {
-            switch (endpoint.protocol) {
-                case eFtpProtocol.FTP:
-                    return new FtpsUtility(endpoint, dispatcher, mode, false);
-                case eFtpProtocol.FTPS:
-                    return new FtpsUtility(endpoint, dispatcher, mode, true);
-                case eFtpProtocol.SFTP:
-                    return new SFtpUtility(endpoint, dispatcher, mode);
-            }
-
-            return null;
+        switch (endpoint.protocol) {
+            case eFtpProtocol.FTP:
+                return new FtpsUtility(endpoint, dispatcher, mode, false);
+            case eFtpProtocol.FTPS:
+                return new FtpsUtility(endpoint, dispatcher, mode, true);
+            case eFtpProtocol.SFTP:
+                return new SFtpUtility(endpoint, dispatcher, mode);
         }
 
-        /// <summary>
-        /// Konstruktor FtpUtility dla pojedynczych usług
-        /// </summary>
-        /// <param name="endpoint">Parametry serwera</param>
-        /// <param name="window">Główne okno aplikacji</param>
-        static IFtpUtility Create(FtpEndpointModel endpoint, MainWindow window)
-        {
-            switch (endpoint.protocol) {
-                case eFtpProtocol.FTP:
-                    return new FtpsUtility(endpoint, window, false);
-                case eFtpProtocol.FTPS:
-                    return new FtpsUtility(endpoint, window, true);
-                case eFtpProtocol.SFTP:
-                    return new SFtpUtility(endpoint, window);
-            }
-
-            return null;
-        }
-        #endregion
-
-        FtpSyncFileModel[] Download();
-        FtpSyncFileModel[] Upload();
-        bool UploadHotFile(FileInfo file);
-        bool CheckConnection(ref string sErrInfo);
-        bool CheckLocalDirectory();
-        string GetLocalDirectory();
+        return null;
     }
+
+    /// <summary>
+    /// Konstruktor FtpUtility dla pojedynczych usług
+    /// </summary>
+    /// <param name="endpoint">Parametry serwera</param>
+    /// <param name="window">Główne okno aplikacji</param>
+    static IFtpUtility Create(FtpEndpointModel endpoint, MainWindow window)
+    {
+        switch (endpoint.protocol) {
+            case eFtpProtocol.FTP:
+                return new FtpsUtility(endpoint, window, false);
+            case eFtpProtocol.FTPS:
+                return new FtpsUtility(endpoint, window, true);
+            case eFtpProtocol.SFTP:
+                return new SFtpUtility(endpoint, window);
+        }
+
+        return null;
+    }
+    #endregion
+
+    FtpSyncFileModel[] Download();
+    FtpSyncFileModel[] Upload();
+    bool UploadHotFile(FileInfo file);
+    bool CheckConnection(ref string sErrInfo);
+    bool CheckLocalDirectory();
+    string GetLocalDirectory();
 }

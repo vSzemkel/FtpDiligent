@@ -6,27 +6,26 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System;
+
+/// <summary>
+/// Harmonogram transferów FTP
+/// </summary>
+public struct FtpScheduleModel
 {
-    using System;
+    public int xx;         // identyfikator schematu uruchomiania
+    public int endXX;      // identyfikator endpointu
+    public short stride;   // co ile minut ponowić
+    public TimeSpan startSpan;
+    public TimeSpan stopSpan;
+    public DateTime nextSyncTime;
+    public string name;
+    public bool enabled;
 
     /// <summary>
-    /// Harmonogram transferów FTP
+    /// 32 bitowy hash pary [xx, nextSyncTime]
     /// </summary>
-    public struct FtpScheduleModel
-    {
-        public int xx;         // identyfikator schematu uruchomiania
-        public int endXX;      // identyfikator endpointu
-        public short stride;   // co ile minut ponowić
-        public TimeSpan startSpan;
-        public TimeSpan stopSpan;
-        public DateTime nextSyncTime;
-        public string name;
-        public bool enabled;
-
-        /// <summary>
-        /// 32 bitowy hash pary [xx, nextSyncTime]
-        /// </summary>
-        public int Hash => (int)nextSyncTime.ToBinary() + (xx << 16);
-    }
+    public int Hash => (int)nextSyncTime.ToBinary() + (xx << 16);
 }

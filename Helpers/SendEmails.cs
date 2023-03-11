@@ -1,117 +1,116 @@
 // -----------------------------------------------------------------------
 // <copyright file="SendEmails.cs" company="Agora SA">
-//     Copyright (c) TDE - Development IT , sierpieñ 2019
+//     Copyright (c) TDE - Development IT , sierpieï¿½ 2019
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent
+namespace FtpDiligent;
+
+using System;
+using System.Linq;
+
+using MailKit.Net.Smtp;
+using MimeKit;
+
+public class SendEmails
 {
-    using System;
-    using System.Linq;
+    #region fields
+    /// <summary>
+    /// Nazwa serwera mailowego
+    /// </summary>
+    private readonly string m_mailServer = "smtp.sendgrid.net";
 
-    using MailKit.Net.Smtp;
-    using MimeKit;
+    /// <summary>
+    /// Klucz usï¿½ugi SendGrid
+    /// </summary>
+    public string m_sendGridKey;
 
-    public class SendEmails
+    /// <summary>
+    /// Referencja do gï¿½ï¿½wnego okna
+    /// </summary>
+    public MainWindow m_mainWnd;
+
+    /// <summary>
+    /// Na jaki adres wysï¿½aï¿½ mailowe powiadomienia o bï¿½ï¿½dach
+    /// </summary>
+    public string m_errorsMailTo;
+    #endregion
+
+    #region constructor
+    /// <summary>
+    /// Klasa pomocnicza do wysyï¿½ania maili
+    /// </summary>
+    /// <param name="wnd">Gï¿½ï¿½wne okno aplikacji WPF</param>
+    /// <param name="errorsMailTo">Lista adresï¿½w odbiorcï¿½w, rozdzialona ï¿½rednikami</param>
+    /// <param name="apiKey">Klucz prywatny do usï¿½ugi SendGrid</param>
+    public SendEmails(MainWindow wnd, string errorsMailTo, string apiKey)
     {
-        #region fields
-        /// <summary>
-        /// Nazwa serwera mailowego
-        /// </summary>
-        private readonly string m_mailServer = "smtp.sendgrid.net";
+        m_mainWnd = wnd;
+        m_sendGridKey = apiKey;
+        m_errorsMailTo = errorsMailTo;
+    }
+    #endregion
 
-        /// <summary>
-        /// Klucz us³ugi SendGrid
-        /// </summary>
-        public string m_sendGridKey;
-
-        /// <summary>
-        /// Referencja do g³ównego okna
-        /// </summary>
-        public MainWindow m_mainWnd;
-
-        /// <summary>
-        /// Na jaki adres wys³aæ mailowe powiadomienia o b³êdach
-        /// </summary>
-        public string m_errorsMailTo;
-        #endregion
-
-        #region constructor
-        /// <summary>
-        /// Klasa pomocnicza do wysy³ania maili
-        /// </summary>
-        /// <param name="wnd">G³ówne okno aplikacji WPF</param>
-        /// <param name="errorsMailTo">Lista adresów odbiorców, rozdzialona œrednikami</param>
-        /// <param name="apiKey">Klucz prywatny do us³ugi SendGrid</param>
-        public SendEmails(MainWindow wnd, string errorsMailTo, string apiKey)
-        {
-            m_mainWnd = wnd;
-            m_sendGridKey = apiKey;
-            m_errorsMailTo = errorsMailTo;
+    /// <summary>
+    /// Uruchamia wysyï¿½kï¿½ maili przez usï¿½ugï¿½ SendGrid
+    /// </summary>
+    /// <param name="error">Bï¿½ï¿½d do wysï¿½ania</param>
+    public void Run(string error)
+    {
+        if (!string.IsNullOrEmpty(m_errorsMailTo)) {
+            var message = PrepareMimeMessage(error);
+            SendEmail(message);
         }
-        #endregion
+    }
 
-        /// <summary>
-        /// Uruchamia wysy³kê maili przez us³ugê SendGrid
-        /// </summary>
-        /// <param name="error">B³¹d do wys³ania</param>
-        public void Run(string error)
-        {
-            if (!string.IsNullOrEmpty(m_errorsMailTo)) {
-                var message = PrepareMimeMessage(error);
-                SendEmail(message);
-            }
+    /// <summary>
+    /// Buduje wiadomoï¿½ï¿½ na podstawie danych wyciï¿½gniï¿½tych z bazy
+    /// </summary>
+    /// <param name="sdr">Rekord z bazy danych</param>
+    /// <returns>Wiadomoï¿½ï¿½ do wysï¿½ania</returns>
+    private MimeMessage PrepareMimeMessage(string error) {
+        try { 
+            var msg = new MimeMessage();
+            msg.Subject = "Powiadomienie o bï¿½ï¿½dzie transferu plikï¿½w";
+            msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => MailboxAddress.Parse(s)));
+            var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@sendgrid.net");
+            msg.Sender = senderMailbox;
+            msg.From.Add(senderMailbox);
+
+            var body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = error };
+            msg.Body = body;
+
+            return msg;
+        } catch (Exception exc) {
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
+            return null;
         }
+    }
 
-        /// <summary>
-        /// Buduje wiadomoœæ na podstawie danych wyci¹gniêtych z bazy
-        /// </summary>
-        /// <param name="sdr">Rekord z bazy danych</param>
-        /// <returns>Wiadomoœæ do wys³ania</returns>
-        private MimeMessage PrepareMimeMessage(string error) {
-            try { 
-                var msg = new MimeMessage();
-                msg.Subject = "Powiadomienie o b³êdzie transferu plików";
-                msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => MailboxAddress.Parse(s)));
-                var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@sendgrid.net");
-                msg.Sender = senderMailbox;
-                msg.From.Add(senderMailbox);
+    /// <summary>
+    /// Wysyï¿½anie wiadomoï¿½ci protokoï¿½em SMTP
+    /// </summary>
+    /// <param name="msg">Wiadomoï¿½ï¿½</param>
+    /// <returns>Status wysyï¿½ki</returns>
+    private bool SendEmail(MimeMessage msg) {
+        try {
+            using (var client = new SmtpClient()) {
+                client.AuthenticationMechanisms.Remove("XOAUTH2");
+                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
-                var body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = error };
-                msg.Body = body;
+                client.Connect(m_mailServer, 587, false);
+                client.Authenticate("apikey", m_sendGridKey);
 
-                return msg;
-            } catch (Exception exc) {
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
-                return null;
+                client.Send(msg);
+                client.Disconnect(true);
             }
-        }
 
-        /// <summary>
-        /// Wysy³anie wiadomoœci protoko³em SMTP
-        /// </summary>
-        /// <param name="msg">Wiadomoœæ</param>
-        /// <returns>Status wysy³ki</returns>
-        private bool SendEmail(MimeMessage msg) {
-            try {
-                using (var client = new SmtpClient()) {
-                    client.AuthenticationMechanisms.Remove("XOAUTH2");
-                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-
-                    client.Connect(m_mailServer, 587, false);
-                    client.Authenticate("apikey", m_sendGridKey);
-
-                    client.Send(msg);
-                    client.Disconnect(true);
-                }
-
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wys³ano {msg.To.Count} powiadomienie/a mailowe.");
-                return true;
-            } catch (Exception exc) {
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
-                return false;
-            }
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wysï¿½ano {msg.To.Count} powiadomienie/a mailowe.");
+            return true;
+        } catch (Exception exc) {
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
+            return false;
         }
     }
 }
