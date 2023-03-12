@@ -11,29 +11,29 @@ namespace FtpDiligent;
 using System;
 using System.Threading;
 
-public sealed class FtpDispatcher
+public sealed class FtpDispatcher : IFtpDispatcher
 {
     #region fields
     /// <summary>
     /// Ile czasu (ms) odczekać po błędzie pobierania harmonogramu przed ponowieniem
     /// </summary>
-    public const int m_retryWaitTime = 10 * 60 * 1000;
+    private const int m_retryWaitTime = 10 * 60 * 1000;
 
     /// <summary>
     /// Co ile czasu (ms) sprawdzać czy scheduler pokazuje kolejny transfer
     /// </summary>
-    public const int m_refractoryWaitTime = 5000;
+    private const int m_refractoryWaitTime = 5000;
 
     /// <summary>
     /// Zlicza przetransportowane pliki.
     /// Nie ma sensu restartować dispatchera, który dotąd nic nie przesłał
     /// </summary>
-    public int m_filesTransfered;
+    private int m_filesTransfered;
 
     /// <summary>
     /// Do wstrzymywania wątku roboczego w oczekiwaniu na planowany czas uruchomienia
     /// </summary>
-    private AutoResetEvent m_are = new AutoResetEvent(false);
+    private AutoResetEvent m_are = new(false);
 
     /// <summary>
     /// Klient bazy danych
@@ -253,5 +253,15 @@ public sealed class FtpDispatcher
 
         return status;
     }
+
+    /// <summary>
+    /// Udostępnia liczbę przesłanych plików
+    /// </summary>
+    public int GetNumberOfFilesTransferred() => m_filesTransfered;
+
+    /// <summary>
+    /// Zlicza przesłane pliki
+    /// </summary>
+    public void NotifyFileTransfer() => ++m_filesTransfered;
     #endregion
 }

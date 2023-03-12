@@ -201,7 +201,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     public (FtpScheduleModel, string) GetNextSync(int instance)
     {
         var ret = new FtpScheduleModel();
-        SqlConnection conn = new SqlConnection(m_connStr);
+        var conn = new SqlConnection(m_connStr);
         SqlCommand cmd = conn.CreateCommand();
         cmd.CommandText = "exec [ftp].[sp_select_next_sync] @ins_xx";
         cmd.Parameters.Add("ins_xx", SqlDbType.Int).Value = instance;
@@ -238,7 +238,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     public async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
     {
         var ret = new FtpEndpointModel();
-        SqlConnection conn = new SqlConnection(m_connStr);
+        var conn = new SqlConnection(m_connStr);
         SqlCommand cmd = conn.CreateCommand();
         cmd.Parameters.Add("sch_xx", SqlDbType.Int).Value = schedule;
         cmd.CommandText = "exec [ftp].[sp_endpoint_for_schedule] @sch_xx";
@@ -277,7 +277,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     /// <returns>Komunikat o ewentualnym błędzie</returns>
     public string LogActivation(FtpSyncModel sync)
     {
-        SqlConnection conn = new SqlConnection(m_connStr);
+        var conn = new SqlConnection(m_connStr);
         SqlCommand cmd = conn.CreateCommand();
         cmd.CommandText = "exec [ftp].[sp_log_activation] @xx,@sync_time";
         cmd.Parameters.Add("xx", SqlDbType.Int).Value = sync.xx;
@@ -293,7 +293,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     /// <returns>Komunikat o ewentualnym błędzie</returns>
     public string LogSync(FtpSyncModel sync)
     {
-        SqlConnection conn = new SqlConnection(m_connStr);
+        var conn = new SqlConnection(m_connStr);
         SqlCommand cmd = conn.CreateCommand();
         cmd.CommandText = "exec [ftp].[sp_log_download] @transdir,@xx,@sync_time,@file_name,@file_size,@file_date,@md5";
         var par = cmd.Parameters;
@@ -325,7 +325,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     /// <returns>Komunikat o ewentualnym błędzie</returns>
     public (bool,string) VerifyFile(FtpFileModel file)
     {
-        SqlConnection conn = new SqlConnection(m_connStr);
+        var conn = new SqlConnection(m_connStr);
         SqlCommand cmd = conn.CreateCommand();
         cmd.CommandText = "exec [ftp].[sp_check_file] @ins_xx,@file_name,@file_size,@file_date";
         var par = cmd.Parameters;

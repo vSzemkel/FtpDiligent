@@ -43,16 +43,16 @@ public partial class Sterowanie : UserControl
     /// <summary>
     /// Zarządza wątkami roboczymi
     /// </summary>
-    public FtpDispatcher m_dispatcher;
+    private IFtpDispatcher m_dispatcher;
     #endregion
 
     #region constructor
-    public Sterowanie(MainWindow wnd, IFtpDiligentDatabaseClient database)
+    public Sterowanie(MainWindow wnd, IFtpDispatcher dispatcher)
     {
         InitializeComponent();
 
         this.m_mainWnd = wnd;
-        this.m_dispatcher = new FtpDispatcher(database);
+        this.m_dispatcher = dispatcher;
         this.cbSyncMode.ItemsSource = Enum.GetValues(typeof(eSyncFileMode));
         this.lvFilesLog.ItemsSource = m_fileInfo;
         this.lvErrLog.ItemsSource = m_errInfo;
@@ -108,7 +108,7 @@ public partial class Sterowanie : UserControl
     /// </summary>
     public void RestartScheduler()
     {
-        if (m_dispatcher.m_filesTransfered > 0) {
+        if (m_dispatcher.GetNumberOfFilesTransferred() > 0) {
             m_dispatcher.Stop();
             FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Restarting dispatcher");
             Thread.Sleep(5000);

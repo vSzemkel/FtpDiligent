@@ -8,6 +8,8 @@
 
 namespace FtpDiligent;
 
+using Autofac;
+
 using System;
 using System.Configuration;
 using System.Diagnostics;
@@ -102,14 +104,14 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         m_database = database;
-        m_tbSterowanie = new Sterowanie(this, database);
+        m_tbSterowanie = FtpDispatcherGlobals.AutofacScope.Resolve<Sterowanie>(new TypedParameter(typeof(MainWindow), this));
         m_tbSterowanie.tbFilesCount.DataContext = 0;
         m_tbSterowanie.cbSyncMode.DataContext = this;
         this.tabSterowanie.Content = m_tbSterowanie;
 
-        m_tbSerwery = new Serwery(this, database);
+        m_tbSerwery = FtpDispatcherGlobals.AutofacScope.Resolve<Serwery>(new TypedParameter(typeof(MainWindow), this));
         this.tabSerwery.Content = m_tbSerwery;
-        m_tbHarmonogramy = new Harmonogramy(this, database);
+        m_tbHarmonogramy = FtpDispatcherGlobals.AutofacScope.Resolve<Harmonogramy>(new TypedParameter(typeof(MainWindow), this));
         this.tabHarmonogramy.Content = m_tbHarmonogramy;
 
         CheckEventLog();

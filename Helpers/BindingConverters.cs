@@ -25,7 +25,7 @@ public class SelectedItemEnabler : IValueConverter {
 
 public class ImageForOperation : IValueConverter
 {
-    static Dictionary<int, string> mapping = new Dictionary<int, string>() {
+    static Dictionary<int, string> mapping = new() {
         {1, "/FtpDiligent;component/Images/get.png" },
         {2, "/FtpDiligent;component/Images/put.png" },
         {4, "/FtpDiligent;component/Images/hot.png" }
@@ -44,7 +44,7 @@ public class ImageForOperation : IValueConverter
 
 public class ImageForError : IValueConverter
 {
-    static Dictionary<eSeverityCode, string> mapping = new Dictionary<eSeverityCode, string>() {
+    static Dictionary<eSeverityCode, string> mapping = new() {
         {eSeverityCode.Warning, "/FtpDiligent;component/Images/warn.png" },
         {eSeverityCode.Error, "/FtpDiligent;component/Images/err.png" },
         {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" }

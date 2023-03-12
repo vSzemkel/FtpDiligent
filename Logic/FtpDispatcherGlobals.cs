@@ -6,6 +6,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Autofac;
+
 using System;
 
 namespace FtpDiligent;
@@ -51,4 +53,9 @@ public static class FtpDispatcherGlobals
     /// Wrapper do metody ShowErrorInfoInternal
     /// </summary>
     public static Action<eSeverityCode, string> ShowError;
+
+    /// <summary>
+    /// Interfejs do kontenera DI
+    /// </summary>
+    public static ILifetimeScope AutofacScope;
 }

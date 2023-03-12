@@ -16,24 +16,24 @@ using System.Linq;
 using FluentFTP;
 
 /// <summary>
-/// Umo�liwia przegl�danie zasob�w serwera FTP i pobieranie plik�w
-/// protoko�em FTP poprzez kana� szyfrowany na poziomie TSL
+/// Umożliwia przeglądanie zasobów serwera FTP i pobieranie plików
+/// protokołem FTP poprzez kanał szyfrowany na poziomie TSL
 /// </summary>
 public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
 {
     #region fields
     /// <summary>
-    /// Rozmiar buforu u�ywanego przy kopiowaniu plik�w
+    /// Rozmiar buforu używanego przy kopiowaniu plik�w
     /// </summary>
     private const int m_bufferSize = 1 << 12;
 
     /// <summary>
-    /// Klient us�ugi FTPS z biblioteki FluentFTP
+    /// Klient usługi FTPS z biblioteki FluentFTP
     /// </summary>
     private FtpClient m_ftpsClient;
 
     /// <summary>
-    /// Czy u�y� po��czenia szyfrowanego
+    /// Czy użył połączenia szyfrowanego
     /// </summary>
     private bool m_secure;
     #endregion
@@ -43,16 +43,16 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     /// Konstruktor FtpUtility sterowanego przez <see>FtpDispatcher</see>
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="dispatcher">Obiekt steruj�cy w�tkami</param>
-    /// <param name="mode">Algorytm kwalifikacji plik�w do transferu</param>
-    /// <param name="secure">Czy u�y� po��czenia szyfrowanego</param>
+    /// <param name="dispatcher">Obiekt sterujący wątkami</param>
+    /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
+    /// <param name="secure">Czy użył połączenia szyfrowanego</param>
     public FtpsUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode, bool secure)
         : base(endpoint, dispatcher, mode) {
         m_secure = secure;
     }
 
     /// <summary>
-    /// Konstruktor FtpUtility dla pojedynczych us�ug
+    /// Konstruktor FtpUtility dla pojedynczych usług
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
     public FtpsUtility(FtpEndpointModel endpoint, bool secure)
@@ -61,7 +61,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     }
 
     /// <summary>
-    /// Destruktor zwalniaj�cy zasoby
+    /// Destruktor zwalniający zasoby
     /// </summary>
     ~FtpsUtility()
     {
@@ -72,7 +72,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
 
     #region public methods
     /// <summary>
-    /// ��czy si� z endpointem i pobiera wszystkie pliki p�niejsze ni� data ostatniego pobrania
+    /// Łączy się z endpointem i pobiera wszystkie pliki późniejsze niż data ostatniego pobrania
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Download()
@@ -97,7 +97,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
             }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta�o przerwane przez u�ytkownika");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_ftpsClient.Disconnect();
 
@@ -105,7 +105,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     }
 
     /// <summary>
-    /// ��czy si� z endpointem i wstawia wszystkie pliki z lokalnego katalogu
+    /// Łączy się z endpointem i wstawia wszystkie pliki z lokalnego katalogu
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Upload()
@@ -131,7 +131,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
         }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta�o przerwane przez u�ytkownika");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_ftpsClient.Disconnect();
 
@@ -139,7 +139,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     }
 
     /// <summary>
-    /// ��czy si� z endpointem i wstawia jeden pliki z lokalnego hot folderu
+    /// Łączy się z endpointem i wstawia jeden pliki z lokalnego hot folderu
     /// </summary>
     /// <returns>Status powodzenia operacji</returns>
     public bool UploadHotFile(FileInfo file)
@@ -161,9 +161,9 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
 
     #region protected override methods
     /// <summary>
-    /// Otwiera po��czenie z serwerem FTP, autoryzuje si� i nawi�zuje sesj�
+    /// Otwiera połączenie z serwerem FTP, autoryzuje się i nawiązuje sesję
     /// </summary>
-    /// <returns>True, a je�li si� nie uda, rzuca wyj�tek</returns>
+    /// <returns>True, a jeśli się nie uda, rzuca wyjątek</returns>
     protected override bool Connect()
     {
         m_ftpsClient = new FtpClient(m_sHost, m_sUser, m_sPass);
@@ -226,7 +226,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
                 m_ftpsClient.DownloadStream(stream, file.Name);
         } catch(Exception ex) {
             var dirsep = m_sRemoteDir.EndsWith('/') ? string.Empty : "/";
-            throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod�o si�. {ex.Message}");
+            throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiodło się. {ex.Message}");
         }
 
         if (FtpDispatcherGlobals.CheckTransferedStorage) {
@@ -236,8 +236,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
             return bStatus;
         }
 
-        if (m_Disp != null)
-            m_Disp.m_filesTransfered++;
+        m_Disp?.NotifyFileTransfer();
 
         return true;
     }
@@ -245,8 +244,8 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     /// <summary>
     /// Wstawia plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
     /// </summary>
-    /// <param name="pFI">struktura opisuj�ca plik lub katalog</param>
-    /// <returns>Czy dosz�o do wstawienia pliku</returns>
+    /// <param name="pFI">struktura opisująca plik lub katalog</param>
+    /// <returns>Czy doszło do wstawienia pliku</returns>
     private bool PutFile(FileInfo pFI)
     {
         if (pFI.Length == 0)
@@ -279,20 +278,19 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
             if (FtpDispatcherGlobals.CheckTransferedStorage)
                 return CheckRemoteStorage(remoteFilename, pFI.Length);
         } catch (Exception ex) {
-            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod�o si�. {ex.Message}");
+            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się. {ex.Message}");
         }
 
-        if (m_Disp != null)
-            m_Disp.m_filesTransfered++;
+        m_Disp?.NotifyFileTransfer();
 
         return true;
     }
 
     /// <summary>
-    /// Sprawdza, czy w zasobie zdalnym istnieje ju� plik o zadanej nazwie i rozmiarze
+    /// Sprawdza, czy w zasobie zdalnym istnieje już plik o zadanej nazwie i rozmiarze
     /// </summary>
     /// <param name="remoteName">Nazwa liku</param>
-    /// <param name="length">D�ugo�� pliku</param>
+    /// <param name="length">Długość pliku</param>
     /// <returns>Czy istnieje plik o zadanych cechach w katalogu zdalnym</returns>
     private bool CheckRemoteStorage(string remoteName, long length)
     {

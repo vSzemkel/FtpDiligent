@@ -37,7 +37,7 @@ public class WIN32_FIND_DATA
 }
 
 /// <summary>
-/// Umożliwia przeglądanie zasob,ow serwera FTP i pobieranie plik�w
+/// Umożliwia przeglądanie zasob,ow serwera FTP i pobieranie plików
 /// </summary>
 public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
 {
@@ -160,7 +160,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
         IntPtr hFind = FtpFindFirstFile(hFtpSess, IntPtr.Zero, pFD, INTERNET_FLAG_RELOAD, iContext);
         if (hFind == IntPtr.Zero) {
             if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
-                throw new FtpUtilityException("B��d przegl�dania zasobu " + m_sHost + m_sRemoteDir);
+                throw new FtpUtilityException("Błąd przeglądania zasobu " + m_sHost + m_sRemoteDir);
             else
                 goto noFilesFound;
         }
@@ -192,10 +192,10 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
             }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta�o przerwane przez u�ytkownika");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
-            throw new FtpUtilityException("B��d pobierania z zasobu " + m_sHost + m_sRemoteDir);
+            throw new FtpUtilityException("Błąd pobierania z zasobu " + m_sHost + m_sRemoteDir);
 
 noFilesFound:
         InternetCloseHandle(hFind);
@@ -231,7 +231,7 @@ noFilesFound:
         }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta�o przerwane przez u�ytkownika");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         Dispose();
 
@@ -261,9 +261,9 @@ noFilesFound:
 
     #region protected override methods
     /// <summary>
-    /// Otwiera po��czenie z serwerem FTP, autoryzuje si� i nawi�zuje sesj�
+    /// Otwiera połączenie z serwerem FTP, autoryzuje się i nawiązuje sesję
     /// </summary>
-    /// <returns>True, a je�li si� nie uda, rzuca wyj�tek</returns>
+    /// <returns>True, a jeśli się nie uda, rzuca wyjątek</returns>
     protected override bool Connect()
     {
         iContext = IntPtr.Zero;
@@ -285,8 +285,8 @@ noFilesFound:
     /// <summary>
     /// Pobiera plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
     /// </summary>
-    /// <param name="pFD">struktura opisuj�ca plik lub katalog</param>
-    /// <returns>Czy dosz�o do pobrania pliku</returns>
+    /// <param name="pFD">struktura opisująca plik lub katalog</param>
+    /// <returns>Czy doszło do pobrania pliku</returns>
     private bool GetFile(WIN32_FIND_DATA pFD)
     {
         if ((pFD.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0)
@@ -319,8 +319,7 @@ noFilesFound:
             throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiod�o si�");
         }
 
-        if (m_Disp != null)
-            m_Disp.m_filesTransfered++;
+        m_Disp?.NotifyFileTransfer();
 
         if (FtpDispatcherGlobals.CheckTransferedStorage) {
             bool bStatus = CheckLocalStorage(pFD.cFileName, size);
@@ -365,8 +364,7 @@ noFilesFound:
         if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
             throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod�o si�", iWin32Error);
 
-        if (m_Disp != null)
-            m_Disp.m_filesTransfered++;
+        m_Disp?.NotifyFileTransfer();
 
         if (FtpDispatcherGlobals.CheckTransferedStorage)
             return CheckRemoteStorage(pFI.Name, pFI.Length);
@@ -375,10 +373,10 @@ noFilesFound:
     }
 
     /// <summary>
-    /// Sprawdza, czy w zasobie zdalnym istnieje ju� plik o zadanej nazwie i rozmiarze
+    /// Sprawdza, czy w zasobie zdalnym istnieje już plik o zadanej nazwie i rozmiarze
     /// </summary>
-    /// <param name="sFileName">Nazwa liku</param>
-    /// <param name="sLength">D�ugo�� pliku</param>
+    /// <param name="remoteName">Nazwa liku</param>
+    /// <param name="length">Długość pliku</param>
     /// <returns>Czy istnieje plik o zadanych cechach w katalogu zdalnym</returns>
     private bool CheckRemoteStorage(string sFileName, long sLength)
     {
@@ -395,8 +393,8 @@ noFilesFound:
     /// <summary>
     /// Konwertuje daty. Istotne tylko w trybie x64
     /// </summary>
-    /// <param name="ft">Warto�� typu System.Runtime.InteropServices.ComTypes.FILETIME</param>
-    /// <returns>R�wnowa�na warto�� typu DateTime</returns>
+    /// <param name="ft">Wartość typu System.Runtime.InteropServices.ComTypes.FILETIME</param>
+    /// <returns>Równoważna wartość typu DateTime</returns>
     DateTime FoundTime2DateTime(FILETIME ft) => DateTime.FromFileTime(Convert.ToInt64(ft.dwHighDateTime) << 32 + ft.dwLowDateTime);
 
     /// <summary>

@@ -201,7 +201,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     public (FtpScheduleModel, string) GetNextSync(int instance)
     {
         var ret = new FtpScheduleModel();
-        OracleConnection conn = new OracleConnection(m_connStr);
+        var conn = new OracleConnection(m_connStr);
         OracleCommand cmd = conn.CreateCommand();
         cmd.CommandText = "begin select_next_sync(:ins_xx,:refCur); end;";
         cmd.Parameters.Add("ins_xx", OracleDbType.Int32).Value = instance;
@@ -239,7 +239,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     public async Task<(FtpEndpointModel, string)> SelectEndpoint(int schedule)
     {
         var ret = new FtpEndpointModel();
-        OracleConnection conn = new OracleConnection(m_connStr);
+        var conn = new OracleConnection(m_connStr);
         OracleCommand cmd = conn.CreateCommand();
         cmd.Parameters.Add("sch_xx", OracleDbType.Int32).Value = schedule;
         cmd.Parameters.Add("refCur", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
@@ -280,7 +280,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// <returns>Komunikat o ewentualnym błędzie</returns>
     public async Task<string> LogActivation(FtpSyncModel sync)
     {
-        OracleConnection conn = new OracleConnection(m_connStr);
+        var conn = new OracleConnection(m_connStr);
         OracleCommand cmd = conn.CreateCommand();
         cmd.CommandText = "begin log_nodownload(:sch_xx,:sync_time); end;";
         cmd.Parameters.Add("sch_xx", OracleDbType.Int32).Value = sync.xx;
@@ -296,7 +296,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// <returns>Komunikat o ewentualnym błędzie</returns>
     public async Task<string> LogSync(FtpSyncModel sync)
     {
-        OracleConnection conn = new OracleConnection(m_connStr);
+        var conn = new OracleConnection(m_connStr);
         OracleCommand cmd = conn.CreateCommand();
         cmd.CommandText = "begin log_download(:transdir,:sch_xx,:sync_fime,:file_names,:file_sizes,:file_dates); end;";
         var par = cmd.Parameters;
@@ -334,7 +334,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// <returns>Komunikat o ewentualnym błędzie</returns>
     public (bool,string) VerifyFile(FtpFileModel file)
     {
-        OracleConnection conn = new OracleConnection(m_connStr);
+        var conn = new OracleConnection(m_connStr);
         OracleCommand cmd = conn.CreateCommand();
         cmd.CommandText = "select check_file(:ins_xx,:file_name,:file_size,:file_date) from dual";
         var par = cmd.Parameters;

@@ -27,11 +27,6 @@ public partial class Serwery : UserControl
     public MainWindow m_mainWnd;
 
     /// <summary>
-    /// Zarządza wątkami roboczymi
-    /// </summary>
-    //public FtpDispatcher m_dispatcher;
-
-    /// <summary>
     /// Lista serwerów zdefiniowanych dla bieżącej instancji
     /// </summary>
     public ObservableCollection<FtpEndpoint> m_endpoints;
@@ -39,7 +34,7 @@ public partial class Serwery : UserControl
     /// <summary>
     /// Lista monitorowanych hotfolderów
     /// </summary>
-    private List<FtpHotfolderWatcher> m_hotfolders = new List<FtpHotfolderWatcher>();
+    private List<FtpHotfolderWatcher> m_hotfolders = new();
 
     /// <summary>
     /// Klient bazy danych

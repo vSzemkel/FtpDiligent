@@ -65,14 +65,14 @@ public class SendEmails
     }
 
     /// <summary>
-    /// Buduje wiadomo�� na podstawie danych wyci�gni�tych z bazy
+    /// Buduje wiadomość na podstawie danych wyciągniętych z bazy
     /// </summary>
     /// <param name="sdr">Rekord z bazy danych</param>
     /// <returns>Wiadomo�� do wys�ania</returns>
     private MimeMessage PrepareMimeMessage(string error) {
         try { 
             var msg = new MimeMessage();
-            msg.Subject = "Powiadomienie o b��dzie transferu plik�w";
+            msg.Subject = "Powiadomienie o błędzie transferu plik�w";
             msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => MailboxAddress.Parse(s)));
             var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@sendgrid.net");
             msg.Sender = senderMailbox;
@@ -89,10 +89,10 @@ public class SendEmails
     }
 
     /// <summary>
-    /// Wysy�anie wiadomo�ci protoko�em SMTP
+    /// Wysyłanie wiadomości protokołem SMTP
     /// </summary>
-    /// <param name="msg">Wiadomo��</param>
-    /// <returns>Status wysy�ki</returns>
+    /// <param name="msg">Wiadomość</param>
+    /// <returns>Status wysyłki</returns>
     private bool SendEmail(MimeMessage msg) {
         try {
             using (var client = new SmtpClient()) {
@@ -106,7 +106,7 @@ public class SendEmails
                 client.Disconnect(true);
             }
 
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wys�ano {msg.To.Count} powiadomienie/a mailowe.");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe.");
             return true;
         } catch (Exception exc) {
             FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");

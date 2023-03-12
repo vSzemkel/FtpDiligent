@@ -82,7 +82,7 @@ public abstract class FtpUtilityBase
     public bool CheckConnection(ref string sErrInfo)
     {
         try {
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
             Connect();
@@ -109,7 +109,7 @@ public abstract class FtpUtilityBase
     /// <returns>Czy istnieje plik o zadanych cechach w katalogu lokalnym</returns>
     protected bool CheckLocalStorage(string sFileName, long sLength)
     {
-        FileInfo fi = new FileInfo(m_sLocalDir + sFileName);
+        var fi = new FileInfo(m_sLocalDir + sFileName);
         if (!fi.Exists) return false;
 
         return fi.Length == sLength;

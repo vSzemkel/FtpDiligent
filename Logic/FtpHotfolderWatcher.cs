@@ -33,7 +33,7 @@ public class FtpHotfolderWatcher
     /// <summary>
     /// Pliki teoretycznie nadal podlegające modyfikacji
     /// </summary>
-    private List<FileInfo> m_stagedFiles = new List<FileInfo>();
+    private List<FileInfo> m_stagedFiles = new();
 
     /// <summary>
     /// Umożliwia zatrzymanie pętli przeglądania <see cref="m_stagedFiles"/>
@@ -43,7 +43,7 @@ public class FtpHotfolderWatcher
     /// <summary>
     /// Dane o transferze zachowywane w bazie danych
     /// </summary>
-    private FtpSyncModel m_log = new FtpSyncModel();
+    private FtpSyncModel m_log = new();
 
     /// <summary>
     /// Klient bazy danych

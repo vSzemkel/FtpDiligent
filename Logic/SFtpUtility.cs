@@ -72,7 +72,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
 
     #region public methods
     /// <summary>
-    /// ��czy si� z endpointem i pobiera wszystkie pliki p�niejsze ni� data ostatniego pobrania
+    /// Łączy się z endpointem i pobiera wszystkie pliki póniejsze niż data ostatniego pobrania
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Download()
@@ -105,7 +105,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     }
 
     /// <summary>
-    /// ��czy si� z endpointem i wstawia wszystkie pliki z lokalnego katalogu
+    /// Łączy się z endpointem i wstawia wszystkie pliki z lokalnego katalogu
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Upload()
@@ -131,7 +131,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
         }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zosta�o przerwane przez u�ytkownika");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_sftpClient.Disconnect();
 
@@ -139,7 +139,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     }
 
     /// <summary>
-    /// ��czy si� z endpointem i wstawia jeden pliki z lokalnego hot folderu
+    /// Łączy się z endpointem i wstawia jeden pliki z lokalnego hot folderu
     /// </summary>
     /// <returns>Status powodzenia operacji</returns>
     public bool UploadHotFile(FileInfo file)
@@ -221,7 +221,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
                 m_sftpClient.DownloadFile(file.Name, stream);
         } catch(Exception ex) {
             var dirsep = m_sRemoteDir.EndsWith('/') ? string.Empty : "/";
-            throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiod�o si�. {ex.Message}");
+            throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiodło się. {ex.Message}");
         }
 
         if (FtpDispatcherGlobals.CheckTransferedStorage) {
@@ -231,8 +231,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
             return bStatus;
         }
 
-        if (m_Disp != null)
-            m_Disp.m_filesTransfered++;
+        m_Disp?.NotifyFileTransfer();
 
         return true;
     }
@@ -240,8 +239,8 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     /// <summary>
     /// Wstawia plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
     /// </summary>
-    /// <param name="pFI">struktura opisuj�ca plik lub katalog</param>
-    /// <returns>Czy dosz�o do wstawienia pliku</returns>
+    /// <param name="pFI">struktura opisująca plik lub katalog</param>
+    /// <returns>Czy doszło do wstawienia pliku</returns>
     private bool PutFile(FileInfo pFI)
     {
         if (pFI.Length == 0)
@@ -274,20 +273,19 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
             if (FtpDispatcherGlobals.CheckTransferedStorage)
                 return CheckRemoteStorage(remoteFilename, pFI.Length);
         } catch (Exception ex) {
-            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod�o si�. {ex.Message}");
+            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się. {ex.Message}");
         }
 
-        if (m_Disp != null)
-            m_Disp.m_filesTransfered++;
+        m_Disp?.NotifyFileTransfer();
 
         return true;
     }
 
     /// <summary>
-    /// Sprawdza, czy w zasobie zdalnym istnieje ju� plik o zadanej nazwie i rozmiarze
+    /// Sprawdza, czy w zasobie zdalnym istnieje już plik o zadanej nazwie i rozmiarze
     /// </summary>
     /// <param name="remoteName">Nazwa liku</param>
-    /// <param name="length">D�ugo�� pliku</param>
+    /// <param name="length">Długość pliku</param>
     /// <returns>Czy istnieje plik o zadanych cechach w katalogu zdalnym</returns>
     private bool CheckRemoteStorage(string remoteName, long length)
     {
@@ -320,7 +318,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     {
         // compress
         var compressed = new MemoryStream();
-        GZipStream ds = new GZipStream(compressed, CompressionLevel.Optimal);
+        var ds = new GZipStream(compressed, CompressionLevel.Optimal);
         var stream = File.OpenRead(@"c:\Code\FtpDiligent\FtpDiligent_RSA");
         stream.CopyTo(ds);
         ds.Close();

@@ -28,9 +28,15 @@ public partial class App : Application
         builder.RegisterType<FtpDiligentSqlClient>()
             .WithParameter(new NamedParameter("connStr", connStr))
             .As<IFtpDiligentDatabaseClient>();
+        builder.RegisterType<FtpDispatcher>().As<IFtpDispatcher>();
+        builder.RegisterType<Sterowanie>().SingleInstance();
+        builder.RegisterType<Serwery>().SingleInstance();
+        builder.RegisterType<Harmonogramy>().SingleInstance();
         container = builder.Build();
 
-        using (var scope = container.BeginLifetimeScope())
+        using (var scope = container.BeginLifetimeScope()) {
+            FtpDispatcherGlobals.AutofacScope = scope;
             scope.Resolve<MainWindow>().Show();
+        }
     }
 }
