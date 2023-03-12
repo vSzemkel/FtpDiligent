@@ -56,9 +56,8 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     /// Konstruktor FtpUtility dla pojedynczych us�ug
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="window">G��wne okno aplikacji</param>
-    public SFtpUtility(FtpEndpointModel endpoint, MainWindow window)
-        : base(endpoint, window) { 
+    public SFtpUtility(FtpEndpointModel endpoint)
+        : base(endpoint) {
     }
 
     /// <summary>

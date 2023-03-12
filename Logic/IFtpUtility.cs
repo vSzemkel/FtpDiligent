@@ -38,15 +38,15 @@ public interface IFtpUtility
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
     /// <param name="window">Główne okno aplikacji</param>
-    static IFtpUtility Create(FtpEndpointModel endpoint, MainWindow window)
+    static IFtpUtility Create(FtpEndpointModel endpoint)
     {
         switch (endpoint.protocol) {
             case eFtpProtocol.FTP:
-                return new FtpsUtility(endpoint, window, false);
+                return new FtpsUtility(endpoint, false);
             case eFtpProtocol.FTPS:
-                return new FtpsUtility(endpoint, window, true);
+                return new FtpsUtility(endpoint, true);
             case eFtpProtocol.SFTP:
-                return new SFtpUtility(endpoint, window);
+                return new SFtpUtility(endpoint);
         }
 
         return null;

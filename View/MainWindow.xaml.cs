@@ -27,11 +27,6 @@ public partial class MainWindow : Window
     private const int m_fileLogSize = 100;
 
     /// <summary>
-    /// Co ile sekund sprawdzamy, czy pliki w hotfolderze są w pełni zapisane
-    /// </summary>
-    public int m_hotfolderInterval;
-
-    /// <summary>
     /// Wysyła mailem powiadomienia o błędach
     /// </summary>
     public SendEmails m_mailer;
@@ -99,6 +94,10 @@ public partial class MainWindow : Window
     #endregion
 
     #region constructor
+    /// <summary>
+    /// Konstruktor okna głównego
+    /// </summary>
+    /// <param name="database">Klient bazy danych</param>
     public MainWindow(IFtpDiligentDatabaseClient database)
     {
         InitializeComponent();
@@ -228,7 +227,7 @@ public partial class MainWindow : Window
         var settings = ConfigurationManager.AppSettings;
         Byte.TryParse(settings["TraceLevel"], out traceLevel);
         Int32.TryParse(settings["InstanceID"], out FtpDispatcherGlobals.Instance);
-        Int32.TryParse(settings["HotfolderInterval"], out m_hotfolderInterval);
+        Int32.TryParse(settings["HotfolderInterval"], out FtpDispatcherGlobals.HotfolderInterval);
         FtpDispatcherGlobals.TraceLevel = (eSeverityCode)traceLevel;
         m_mailer = new SendEmails(this, settings["ErrorsMailTo"], settings["SendGridKey"]);
         FtpDispatcherGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);

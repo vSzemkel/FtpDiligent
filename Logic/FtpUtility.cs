@@ -37,7 +37,7 @@ public class WIN32_FIND_DATA
 }
 
 /// <summary>
-/// Umo�liwia przegl�danie zasob�w serwera FTP i pobieranie plik�w
+/// Umożliwia przeglądanie zasob,ow serwera FTP i pobieranie plik�w
 /// </summary>
 public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
 {
@@ -63,9 +63,8 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
     /// Konstruktor FtpUtility dla pojedynczych us�ug
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="window">G��wne okno aplikacji</param>
-    public FtpUtility(FtpEndpointModel endpoint, MainWindow window)
-        : base(endpoint, window) { 
+    public FtpUtility(FtpEndpointModel endpoint)
+        : base(endpoint) { 
     }
     #endregion
 

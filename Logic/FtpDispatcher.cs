@@ -10,8 +10,6 @@ namespace FtpDiligent;
 
 using System;
 using System.Threading;
-using System.Windows;
-using System.Windows.Controls.Primitives;
 
 public sealed class FtpDispatcher
 {
@@ -22,13 +20,18 @@ public sealed class FtpDispatcher
     public const int m_retryWaitTime = 10 * 60 * 1000;
 
     /// <summary>
+    /// Co ile czasu (ms) sprawdzać czy scheduler pokazuje kolejny transfer
+    /// </summary>
+    public const int m_refractoryWaitTime = 5000;
+
+    /// <summary>
     /// Zlicza przetransportowane pliki.
-    /// Nie ma sensu restartować dispatchera, który dotąd nic nie przes�a�
+    /// Nie ma sensu restartować dispatchera, który dotąd nic nie przesłał
     /// </summary>
     public int m_filesTransfered;
 
     /// <summary>
-    /// Do wstrzymywania w�tku roboczego w oczekiwaniu na planowany czas uruchomienia
+    /// Do wstrzymywania wątku roboczego w oczekiwaniu na planowany czas uruchomienia
     /// </summary>
     private AutoResetEvent m_are = new AutoResetEvent(false);
 
@@ -40,7 +43,7 @@ public sealed class FtpDispatcher
 
     #region properties
     /// <summary>
-    /// Pozwala dostosowa� wygl�d interfejsu do stanu przetwarzania
+    /// Pozwala dostosować wygląd interfejsu do stanu przetwarzania
     /// Ustawiana na czas wykonywania transferu
     /// </summary>
     public bool InProgress { get; set; }
@@ -50,7 +53,7 @@ public sealed class FtpDispatcher
     /// <summary>
     /// Konstruktor FtpDispatchera
     /// </summary>
-    /// <param name="wnd">G��wne okno aplikacji WPF</param>
+    /// <param name="wnd">Główne okno aplikacji WPF</param>
     public FtpDispatcher(IFtpDiligentDatabaseClient database)
     {
         m_database = database;
@@ -59,13 +62,13 @@ public sealed class FtpDispatcher
 
     #region private methods
     /// <summary>
-    /// Implementacja p�tli obs�uguj�cej ��dania pobrania plik�w z endpointu ftp
-    /// Je�eli czas ��dania up�yn��, wykonuje je bezzw�ocznie, je�li nie, to zasypia 
-    /// do czasu wymagalno�ci ��dania. Zaimplementowano metod� wyj�cia z p�tli na
-    /// �yczenie u�ytkownika po wywo�aniu Stop(); Warto�� iSchXX==-1 oznacza brak 
-    /// ��da� do ko�ca tygodnia, towarzyszy jej data pocz�tku nowego tygodnia.
+    /// Implementacja pętli obsługującej żądania pobrania plików z endpointu ftp
+    /// Jeżeli czas żądania upłynął, wykonuje je bezzwłocznie, jeśli nie, to zasypia 
+    /// do czasu wymagalności żądania. Zaimplementowano metodę wyjścia z pętli na
+    /// życzenie użytkownika po wywołaniu Stop(); Wartość iSchXX==-1 oznacza brak 
+    /// żądań do końca tygodnia, towarzyszy jej data początku nowego tygodnia.
     /// </summary>
-    /// <param name="o">Nie u�ywany</param>
+    /// <param name="o">Nie używany</param>
     private void DispatchFtpThread(object o)
     {
         int lastSchedule = 0;
@@ -74,28 +77,28 @@ public sealed class FtpDispatcher
             var (schedule, errmsg) = m_database.GetNextSync(FtpDispatcherGlobals.Instance);
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Nie zaplanowano �adnych pozycji w harmonogramie");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie");
                 else {
                     FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po b��dzie");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po błędzie");
                     lastSchedule = 0;
                     Thread.Sleep(m_retryWaitTime);
-                    Sterowanie.s_execute();
+                    FtpDispatcherGlobals.StartProcessing();
                 }
                 return;
             }
 
             int currentSchedule = schedule.Hash;
             if (currentSchedule == lastSchedule) {
-                Thread.Sleep(5000);
+                Thread.Sleep(m_refractoryWaitTime);
                 continue;
             }
 
             lastSchedule = currentSchedule;
             if (schedule.xx > 0)
-                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, $"Najbli�szy transfer plik�w z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
+                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, $"Najbliższy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
             else
-                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Do ko�ca tygodnia nie zaplanowano �adnych transfer�w");
+                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Do końca tygodnia nie zaplanowano żadnych transferów.");
 
             if (DateTime.Now < schedule.nextSyncTime)
                 m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
@@ -109,12 +112,12 @@ public sealed class FtpDispatcher
     }
 
     /// <summary>
-    /// Wykonuje transfer plik�w na podstawie zaplanowanej pozycji harmonogramu
+    /// Wykonuje transfer plików na podstawie zaplanowanej pozycji harmonogramu
     /// Jest uruchamiana przez dispatcher o odpowiedniej porze i tylko dla poprawnych pozycji harmonogramu
     /// </summary>
     /// <param name="iSchXX">
-    /// Je�li dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
-    /// je�li ujemny, to identyfikator endpointu, dla kt�rego transfer uruchomiono r�cznie
+    /// Jeśli dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
+    /// jeśli ujemny, to identyfikator endpointu, dla którego transfer uruchomiono ręcznie
     /// </param>
     private void ExecuteFtpTransfer(object o)
     {
@@ -130,7 +133,7 @@ public sealed class FtpDispatcher
         }
 
         string remote = endpoint.host + endpoint.remDir;
-        FtpSyncModel log = new FtpSyncModel() { xx = key, syncTime = endpoint.nextSync };
+        FtpSyncModel log = new() { xx = key, syncTime = endpoint.nextSync };
         IFtpUtility fu = IFtpUtility.Create(endpoint, this, FtpDispatcherGlobals.SyncMode);
         eFtpDirection eDirection = endpoint.direction;
 
@@ -191,7 +194,7 @@ public sealed class FtpDispatcher
 
     #region public methods
     /// <summary>
-    /// Inicjuje w w�tku z puli p�tl� przetwarzania ��da� pobrania plik�w z endpoint�w ftp
+    /// Inicjuje w wątku z puli pętlą przetwarzania żądań pobranie plików z endpointów ftp
     /// </summary>
     public void Start()
     {
@@ -201,9 +204,10 @@ public sealed class FtpDispatcher
     }
 
     /// <summary>
-    /// Inicjuje w w�tku z puli p�tl� przetwarzania ��da� pobrania plik�w z endpoint�w ftp
+    /// Inicjuje w wątku z puli pętlą przetwarzania żądań
+    /// niezwłoczne pobranie plików z konkretnego endpointu Ftp
     /// </summary>
-    /// <param name="endpoint">Endpoint, dla kt�rego symulujemy wywo�anie z harmonogramu</param>
+    /// <param name="endpoint">Endpoint, dla którego symulujemy wywołanie z harmonogramu</param>
     public void StartNow(FtpEndpoint endpoint)
     {
         bool oldInProgress = InProgress;
@@ -216,22 +220,22 @@ public sealed class FtpDispatcher
     }
 
     /// <summary>
-    /// Przerywa oczekuj�cy w�tek i pozwala na zako�czenie pracy dispatchera
+    /// Przerywa oczekujący wątek i pozwala na zakończenie pracy dispatchera
     /// </summary>
     public void Stop()
     {
         InProgress = false;
         m_are.Set();
-        FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plik�w.");
+        FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
     }
 
     /// <summary>
-    /// U�ywana w trybie: UniqueDateAndSizeInDatabase. Sprawdza, czy z danej instancji FtpGetWorkera pobrano ju� dany plik
+    /// Używana w trybie: UniqueDateAndSizeInDatabase. Sprawdza, czy z danej instancji FtpGetWorkera pobrano ju� dany plik
     /// </summary>
     /// <param name="sFileName">Nazwa liku</param>
-    /// <param name="lLength">D�ugo�� pliku</param>
+    /// <param name="lLength">Długość pliku</param>
     /// <param name="dtDate">Data ostatniej modyfikacji pliku</param>
-    /// <returns>Czy z danej instancji FtpGetWorkera pobrano ju� dany plik</returns>
+    /// <returns>Czy z danej instancji FtpGetWorkera pobrano już dany plik</returns>
     public bool CheckDatabase(string sFileName, long lLength, DateTime dtDate)
     {
         var file = new FtpFileModel() {

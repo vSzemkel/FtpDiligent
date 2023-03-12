@@ -55,9 +55,8 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     /// Konstruktor FtpUtility dla pojedynczych us�ug
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="window">G��wne okno aplikacji</param>
-    public FtpsUtility(FtpEndpointModel endpoint, MainWindow window, bool secure)
-        : base(endpoint, window) {
+    public FtpsUtility(FtpEndpointModel endpoint, bool secure)
+        : base(endpoint) {
         m_secure = secure;
     }
 

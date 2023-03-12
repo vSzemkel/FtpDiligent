@@ -44,8 +44,7 @@ public abstract class FtpUtilityBase
     /// Konstruktor FtpUtility dla pojedynczych usług
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="window">Główne okno aplikacji</param>
-    public FtpUtilityBase(FtpEndpointModel endpoint, MainWindow window)
+    public FtpUtilityBase(FtpEndpointModel endpoint)
     {
         m_SyncMode = eSyncFileMode.AllFiles;
         FromFtpEndpoint(endpoint);

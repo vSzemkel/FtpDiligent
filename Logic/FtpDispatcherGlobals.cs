@@ -28,6 +28,11 @@ public static class FtpDispatcherGlobals
     public static bool CheckTransferedStorage;
 
     /// <summary>
+    /// Co ile sekund sprawdzamy, czy pliki w hotfolderze s¹ w pe³ni zapisane
+    /// </summary>
+    public static int HotfolderInterval;
+
+    /// <summary>
     /// Poziom logowania komunikatów
     /// </summary>
     public static eSeverityCode TraceLevel;
@@ -36,6 +41,11 @@ public static class FtpDispatcherGlobals
     /// Nazwa aplikacyjnego EventLogu
     /// </summary>
     public static readonly string EventLog = "FtpDiligent";
+
+    /// <summary>
+    /// Umo¿liwia programowe uruchomienie transferu danych
+    /// </summary>
+    public static Action StartProcessing;
 
     /// <summary>
     /// Wrapper do metody ShowErrorInfoInternal

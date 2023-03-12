@@ -80,7 +80,7 @@ public partial class Harmonogramy : UserControl
             if (string.IsNullOrEmpty(errmsg))
                 collection.Remove(schedule);
             else
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
         }
     }
 

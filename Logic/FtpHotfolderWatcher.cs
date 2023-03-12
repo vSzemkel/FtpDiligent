@@ -21,11 +21,6 @@ public class FtpHotfolderWatcher
 {
     #region fields
     /// <summary>
-    /// Referencja do głównego okna
-    /// </summary>
-    private MainWindow m_mainWnd;
-
-    /// <summary>
     /// Klient usługi FTP
     /// </summary>
     private IFtpUtility m_ftpUtility;
@@ -61,12 +56,11 @@ public class FtpHotfolderWatcher
     /// Konstruktor FtpUtility dla pojedynczych usług
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="window">Główne okno aplikacji</param>
-    public FtpHotfolderWatcher(FtpEndpointModel endpoint, MainWindow wnd, IFtpDiligentDatabaseClient database)
+    /// <param name="database">Klient bazy danych</param>
+    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IFtpDiligentDatabaseClient database)
     {
-        m_mainWnd = wnd;
         m_database = database;
-        m_ftpUtility = IFtpUtility.Create(endpoint, wnd);
+        m_ftpUtility = IFtpUtility.Create(endpoint);
         m_log.xx = -endpoint.xx;
         m_log.syncTime = DateTime.Now;
         m_log.direction = eFtpDirection.HotfolderPut;
@@ -163,7 +157,7 @@ public class FtpHotfolderWatcher
             if (good2go.Any())
                 ThreadPool.QueueUserWorkItem(UploadFiles, good2go.ToArray());
             // wait for the next run
-            Thread.Sleep(1000 * m_mainWnd.m_hotfolderInterval);
+            Thread.Sleep(1000 * FtpDispatcherGlobals.HotfolderInterval);
             // clear
             staged.Clear();
             good2go.Clear();
@@ -191,9 +185,9 @@ public class FtpHotfolderWatcher
                         MD5 = fi.FullName.ComputeMD5()
                     });
         } catch (FtpUtilityException fex) {
-            m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, fex.Message);
+            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, fex.Message);
         } catch (System.Exception se) {
-            m_mainWnd.ShowErrorInfo(eSeverityCode.TransferError, se.Message);
+            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, se.Message);
         }
 
         m_log.files = log.ToArray();

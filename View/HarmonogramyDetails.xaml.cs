@@ -84,7 +84,7 @@ public partial class HarmonogramyDetails : UserControl
         if (string.IsNullOrEmpty(errmsg))
             RestoreTabControl();
         else
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
     }
 
     /// <summary>

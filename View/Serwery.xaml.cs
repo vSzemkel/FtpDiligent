@@ -98,7 +98,7 @@ public partial class Serwery : UserControl
             if (string.IsNullOrEmpty(errmsg))
                 collection.Remove(endpoint);
             else
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
         }
     }
 
@@ -117,7 +117,7 @@ public partial class Serwery : UserControl
             Cursor = Cursors.Wait;
 
             string errmsg = string.Empty;
-            var fu = IFtpUtility.Create(endpoint.GetModel(), m_mainWnd);
+            var fu = IFtpUtility.Create(endpoint.GetModel());
 
             bool isErr = !fu.CheckConnection(ref errmsg);
 
@@ -173,7 +173,7 @@ public partial class Serwery : UserControl
     {
         foreach (FtpEndpoint enp in m_endpoints)
             if ((enp.Direction & eFtpDirection.HotfolderPut) > 0) {
-                var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_mainWnd, m_database);
+                var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_database);
                 fhw.StartWatching();
                 m_hotfolders.Add(fhw);
             }

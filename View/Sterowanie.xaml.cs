@@ -33,22 +33,17 @@ public partial class Sterowanie : UserControl
     /// <summary>
     /// Lista ostatnio transferowanych plików
     /// </summary>
-    public ObservableCollection<FtpFileModel> m_fileInfo = new ObservableCollection<FtpFileModel>();
+    public ObservableCollection<FtpFileModel> m_fileInfo = new();
 
     /// <summary>
     /// Lista ostatnio zarejestrowanych błędów i ostrzeżeń
     /// </summary>
-    public ObservableCollection<FtpErrorModel> m_errInfo = new ObservableCollection<FtpErrorModel>();
+    public ObservableCollection<FtpErrorModel> m_errInfo = new();
 
     /// <summary>
     /// Zarządza wątkami roboczymi
     /// </summary>
     public FtpDispatcher m_dispatcher;
-
-    /// <summary>
-    /// Umożliwia programowe uruchomienie transferu danych
-    /// </summary>
-    public static Action s_execute;
     #endregion
 
     #region constructor
@@ -61,7 +56,7 @@ public partial class Sterowanie : UserControl
         this.cbSyncMode.ItemsSource = Enum.GetValues(typeof(eSyncFileMode));
         this.lvFilesLog.ItemsSource = m_fileInfo;
         this.lvErrLog.ItemsSource = m_errInfo;
-        s_execute = () => this.OnStartSync(null, null);
+        FtpDispatcherGlobals.StartProcessing = () => this.OnStartSync(null, null);
     }
     #endregion
 
@@ -90,7 +85,7 @@ public partial class Sterowanie : UserControl
         btStopSync.IsEnabled = false;
         m_dispatcher.Stop();
         m_mainWnd.m_tbSerwery.StopHotfolders();
-        m_mainWnd.ShowErrorInfo(eSeverityCode.NextSync, string.Empty);
+        FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, string.Empty);
     }
 
     /// <summary>
