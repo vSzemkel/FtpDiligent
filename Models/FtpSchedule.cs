@@ -30,7 +30,7 @@ public class FtpSchedule : EditableItem<FtpScheduleModel>
     /// <summary>
     /// Konstruktor używany do inicjowania obiektu na podstawie bazy danych
     /// </summary>
-    /// <param name="fsm">MOdel bazodanowy</param>
+    /// <param name="fsm">Model bazodanowy</param>
     public FtpSchedule(FtpScheduleModel fsm)
     {
         _currentData = fsm;

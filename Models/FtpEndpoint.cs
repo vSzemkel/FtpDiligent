@@ -17,19 +17,22 @@ public class FtpEndpoint : EditableItem<FtpEndpointModel>
 {
     #region constructors
     /// <summary>
-    /// Inicjalizacja dodawanego obiektu
+    /// Inicjalizacja obiektu odczytanego z bazy
     /// </summary>
-    /// <param name="endpoint">Klucz rodzica</param>
-    public FtpEndpoint()
+    public FtpEndpoint(int xx, int insXX, string host, string uid, string pwd, string remDir,
+        string locDir, DateTime lastSync, eFtpProtocol prot, eFtpDirection dir, eFtpTransferMode mode)
     {
-        Host = string.Empty;
-        Userid = string.Empty;
-        Password = string.Empty;
-        RemoteDirectory = string.Empty;
-        LocalDirectory = string.Empty;
-        Protocol = eFtpProtocol.FTP;
-        Direction = eFtpDirection.Get;
-        Mode = eFtpTransferMode.Binary;
+        XX = xx;
+        Instance = insXX;
+        Host = host;
+        Userid = uid;
+        Password = pwd;
+        RemoteDirectory = remDir;
+        LocalDirectory = locDir;
+        LastSyncTime = lastSync;
+        Protocol = prot;
+        Direction = dir;
+        Mode = mode;
     }
     #endregion
 

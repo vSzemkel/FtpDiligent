@@ -11,6 +11,7 @@ namespace FtpDiligent;
 using System;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 using Oracle.ManagedDataAccess.Client;
@@ -77,21 +78,20 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     public ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
     {
         var ret = new ObservableCollection<FtpEndpoint>();
-        foreach (DataRow dr in tab.Rows) {
-            ret.Add(new FtpEndpoint() {
-                XX = (int)(decimal)dr[0],
-                Instance = (int)(decimal)dr[1],
-                Host = dr[2].ToString(),
-                Userid = dr[3].ToString(),
-                Password = dr[4].ToString(),
-                RemoteDirectory = dr[5].ToString(),
-                LocalDirectory = dr[6].ToString(),
-                LastSyncTime = (DateTime)dr[7],
-                Protocol = (eFtpProtocol)(short)dr[8],
-                Direction = (eFtpDirection)(short)dr[9],
-                Mode = (eFtpTransferMode)(short)dr[10]
-            });
-        }
+        foreach (DataRow dr in tab.Rows)
+            ret.Add(new (
+                xx: (int)(decimal)dr[0],
+                insXX: (int)(decimal)dr[1],
+                host: dr[2].ToString(),
+                uid: dr[3].ToString(),
+                pwd: dr[4].ToString(),
+                remDir: dr[5].ToString(),
+                locDir: dr[6].ToString(),
+                lastSync: (DateTime)dr[7],
+                prot: (eFtpProtocol)(short)dr[8],
+                dir: (eFtpDirection)(short)dr[9],
+                mode: (eFtpTransferMode)(short)dr[10])
+            );
 
         return ret;
     }

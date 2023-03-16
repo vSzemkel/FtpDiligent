@@ -23,41 +23,32 @@ class FtpDiligentDesignTimeClient
     public static ObservableCollection<FtpEndpoint> GetEndpoints(int instance)
     {
         var ret = new ObservableCollection<FtpEndpoint> {
-            new FtpEndpoint() {
-                XX = 1,
-                Instance = instance,
-                Host = "gwmanam5.agora.pl",
-                Userid = "ftp",
-                Password = "ftp",
-                LocalDirectory = @"C:\Tmp\Ftp",
-                RemoteDirectory = "/",
-                LastSyncTime = DateTime.MinValue,
-                NextSyncTime = DateTime.Now.AddMinutes(1)
-            },
-            new FtpEndpoint() {
-                XX = 2,
-                Host = "ftp.ftpdiligentdesigntimeclient.pl",
-                Userid = "ftp",
-                Password = "pa$$word76",
-                LocalDirectory = @"C:\Tmp\Ftp",
-                RemoteDirectory = "/",
-                LastSyncTime = DateTime.MinValue,
-                NextSyncTime = DateTime.Now.AddMinutes(1),
-                Direction = eFtpDirection.Put,
-                Mode = eFtpTransferMode.Ascii,
-            },
-            new FtpEndpoint() {
-                XX = 3,
-                Instance = instance,
-                Host = "ftp.contoso.com",
-                Userid = "adrian",
-                Password = "doDOmoo$",
-                LocalDirectory = @"C:\Tmp",
-                RemoteDirectory = "/trash",
-                LastSyncTime = DateTime.MinValue,
-                NextSyncTime = DateTime.Now.AddMinutes(60),
-                Direction = eFtpDirection.Put | eFtpDirection.Get,
-            },
+            new (
+                xx: 1,
+                insXX: instance,
+                host: "gwmanam5.agora.pl",
+                uid: "ftp",
+                pwd: "ftp",
+                remDir: "/",
+                locDir: @"C:\Tmp\Ftp",
+                lastSync: DateTime.MinValue,
+                prot: eFtpProtocol.FTP,
+                dir: eFtpDirection.Put,
+                mode: eFtpTransferMode.Ascii
+            ) { NextSyncTime = DateTime.Now.AddMinutes(15) },
+            new (
+                xx: 2,
+                insXX: instance,
+                host: "ftp.ftpdiligentdesigntimeclient.pl",
+                uid: "ftp",
+                pwd: "pa$$word76",
+                locDir:  @"C:\Tmp\Ftp",
+                remDir: "/",
+                lastSync: DateTime.MinValue,
+                prot: eFtpProtocol.SFTP,
+                dir: eFtpDirection.Get | eFtpDirection.Put,
+                mode: eFtpTransferMode.Ascii
+            ) { NextSyncTime = DateTime.Now.AddMinutes(1) },
         };
 
         return ret;

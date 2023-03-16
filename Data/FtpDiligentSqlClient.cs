@@ -77,21 +77,20 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     public ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
     {
         var ret = new ObservableCollection<FtpEndpoint>();
-        foreach (DataRow dr in tab.Rows) {
-            ret.Add(new FtpEndpoint() {
-                XX = (int)dr[0],
-                Instance = (int)dr[1],
-                Host = dr[2].ToString(),
-                Userid = dr[3].ToString(),
-                Password = dr[4].ToString(),
-                RemoteDirectory = dr[5].ToString(),
-                LocalDirectory = dr[6].ToString(),
-                LastSyncTime = (DateTime)dr[7],
-                Protocol = (eFtpProtocol)dr[8],
-                Direction = (eFtpDirection)dr[9],
-                Mode = (eFtpTransferMode)dr[10]
-            });
-        }
+        foreach (DataRow dr in tab.Rows)
+            ret.Add(new (
+                xx: (int)dr[0],
+                insXX: (int)dr[1],
+                host: dr[2].ToString(),
+                uid: dr[3].ToString(),
+                pwd: dr[4].ToString(),
+                remDir: dr[5].ToString(),
+                locDir: dr[6].ToString(),
+                lastSync: (DateTime)dr[7],
+                prot: (eFtpProtocol)dr[8],
+                dir: (eFtpDirection)dr[9],
+                mode: (eFtpTransferMode)dr[10])
+            );
 
         return ret;
     }
