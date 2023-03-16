@@ -103,26 +103,26 @@ public partial class MainWindow : Window
     public MainWindow(IFtpDiligentDatabaseClient database)
     {
         InitializeComponent();
-        m_database = database;
-        m_tbSterowanie = FtpDispatcherGlobals.AutofacScope.Resolve<Sterowanie>(new TypedParameter(typeof(MainWindow), this));
+        var diMainWindow = new TypedParameter(typeof(MainWindow), this);
+        m_tbSerwery = FtpDispatcherGlobals.AutofacScope.Resolve<Serwery>(diMainWindow);
+        m_tbSterowanie = FtpDispatcherGlobals.AutofacScope.Resolve<Sterowanie>(diMainWindow);
+        m_tbHarmonogramy = FtpDispatcherGlobals.AutofacScope.Resolve<Harmonogramy>(diMainWindow);
         m_tbSterowanie.tbFilesCount.DataContext = 0;
         m_tbSterowanie.cbSyncMode.DataContext = this;
         this.tabSterowanie.Content = m_tbSterowanie;
-
-        m_tbSerwery = FtpDispatcherGlobals.AutofacScope.Resolve<Serwery>(new TypedParameter(typeof(MainWindow), this));
         this.tabSerwery.Content = m_tbSerwery;
-        m_tbHarmonogramy = FtpDispatcherGlobals.AutofacScope.Resolve<Harmonogramy>(new TypedParameter(typeof(MainWindow), this));
         this.tabHarmonogramy.Content = m_tbHarmonogramy;
+
+        FtpDispatcherGlobals.ShowError = this.ShowErrorInfo;
+        this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
+
+        m_database = database;
+        m_tbSerwery.LoadEndpoints();
+        m_tbHarmonogramy.LoadSchedules(0);
 
         CheckEventLog();
         LoadConfig();
         CheckInstanceInitialization();
-
-        FtpDispatcherGlobals.ShowError = (code, msg) => this.ShowErrorInfo(code, msg);
-        this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
-
-        m_tbSerwery.LoadEndpoints();
-        m_tbHarmonogramy.LoadSchedules(0);
     }
     #endregion
 

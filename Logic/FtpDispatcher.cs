@@ -108,7 +108,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
         } // while
 
         if (!InProgress)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Pobieranie przerwane przez u�ytkownika");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Pobieranie przerwane przez użytkownika");
     }
 
     /// <summary>
@@ -138,9 +138,9 @@ public sealed class FtpDispatcher : IFtpDispatcher
         eFtpDirection eDirection = endpoint.direction;
 
         if (key < 0)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpocz�to transfer plik�w z serwera {remote}");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpoczęto transfer plików z serwera {remote}");
         else
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpocz�to zaplanowany transfer plik�w {schedule.name} z serwera {remote}");
+            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpoczęto zaplanowany transfer plików {schedule.name} z serwera {remote}");
 
         try { // transferuj pliki
             #region pobieranie

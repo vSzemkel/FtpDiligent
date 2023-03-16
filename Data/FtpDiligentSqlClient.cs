@@ -214,7 +214,8 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
 
             ret.xx = sdr.GetInt32(0);
             ret.name = sdr.GetString(1);
-            ret.nextSyncTime = sdr.GetDateTimeOffset(2).LocalDateTime;
+            if (ret.xx > 0)
+                ret.nextSyncTime = sdr.GetDateTimeOffset(2).LocalDateTime;
             sdr.Close();
         } catch (SqlException oex) {
             return (ret, oex.Message);

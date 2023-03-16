@@ -167,15 +167,16 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     protected override bool Connect()
     {
         m_ftpsClient = new FtpClient(m_sHost, m_sUser, m_sPass);
-        m_ftpsClient.Config.DataConnectionType = FtpDataConnectionType.PASV;
-        m_ftpsClient.Config.EncryptionMode = m_secure ? FtpEncryptionMode.Explicit : FtpEncryptionMode.None;
-        m_ftpsClient.Config.DataConnectionEncryption = true;
-        m_ftpsClient.Config.ValidateAnyCertificate = true;
+        var config = m_ftpsClient.Config;
+        config.DataConnectionType = FtpDataConnectionType.PASV;
+        config.EncryptionMode = m_secure ? FtpEncryptionMode.Explicit : FtpEncryptionMode.None;
+        config.DataConnectionEncryption = true;
+        config.ValidateAnyCertificate = true;
 
         var transferMode = m_TransferMode == eFtpTransferMode.Binary 
                 ? FtpDataType.Binary : FtpDataType.ASCII;
-        m_ftpsClient.Config.DownloadDataType = transferMode;
-        m_ftpsClient.Config.UploadDataType = transferMode;
+        config.DownloadDataType = transferMode;
+        config.UploadDataType = transferMode;
 
         try {
             m_ftpsClient.Connect();
