@@ -113,16 +113,15 @@ public partial class MainWindow : Window
         this.tabSerwery.Content = m_tbSerwery;
         this.tabHarmonogramy.Content = m_tbHarmonogramy;
 
-        FtpDispatcherGlobals.ShowError = this.ShowErrorInfo;
-        this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
-
         m_database = database;
-        m_tbSerwery.LoadEndpoints();
-        m_tbHarmonogramy.LoadSchedules(0);
-
         CheckEventLog();
         LoadConfig();
         CheckInstanceInitialization();
+        m_tbSerwery.LoadEndpoints();
+        m_tbHarmonogramy.LoadSchedules(0);
+
+        this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
+        FtpDispatcherGlobals.ShowError = this.ShowErrorInfo;
     }
     #endregion
 
