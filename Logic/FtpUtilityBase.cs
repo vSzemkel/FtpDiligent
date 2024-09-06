@@ -51,6 +51,10 @@ public abstract class FtpUtilityBase
     }
     #endregion
 
+    #region events
+    public static event EventHandler<FileTransferredEventArgs> FileTransferred;
+    #endregion
+
     #region public methods
     /// <summary>
     /// Podaje ścieżkę do lokalnego katalogu roboczego
@@ -130,6 +134,32 @@ public abstract class FtpUtilityBase
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Triggers an FileTransferred event with provided arguments
+    /// </summary>
+    /// <param name="code">Severity code</param>
+    /// <param name="operation">Operation type</param>
+    /// <param name="message">Description</param>
+    protected void NotifyFileTransferred(eSeverityCode code, eFtpDirection operation, string message)
+    {
+        var eventArgs = new FileTransferredEventArgs(code, operation, null, message);
+        if (FileTransferred != null)
+            FileTransferred(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Triggers an FileTransferred event with provided arguments
+    /// </summary>
+    /// <param name="code">Severity code</param>
+    /// <param name="operation">Operation type</param>
+    /// <param name="file">File details</param>
+    protected void NotifyFileTransferred(eFtpDirection operation, FileInfo file)
+    {
+        var eventArgs = new FileTransferredEventArgs(eSeverityCode.FileInfo, operation, file, string.Empty);
+        if (FileTransferred != null)
+            FileTransferred(this, eventArgs);
     }
     #endregion
 

@@ -53,8 +53,8 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
     /// Konstruktor FtpUtility sterowanego przez <see>FtpDispatcher</see>
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="dispatcher">Obiekt steruj�cy w�tkami</param>
-    /// <param name="mode">Algorytm kwalifikacji plik�w do transferu</param>
+    /// <param name="dispatcher">Obiekt sterujący wątkami</param>
+    /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
     public FtpUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
         : base(endpoint, dispatcher, mode) {
     }
@@ -145,7 +145,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
 
     #region public methods
     /// <summary>
-    /// ��czy si� z endpointem i pobiera wszystkie pliki p�niejsze ni� data ostatniego pobrania
+    /// Łączy się z endpointem i pobiera wszystkie pliki p�niejsze ni� data ostatniego pobrania
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Download()
@@ -174,8 +174,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
                 Modified = last,
                 MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
             });
-            if (FtpDispatcherGlobals.ShowError != null)
-                FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
+            NotifyFileTransferred(eFtpDirection.Get, new FileInfo(pFD.cFileName));
         }
         while (InternetFindNextFile(hFind, pFD) && m_Disp.InProgress)
             if (GetFile(pFD)) {
@@ -187,12 +186,11 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
                     Modified = last,
                     MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
                 });
-                if (FtpDispatcherGlobals.ShowError != null)
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{pFD.cFileName}|{size}|{last.ToBinary()}");
+                NotifyFileTransferred(eFtpDirection.Get, new FileInfo(pFD.cFileName));
             }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Get, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
             throw new FtpUtilityException("Błąd pobierania z zasobu " + m_sHost + m_sRemoteDir);
@@ -205,7 +203,7 @@ noFilesFound:
     }
 
     /// <summary>
-    /// ��czy si� z endpointem i wstawia wszystkie pliki z lokalnego katalogu
+    /// Łączy się z endpointem i wstawia wszystkie pliki z lokalnego katalogu
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Upload()
@@ -225,13 +223,12 @@ noFilesFound:
                     Modified = fi.LastWriteTime,
                     MD5 = fi.FullName.ComputeMD5()
                 });
-                if (FtpDispatcherGlobals.ShowError != null)
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
+                NotifyFileTransferred(eFtpDirection.Put, fi);
             }
         }
 
-        if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+        if (m_Disp != null && !m_Disp.InProgress)
+            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Put, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         Dispose();
 
@@ -239,7 +236,7 @@ noFilesFound:
     }
 
     /// <summary>
-    /// ��czy si� z endpointem i wstawia jeden pliki z lokalnego hot folderu
+    /// Łączy się z endpointem i wstawia jeden pliki z lokalnego hot folderu
     /// </summary>
     /// <returns>Status powodzenia operacji</returns>
     public bool UploadHotFile(FileInfo file)
@@ -251,7 +248,7 @@ noFilesFound:
 
         bool status = PutFile(file);
         if (status)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
+            NotifyFileTransferred(eFtpDirection.HotfolderPut, file);
 
         Dispose();
 
@@ -316,7 +313,7 @@ noFilesFound:
         string localPath = m_sLocalDir + pFD.cFileName;
         if (!FtpGetFile(hFtpSess, pFD.cFileName, localPath, false, FILE_ATTRIBUTE_NORMAL, (uint)m_TransferMode, iContext)) {
             var dirsep = m_sRemoteDir.EndsWith('/')? string.Empty : "/";
-            throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiod�o si�");
+            throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiodło się");
         }
 
         m_Disp?.NotifyFileTransfer();
@@ -362,7 +359,7 @@ noFilesFound:
 
         int iWin32Error = Marshal.GetLastWin32Error();
         if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
-            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiod�o si�", iWin32Error);
+            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się", iWin32Error);
 
         m_Disp?.NotifyFileTransfer();
 

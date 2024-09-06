@@ -45,6 +45,7 @@ public class ImageForOperation : IValueConverter
 public class ImageForError : IValueConverter
 {
     static Dictionary<eSeverityCode, string> mapping = new() {
+        {eSeverityCode.Message, "/FtpDiligent;component/Images/detail.png" },
         {eSeverityCode.Warning, "/FtpDiligent;component/Images/warn.png" },
         {eSeverityCode.Error, "/FtpDiligent;component/Images/err.png" },
         {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" }

@@ -72,7 +72,7 @@ public class SendEmails
     private MimeMessage PrepareMimeMessage(string error) {
         try { 
             var msg = new MimeMessage();
-            msg.Subject = "Powiadomienie o błędzie transferu plik�w";
+            msg.Subject = "Powiadomienie o błędzie transferu plików";
             msg.To.AddRange(m_errorsMailTo.Split(';').Where(s => !string.IsNullOrEmpty(s)).Select(s => MailboxAddress.Parse(s)));
             var senderMailbox = new MailboxAddress("FtpDiligent", "no_replay@sendgrid.net");
             msg.Sender = senderMailbox;

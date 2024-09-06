@@ -28,6 +28,8 @@ public interface IFtpUtility
                 return new FtpsUtility(endpoint, dispatcher, mode, true);
             case eFtpProtocol.SFTP:
                 return new SFtpUtility(endpoint, dispatcher, mode);
+            case eFtpProtocol.FileCopy:
+                return new FileCopyUtility(endpoint, dispatcher, mode);
         }
 
         return null;

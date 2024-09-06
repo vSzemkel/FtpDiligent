@@ -15,5 +15,6 @@ public enum eFtpProtocol : byte
 {
     FTP  = 1,
     FTPS = 2,
-    SFTP = 3
+    SFTP = 3,
+    FileCopy = 4
 }

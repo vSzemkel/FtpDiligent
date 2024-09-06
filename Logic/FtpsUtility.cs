@@ -23,7 +23,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
 {
     #region fields
     /// <summary>
-    /// Rozmiar buforu używanego przy kopiowaniu plik�w
+    /// Rozmiar buforu używanego przy kopiowaniu plików
     /// </summary>
     private const int m_bufferSize = 1 << 12;
 
@@ -92,12 +92,11 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
                     Modified = f.Modified,
                     MD5 = (m_sLocalDir + f.Name).ComputeMD5()
                 });
-                if (FtpDispatcherGlobals.ShowError != null)
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Size}|{f.Modified.ToBinary()}");
+                NotifyFileTransferred(eFtpDirection.Get, new FileInfo(f.FullName));
             }
 
-        if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+        if (m_Disp != null && !m_Disp.InProgress)
+            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Get, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_ftpsClient.Disconnect();
 
@@ -125,13 +124,12 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
                     Modified = fi.LastWriteTime,
                     MD5 = fi.FullName.ComputeMD5()
                 });
-                if (FtpDispatcherGlobals.ShowError != null)
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
+                NotifyFileTransferred(eFtpDirection.Put, fi);
             }
         }
 
-        if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+        if (m_Disp != null && !m_Disp.InProgress)
+            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Put, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_ftpsClient.Disconnect();
 
@@ -151,7 +149,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
 
         bool status = PutFile(file);
         if (status)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
+            NotifyFileTransferred(eFtpDirection.HotfolderPut, file);
 
         m_ftpsClient.Disconnect();
 

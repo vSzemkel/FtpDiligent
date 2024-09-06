@@ -112,6 +112,7 @@ public partial class MainWindow : Window
         this.tabSterowanie.Content = m_tbSterowanie;
         this.tabSerwery.Content = m_tbSerwery;
         this.tabHarmonogramy.Content = m_tbHarmonogramy;
+        FtpUtilityBase.FileTransferred += ShowNotification;
 
         m_database = database;
         CheckEventLog();
@@ -143,6 +144,14 @@ public partial class MainWindow : Window
         else
             Dispatcher.Invoke(ShowErrorInfoInternal, code, message);
     }
+
+    public void ShowNotification(object sender, FileTransferredEventArgs arg)
+    {
+        if (Dispatcher.CheckAccess())
+            ShowTransferDetails(arg);
+        else
+            Dispatcher.Invoke(ShowTransferDetails, arg);
+    }
     #endregion
 
     #region private
@@ -153,33 +162,44 @@ public partial class MainWindow : Window
     /// <param name="message">Treść powiadomienia</param>
     private void ShowErrorInfoInternal(eSeverityCode code, string message)
     {
-        switch (code) {
+        m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+        if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+            EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Warning);
+    }
+
+    /// <summary>
+    /// Aktualizuje informacje o przesyłaniu plików na zakładce Sterowanie
+    /// </summary>
+    /// <param name="arg">Szczegóły operacji</param>
+    private void ShowTransferDetails(FileTransferredEventArgs arg)
+    {
+        switch (arg.code) {
             case eSeverityCode.NextSync:
-                m_tbSterowanie.tbNextSync.Text = message;
+                m_tbSterowanie.tbNextSync.Text = arg.message;
                 break;
             case eSeverityCode.Message:
-                m_tbSterowanie.lbLog.Items.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {message}");
+                m_tbSterowanie.lbLog.Items.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {arg.message}");
                 if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Information);
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Information);
                 break;
             case eSeverityCode.FileInfo:
-                BindFileInfo(message);
+                BindFileInfo(arg);
                 if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.FileInfo))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.SuccessAudit);
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.SuccessAudit);
                 break;
             case eSeverityCode.Warning:
-                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = arg.code, Message = arg.message });
                 if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Warning);
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Warning);
                 break;
             case eSeverityCode.TransferError:
                 m_tbSterowanie.RestartScheduler();
-                m_mailer.Run(message);
+                m_mailer.Run(arg.message);
                 goto case eSeverityCode.Error;
             case eSeverityCode.Error:
-                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = arg.code, Message = arg.message });
                 if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Error);
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Error);
                 break;
         }
     }
@@ -189,15 +209,14 @@ public partial class MainWindow : Window
     /// aktualizuje liste plików i licznik
     /// </summary>
     /// <param name="message">eFtpDirection|Name|Size|Date</param>
-    private void BindFileInfo(string message)
+    private void BindFileInfo(FileTransferredEventArgs arg)
     {
-        var items = message.Split('|');
         var list = m_tbSterowanie.m_fileInfo;
         list.Insert(0, new FtpFileModel() {
-            Instance = Byte.Parse(items[0]),
-            FileName = items[1],
-            FileSize = long.Parse(items[2]),
-            FileDate = DateTime.FromBinary(long.Parse(items[3]))
+            Instance = (byte)arg.direction,
+            FileName = arg.file.FullName,
+            FileSize = arg.file.Length,
+            FileDate = arg.file.LastWriteTime
         });
 
         if (list.Count > m_fileLogSize)

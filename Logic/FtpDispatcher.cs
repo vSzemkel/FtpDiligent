@@ -47,6 +47,12 @@ public sealed class FtpDispatcher : IFtpDispatcher
     /// Ustawiana na czas wykonywania transferu
     /// </summary>
     public bool InProgress { get; set; }
+
+    /// <summary>
+    /// Pozwala dostosować wygląd interfejsu do stanu przetwarzania
+    /// Ustawiana na czas wykonywania transferu
+    /// </summary>
+    public bool InManualRun { get; set; }
     #endregion
 
     #region constructor
@@ -147,7 +153,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
             if (eDirection.HasFlag(eFtpDirection.Get)) {
                 log.files = fu.Download();
                 if (log.files == null) {
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Pobieranie plik�w z serwera {remote} zako�czy�o si� niepowodzeniem");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakończyło się niepowodzeniem");
                     return;
                 }
 
@@ -155,11 +161,11 @@ public sealed class FtpDispatcher : IFtpDispatcher
                 int filesTransfered = log.files.Length;
                 if (filesTransfered == 0) {
                     m_database.LogActivation(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plik�w odpowiednich do pobrania");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
                 } else {
                     log.direction = eFtpDirection.Get;
                     m_database.LogSync(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobrano {filesTransfered} plik�w z serwera {remote}");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
                 }
             }
             #endregion
@@ -168,7 +174,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
             if (eDirection.HasFlag(eFtpDirection.Put)) {
                 log.files = fu.Upload();
                 if (log.files == null) {
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Wstawianie plik�w na serwer {remote} zako�czy�o si� niepowodzeniem");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakończyło się niepowodzeniem");
                     return;
                 }
 
@@ -176,11 +182,11 @@ public sealed class FtpDispatcher : IFtpDispatcher
                 int filesTransfered = log.files.Length;
                 if (filesTransfered == 0) {
                     m_database.LogActivation(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Nie znaleziono plik�w do wstawienia na serwer {remote}");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
                 } else {
                     log.direction = eFtpDirection.Put;
                     m_database.LogSync(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawiono {filesTransfered} plik�w na serwer {remote}");
+                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
                 }
             }
             #endregion
@@ -210,13 +216,11 @@ public sealed class FtpDispatcher : IFtpDispatcher
     /// <param name="endpoint">Endpoint, dla którego symulujemy wywołanie z harmonogramu</param>
     public void StartNow(FtpEndpoint endpoint)
     {
-        bool oldInProgress = InProgress;
-        InProgress = true;
+        InManualRun = true;
         m_filesTransfered = 0;
         ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, new FtpScheduleModel() {
             xx = -endpoint.XX
         });
-        InProgress = oldInProgress;
     }
 
     /// <summary>

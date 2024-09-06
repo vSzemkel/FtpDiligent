@@ -34,6 +34,17 @@ public class FtpEndpoint : EditableItem<FtpEndpointModel>
         Direction = dir;
         Mode = mode;
     }
+
+    /// <summary>
+    /// Inicjalizacja nowego obiektu
+    /// </summary>
+    public FtpEndpoint()
+    {
+        Instance = FtpDispatcherGlobals.Instance;
+        Protocol = eFtpProtocol.FTP;
+        Direction = eFtpDirection.Get;
+        Mode = eFtpTransferMode.Binary;
+    }
     #endregion
 
     #region properties

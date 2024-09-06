@@ -19,14 +19,14 @@ using Renci.SshNet.Common;
 using Renci.SshNet.Sftp;
 
 /// <summary>
-/// Umo�liwia przegl�danie zasob�w serwera FTP i pobieranie plik�w
+/// Umożliwia przeglądanie zasobów serwera FTP i pobieranie plików
 /// poprzez transport oparty na protokole SSH (port 22)
 /// </summary>
 public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
 {
     #region fields
     /// <summary>
-    /// Rozmiar buforu u�ywanego przy kopiowaniu plik�w
+    /// Rozmiar buforu u�ywanego przy kopiowaniu plików
     /// </summary>
     private const int m_bufferSize = 1 << 12;
 
@@ -46,8 +46,8 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     /// Konstruktor FtpUtility sterowanego przez <see>FtpDispatcher</see>
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="dispatcher">Obiekt steruj�cy w�tkami</param>
-    /// <param name="mode">Algorytm kwalifikacji plik�w do transferu</param>
+    /// <param name="dispatcher">Obiekt sterujący wątkami</param>
+    /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
     public SFtpUtility(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
         : base(endpoint, dispatcher, mode) {
     }
@@ -92,12 +92,11 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
                     Modified = f.LastWriteTime,
                     MD5 = (m_sLocalDir + f.Name).ComputeMD5()
                 });
-                if (FtpDispatcherGlobals.ShowError != null)
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"1|{f.Name}|{f.Length}|{f.LastWriteTime.ToBinary()}");
+                NotifyFileTransferred(eFtpDirection.Get, new FileInfo(f.FullName));
             }
 
-        if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zosta�o przerwane przez u�ytkownika");
+        if (m_Disp != null && !m_Disp.InProgress)
+            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Get, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_sftpClient.Disconnect();
 
@@ -125,13 +124,12 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
                     Modified = fi.LastWriteTime,
                     MD5 = fi.FullName.ComputeMD5()
                 });
-                if (FtpDispatcherGlobals.ShowError != null)
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"2|{fi.Name}|{fi.Length}|{fi.LastWriteTime.ToBinary()}");
+                NotifyFileTransferred(eFtpDirection.Put, fi);
             }
         }
 
-        if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+        if (m_Disp != null && !m_Disp.InProgress)
+            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Put, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_sftpClient.Disconnect();
 
@@ -151,7 +149,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
 
         bool status = PutFile(file);
         if (status)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.FileInfo, $"4|{file.Name}|{file.Length}|{file.LastWriteTime.ToBinary()}");
+            NotifyFileTransferred(eFtpDirection.Put, file);
 
         m_sftpClient.Disconnect();
 
