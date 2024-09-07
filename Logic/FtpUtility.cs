@@ -316,8 +316,6 @@ noFilesFound:
             throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiodło się");
         }
 
-        m_Disp?.NotifyFileTransfer();
-
         if (FtpDispatcherGlobals.CheckTransferedStorage) {
             bool bStatus = CheckLocalStorage(pFD.cFileName, size);
             if (!bStatus && File.Exists(localPath))
@@ -360,8 +358,6 @@ noFilesFound:
         int iWin32Error = Marshal.GetLastWin32Error();
         if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
             throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się", iWin32Error);
-
-        m_Disp?.NotifyFileTransfer();
 
         if (FtpDispatcherGlobals.CheckTransferedStorage)
             return CheckRemoteStorage(pFI.Name, pFI.Length);

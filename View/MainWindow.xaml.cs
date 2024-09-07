@@ -173,7 +173,7 @@ public partial class MainWindow : Window
     /// <param name="arg">Szczegóły operacji</param>
     private void ShowTransferDetails(FileTransferredEventArgs arg)
     {
-        switch (arg.code) {
+        switch (arg.severity) {
             case eSeverityCode.NextSync:
                 m_tbSterowanie.tbNextSync.Text = arg.message;
                 break;
@@ -188,7 +188,7 @@ public partial class MainWindow : Window
                     EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.SuccessAudit);
                 break;
             case eSeverityCode.Warning:
-                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = arg.code, Message = arg.message });
+                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
                 if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
                     EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Warning);
                 break;
@@ -197,7 +197,7 @@ public partial class MainWindow : Window
                 m_mailer.Run(arg.message);
                 goto case eSeverityCode.Error;
             case eSeverityCode.Error:
-                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = arg.code, Message = arg.message });
+                m_tbSterowanie.m_errInfo.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
                 if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
                     EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Error);
                 break;
@@ -221,7 +221,7 @@ public partial class MainWindow : Window
 
         if (list.Count > m_fileLogSize)
             list.RemoveAt(m_fileLogSize);
-        m_tbSterowanie.tbFilesCount.DataContext = ++m_tbSterowanie.m_filesCount;
+        m_tbSterowanie.tbFilesCount.DataContext = m_tbSterowanie.NotifyFileTransfer();
     }
 
     /// <summary>

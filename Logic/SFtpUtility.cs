@@ -229,8 +229,6 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
             return bStatus;
         }
 
-        m_Disp?.NotifyFileTransfer();
-
         return true;
     }
 
@@ -274,8 +272,6 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
             throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się. {ex.Message}");
         }
 
-        m_Disp?.NotifyFileTransfer();
-
         return true;
     }
 
@@ -294,7 +290,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     /// <summary>
     /// Stream z kluczem prywatnym
     /// </summary>
-    /// <returns>Otwarty stream, kt�ry costanie zamkni�ty w konstruktorze SftpClient</returns>
+    /// <returns>Otwarty stream, który costanie zamknięty w konstruktorze SftpClient</returns>
     private GZipStream GetSSHPrivateKey()
     {
         // scrumble

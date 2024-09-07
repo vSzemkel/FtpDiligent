@@ -19,7 +19,7 @@ public record struct FileTransferredEventArgs
     /// <summary>
     /// Podtyp powiadomienia
     /// </summary>
-    eSeverityCode code,
+    eSeverityCode severity,
 
     /// <summary>
     /// Rodzaj transferu

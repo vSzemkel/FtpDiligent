@@ -1,9 +1,7 @@
-
 // -----------------------------------------------------------------------
-// <copyright file="FileCopyUtility.cs" company="Agora SA">
-// <legal>Copyright (c) Development IT, kwiecien 2020</legal>
+// <copyright file="FileTransferredEventArgs.cs">
+// <legal>Copyright (c) Marcin Buchwald, September 2024</legal>
 // <author>Marcin Buchwald</author>
-// <retired>Not used, for demonstration purposes only</retired>
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -146,9 +144,6 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
 
         string localPath = m_sLocalDir + file.Name;
         File.Copy(file.FullName, localPath);
-            //throw new FtpUtilityException($"Kopiowanie {file.FullName} do {m_sLocalDir} nie powiodło się");
-
-        m_Disp?.NotifyFileTransfer();
 
         if (FtpDispatcherGlobals.CheckTransferedStorage) {
             bool bStatus = CheckLocalStorage(file.Name, file.Length);
@@ -163,8 +158,8 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
     /// <summary>
     /// Wstawia plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
     /// </summary>
-    /// <param name="pFD">struktura opisuj�ca plik lub katalog</param>
-    /// <returns>Czy dosz�o do wstawienia pliku</returns>
+    /// <param name="pFD">struktura opisująca plik lub katalog</param>
+    /// <returns>Czy doszło do wstawienia pliku</returns>
     private bool PutFile(FileInfo pFI)
     {
         if (pFI.Length == 0)
@@ -187,13 +182,8 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
                 break;
         }
 
-        //FtpPutFile(hFtpSess, pFI.FullName, pFI.Name, (uint)m_TransferMode, iContext);
-
-        int iWin32Error = 111;// Marshal.GetLastWin32Error();
-        if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
-            throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się", iWin32Error);
-
-        m_Disp?.NotifyFileTransfer();
+        string localPath = m_sLocalDir + pFI.Name;
+        File.Copy(pFI.FullName, localPath);
 
         if (FtpDispatcherGlobals.CheckTransferedStorage)
             return CheckRemoteStorage(pFI.Name, pFI.Length);

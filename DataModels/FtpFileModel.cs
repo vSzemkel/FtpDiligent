@@ -15,7 +15,10 @@ using System;
 /// </summary>
 public struct FtpFileModel
 {
-    public int Instance { get; set; } // identyfikator instancji workera
+    /// <summary>
+    /// Identyfikator instancji workera, uzywany tez do przekazywania rodzaju operacji
+    /// </summary>
+    public int Instance { get; set; }
     public string FileName { get; set; }
     public long FileSize { get; set; }
     public DateTime FileDate { get; set; }

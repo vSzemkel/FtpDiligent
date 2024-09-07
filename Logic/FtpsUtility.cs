@@ -235,8 +235,6 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
             return bStatus;
         }
 
-        m_Disp?.NotifyFileTransfer();
-
         return true;
     }
 
@@ -279,8 +277,6 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
         } catch (Exception ex) {
             throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się. {ex.Message}");
         }
-
-        m_Disp?.NotifyFileTransfer();
 
         return true;
     }

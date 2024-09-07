@@ -26,11 +26,6 @@ public partial class Sterowanie : UserControl
     private MainWindow m_mainWnd;
 
     /// <summary>
-    /// Liczba plików przesłanych w bieżącej sesji
-    /// </summary>
-    public int m_filesCount = 0;
-
-    /// <summary>
     /// Lista ostatnio transferowanych plików
     /// </summary>
     public ObservableCollection<FtpFileModel> m_fileInfo = new();
@@ -114,6 +109,11 @@ public partial class Sterowanie : UserControl
             Thread.Sleep(5000);
             m_dispatcher.Start();
         }
+    }
+
+    public int NotifyFileTransfer()
+    {
+        return m_dispatcher.NotifyFileTransfer();
     }
     #endregion
 

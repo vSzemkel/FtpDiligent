@@ -30,8 +30,9 @@ New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled Tru
 # User key generation
 cd ~\.ssh\
 ssh-keygen
+# OpenSSH client service is disabled by default. 
 Get-Service ssh-agent | Select StartType
-Get-Service -Name ssh-agent | Set-Service -StartupType Manual
+Get-Service -Name ssh-agent | Set-Service -StartupType Automatic
 Start-Service ssh-agent
 ssh-add ~\.ssh\test_rsa
 # Copy public key to the server file C:\Users\vSzemkel\.ssh\authorized_keys

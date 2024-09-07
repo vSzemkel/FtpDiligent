@@ -264,8 +264,8 @@ public sealed class FtpDispatcher : IFtpDispatcher
     public int GetNumberOfFilesTransferred() => m_filesTransfered;
 
     /// <summary>
-    /// Zlicza przesłane pliki
+    /// Zlicza przesłane pliki, wołane tylko przez GUI thread
     /// </summary>
-    public void NotifyFileTransfer() => ++m_filesTransfered;
+    public int NotifyFileTransfer() => ++m_filesTransfered;
     #endregion
 }

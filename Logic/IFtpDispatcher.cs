@@ -46,5 +46,5 @@ public interface IFtpDispatcher
     /// <summary>
     /// Zlicza przesłane pliki
     /// </summary>
-    public void NotifyFileTransfer();
+    public int NotifyFileTransfer();
 }
