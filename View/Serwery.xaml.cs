@@ -167,7 +167,7 @@ public partial class Serwery : UserControl
     public void StartHotfolders()
     {
         foreach (FtpEndpoint enp in m_endpoints)
-            if ((enp.Direction & eFtpDirection.HotfolderPut) > 0) {
+            if (enp.Direction.HasFlag(eFtpDirection.HotfolderPut)) {
                 var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_database);
                 fhw.StartWatching();
                 m_hotfolders.Add(fhw);

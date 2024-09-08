@@ -127,7 +127,7 @@ public class FtpHotfolderWatcher
     {
         var staged = new List<FileInfo>();
         var good2go = new List<FileInfo>();
-        CancellationToken ct = (CancellationToken)o;
+        var ct = (CancellationToken)o;
 
         while (!ct.IsCancellationRequested) {
             // select

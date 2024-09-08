@@ -49,6 +49,8 @@ public interface IFtpUtility
                 return new FtpsUtility(endpoint, true);
             case eFtpProtocol.SFTP:
                 return new SFtpUtility(endpoint);
+            case eFtpProtocol.FileCopy:
+                return new FileCopyUtility(endpoint);
         }
 
         return null;

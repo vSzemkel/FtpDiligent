@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="FileTransferredEventArgs.cs">
+// <copyright file="FileCopyUtility.cs">
 // <legal>Copyright (c) Marcin Buchwald, September 2024</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
@@ -160,33 +160,33 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
     /// </summary>
     /// <param name="pFD">struktura opisująca plik lub katalog</param>
     /// <returns>Czy doszło do wstawienia pliku</returns>
-    private bool PutFile(FileInfo pFI)
+    private bool PutFile(FileInfo file)
     {
-        if (pFI.Length == 0)
+        if (file.Length == 0)
             return false;
 
         switch (m_SyncMode) {
             case eSyncFileMode.NewerThenRefreshDate:
-                if (pFI.LastWriteTime < m_dtLastRefresh)
+                if (file.LastWriteTime < m_dtLastRefresh)
                     return false;
                 break;
             case eSyncFileMode.UniqueDateAndSizeOnDisk:
-                if (CheckRemoteStorage(pFI.Name, pFI.Length))
+                if (CheckRemoteStorage(file.Name, file.Length))
                     return false;
                 break;
             case eSyncFileMode.UniqueDateAndSizeInDatabase:
-                if (m_Disp.CheckDatabase(pFI.Name, pFI.Length, pFI.LastWriteTime))
+                if (m_Disp.CheckDatabase(file.Name, file.Length, file.LastWriteTime))
                     return false;
                 break;
             case eSyncFileMode.AllFiles:
                 break;
         }
 
-        string localPath = m_sLocalDir + pFI.Name;
-        File.Copy(pFI.FullName, localPath);
+        string destPath = m_sRemoteDir + file.Name;
+        File.Copy(file.FullName, destPath);
 
         if (FtpDispatcherGlobals.CheckTransferedStorage)
-            return CheckRemoteStorage(pFI.Name, pFI.Length);
+            return CheckRemoteStorage(destPath, file.Length);
 
         return true;
     }

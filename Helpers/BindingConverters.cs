@@ -48,7 +48,8 @@ public class ImageForError : IValueConverter
         {eSeverityCode.Message, "/FtpDiligent;component/Images/detail.png" },
         {eSeverityCode.Warning, "/FtpDiligent;component/Images/warn.png" },
         {eSeverityCode.Error, "/FtpDiligent;component/Images/err.png" },
-        {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" }
+        {eSeverityCode.TransferError, "/FtpDiligent;component/Images/trans.png" },
+        {eSeverityCode.NextSync, "/FtpDiligent;component/Images/serwer.png" }
     };
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
