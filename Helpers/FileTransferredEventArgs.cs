@@ -6,10 +6,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.IO;
-
 namespace FtpDiligent;
-
 
 /// <summary>
 /// Informacje o zakończonym transferze pliku
@@ -29,7 +26,7 @@ public record struct FileTransferredEventArgs
     /// <summary>
     /// Dane pliku
     /// </summary>
-    FileInfo file,
+    System.IO.FileInfo file,
 
     /// <summary>
     /// Treść wiadomości

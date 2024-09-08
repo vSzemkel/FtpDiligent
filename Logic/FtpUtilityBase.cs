@@ -52,7 +52,15 @@ public abstract class FtpUtilityBase
     #endregion
 
     #region events
+    /// <summary>
+    /// Rozgłasza informację o przetransportowanym pliku
+    /// </summary>
     public static event EventHandler<FileTransferredEventArgs> FileTransferred;
+
+    /// <summary>
+    /// Rozgłasza status operacji transferu pliku
+    /// </summary>
+    public static event EventHandler<TransferNotificationEventArgs> TransferStatusNotification;
     #endregion
 
     #region public methods

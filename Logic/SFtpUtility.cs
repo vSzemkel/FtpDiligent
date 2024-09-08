@@ -283,7 +283,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     /// <returns>Czy istnieje plik o zadanych cechach w katalogu zdalnym</returns>
     private bool CheckRemoteStorage(string remoteName, long length)
     {
-        SftpFile f = m_sftpClient.Get(remoteName);
+        var f = m_sftpClient.Get(remoteName);
         return f.Length == length;
     }
 
