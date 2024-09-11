@@ -55,6 +55,13 @@ public sealed class FtpDispatcher : IFtpDispatcher
     public bool InManualRun { get; set; }
     #endregion
 
+    #region events
+    /// <summary>
+    /// Rozgłasza status operacji transferu pliku
+    /// </summary>
+    public static event EventHandler<TransferNotificationEventArgs> DispatcherStatusNotification;
+    #endregion
+
     #region constructor
     /// <summary>
     /// Konstruktor FtpDispatchera
@@ -83,10 +90,10 @@ public sealed class FtpDispatcher : IFtpDispatcher
             var (schedule, errmsg) = m_database.GetNextSync(FtpDispatcherGlobals.Instance);
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie");
+                    NotifyTransferStatus(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie");
                 else {
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po błędzie");
+                    NotifyTransferStatus(eSeverityCode.Error, errmsg);
+                    NotifyTransferStatus(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po błędzie");
                     lastSchedule = 0;
                     Thread.Sleep(m_retryWaitTime);
                     FtpDispatcherGlobals.StartProcessing();
@@ -102,9 +109,9 @@ public sealed class FtpDispatcher : IFtpDispatcher
 
             lastSchedule = currentSchedule;
             if (schedule.xx > 0)
-                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, $"Najbliższy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
+                NotifyTransferStatus(eSeverityCode.NextSync, $"Najbliższy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
             else
-                FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, "Do końca tygodnia nie zaplanowano żadnych transferów.");
+                NotifyTransferStatus(eSeverityCode.NextSync, "Do końca tygodnia nie zaplanowano żadnych transferów.");
 
             if (DateTime.Now < schedule.nextSyncTime)
                 m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
@@ -114,7 +121,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
         } // while
 
         if (!InProgress)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Pobieranie przerwane przez użytkownika");
+            NotifyTransferStatus(eSeverityCode.Message, "Pobieranie przerwane przez użytkownika");
     }
 
     /// <summary>
@@ -134,7 +141,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
             if (errmsg == "0")
                 errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
 
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            NotifyTransferStatus(eSeverityCode.Error, errmsg);
             return;
         }
 
@@ -144,16 +151,16 @@ public sealed class FtpDispatcher : IFtpDispatcher
         eFtpDirection eDirection = endpoint.direction;
 
         if (key < 0)
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpoczęto transfer plików z serwera {remote}");
+            NotifyTransferStatus(eSeverityCode.Message, $"Rozpoczęto transfer plików z serwera {remote}");
         else
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Rozpoczęto zaplanowany transfer plików {schedule.name} z serwera {remote}");
+            NotifyTransferStatus(eSeverityCode.Message, $"Rozpoczęto zaplanowany transfer plików {schedule.name} z serwera {remote}");
 
         try { // transferuj pliki
             #region pobieranie
             if (eDirection.HasFlag(eFtpDirection.Get)) {
                 log.files = fu.Download();
                 if (log.files == null) {
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakończyło się niepowodzeniem");
+                    NotifyTransferStatus(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakończyło się niepowodzeniem");
                     return;
                 }
 
@@ -161,11 +168,11 @@ public sealed class FtpDispatcher : IFtpDispatcher
                 int filesTransfered = log.files.Length;
                 if (filesTransfered == 0) {
                     m_database.LogActivation(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
+                    NotifyTransferStatus(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
                 } else {
                     log.direction = eFtpDirection.Get;
                     m_database.LogSync(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
+                    NotifyTransferStatus(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
                 }
             }
             #endregion
@@ -174,7 +181,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
             if (eDirection.HasFlag(eFtpDirection.Put)) {
                 log.files = fu.Upload();
                 if (log.files == null) {
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakończyło się niepowodzeniem");
+                    NotifyTransferStatus(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakończyło się niepowodzeniem");
                     return;
                 }
 
@@ -182,19 +189,31 @@ public sealed class FtpDispatcher : IFtpDispatcher
                 int filesTransfered = log.files.Length;
                 if (filesTransfered == 0) {
                     m_database.LogActivation(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
+                    NotifyTransferStatus(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
                 } else {
                     log.direction = eFtpDirection.Put;
                     m_database.LogSync(log);
-                    FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
+                    NotifyTransferStatus(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
                 }
             }
             #endregion
         } catch (FtpUtilityException fex) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, fex.Message);
+            NotifyTransferStatus(eSeverityCode.TransferError, fex.Message);
         } catch (Exception se) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, se.Message);
+            NotifyTransferStatus(eSeverityCode.TransferError, se.Message);
         }
+    }
+
+    /// <summary>
+    /// Triggers an DispatcherStatusNotification event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+    private void NotifyTransferStatus(eSeverityCode severity, string message)
+    {
+        var eventArgs = new TransferNotificationEventArgs(severity, message);
+        if (DispatcherStatusNotification != null)
+            DispatcherStatusNotification(this, eventArgs);
     }
     #endregion
 
@@ -230,7 +249,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
     {
         InProgress = false;
         m_are.Set();
-        FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
+        NotifyTransferStatus(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
     }
 
     /// <summary>
@@ -251,7 +270,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
 
         var (status, errmsg) = m_database.VerifyFile(file);
         if (!string.IsNullOrEmpty(errmsg)) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            NotifyTransferStatus(eSeverityCode.Error, errmsg);
             return false;
         }
 

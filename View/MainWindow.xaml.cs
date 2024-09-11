@@ -113,6 +113,8 @@ public partial class MainWindow : Window
         this.tabSerwery.Content = m_tbSerwery;
         this.tabHarmonogramy.Content = m_tbHarmonogramy;
         FtpUtilityBase.FileTransferred += ShowNotification;
+        FtpUtilityBase.TransferStatusNotification += ShowStatus;
+        FtpDispatcher.DispatcherStatusNotification += ShowStatus;
 
         m_database = database;
         CheckEventLog();
@@ -122,7 +124,6 @@ public partial class MainWindow : Window
         m_tbHarmonogramy.LoadSchedules(0);
 
         this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
-        FtpDispatcherGlobals.ShowError = this.ShowErrorInfo;
     }
     #endregion
 
@@ -143,6 +144,14 @@ public partial class MainWindow : Window
             ShowErrorInfoInternal(code, message);
         else
             Dispatcher.Invoke(ShowErrorInfoInternal, code, message);
+    }
+
+    public void ShowStatus(object sender, TransferNotificationEventArgs arg)
+    {
+        if (Dispatcher.CheckAccess())
+            ShowErrorInfoInternal(arg.severity, arg.message);
+        else
+            Dispatcher.Invoke(ShowErrorInfoInternal, arg.severity, arg.message);
     }
 
     public void ShowNotification(object sender, FileTransferredEventArgs arg)

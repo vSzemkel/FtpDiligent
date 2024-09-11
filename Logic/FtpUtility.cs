@@ -190,7 +190,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
             }
 
         if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
-            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Get, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            NotifyTransferStatus(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
             throw new FtpUtilityException("Błąd pobierania z zasobu " + m_sHost + m_sRemoteDir);
@@ -228,7 +228,7 @@ noFilesFound:
         }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Put, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            NotifyTransferStatus(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         Dispose();
 

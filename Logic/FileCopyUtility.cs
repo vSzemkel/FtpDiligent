@@ -69,7 +69,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
         }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Get, $"Kopiowanie plików z katalogu {m_sRemoteDir} zostało przerwane przez użytkownika");
+            NotifyTransferStatus(eSeverityCode.Message, $"Kopiowanie plików z katalogu {m_sRemoteDir} zostało przerwane przez użytkownika");
 
         return ret.ToArray();
     }
@@ -80,7 +80,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Upload()
     {
-        NotifyFileTransferred(eSeverityCode.Warning, eFtpDirection.Put, $"Kopiowanie plików jest możliwe tylko przy użyciu operacji GET");
+        NotifyTransferStatus(eSeverityCode.Warning, $"Kopiowanie plików jest możliwe tylko przy użyciu operacji GET");
         return null;
     }
 

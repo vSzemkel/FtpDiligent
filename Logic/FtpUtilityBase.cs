@@ -147,14 +147,13 @@ public abstract class FtpUtilityBase
     /// <summary>
     /// Triggers an FileTransferred event with provided arguments
     /// </summary>
-    /// <param name="code">Severity code</param>
-    /// <param name="operation">Operation type</param>
+    /// <param name="severity">Severity code</param>
     /// <param name="message">Description</param>
-    protected void NotifyFileTransferred(eSeverityCode code, eFtpDirection operation, string message)
+    protected void NotifyTransferStatus(eSeverityCode severity, string message)
     {
-        var eventArgs = new FileTransferredEventArgs(code, operation, null, message);
-        if (FileTransferred != null)
-            FileTransferred(this, eventArgs);
+        var eventArgs = new TransferNotificationEventArgs(severity, message);
+        if (TransferStatusNotification != null)
+            TransferStatusNotification(this, eventArgs);
     }
 
     /// <summary>

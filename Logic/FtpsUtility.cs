@@ -96,7 +96,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
             }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Get, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            NotifyTransferStatus(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_ftpsClient.Disconnect();
 
@@ -129,7 +129,7 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
         }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            NotifyFileTransferred(eSeverityCode.Message, eFtpDirection.Put, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            NotifyTransferStatus(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_ftpsClient.Disconnect();
 
