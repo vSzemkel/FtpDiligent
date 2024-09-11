@@ -51,6 +51,13 @@ public class FtpHotfolderWatcher
     private IFtpDiligentDatabaseClient m_database { get; set; }
     #endregion
 
+    #region events
+    /// <summary>
+    /// Rozgłasza status monitoringu
+    /// </summary>
+    public static event EventHandler<TransferNotificationEventArgs> HotfolderStatusNotification;
+    #endregion
+
     #region constructor
     /// <summary>
     /// Konstruktor FtpUtility dla pojedynczych usług
@@ -142,10 +149,10 @@ public class FtpHotfolderWatcher
                         f.Close();
                     } catch (UnauthorizedAccessException) {
                         staged.Add(fi);
-                        FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Odczyt pliku {fi.FullName} zostanie ponowiony");
+                        NotifyMonitoringStatus(eSeverityCode.Message, $"Odczyt pliku {fi.FullName} zostanie ponowiony");
                     } catch (Exception e) {
                         staged.Add(fi);
-                        FtpDispatcherGlobals.ShowError(eSeverityCode.Warning, $"Nie udało się odczytać pliku {fi.FullName} {e.Message}");
+                        NotifyMonitoringStatus(eSeverityCode.Warning, $"Nie udało się odczytać pliku {fi.FullName} {e.Message}");
                     }
 
                 }
@@ -185,15 +192,27 @@ public class FtpHotfolderWatcher
                         MD5 = fi.FullName.ComputeMD5()
                     });
         } catch (FtpUtilityException fex) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, fex.Message);
+            NotifyMonitoringStatus(eSeverityCode.TransferError, fex.Message);
         } catch (System.Exception se) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.TransferError, se.Message);
+            NotifyMonitoringStatus(eSeverityCode.TransferError, se.Message);
         }
 
         m_log.files = log.ToArray();
 
         // not wait CS4014
         m_database.LogSync(m_log);
+    }
+    /// <summary>
+    /// Triggers an DispatcherStatusNotification event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+
+    private void NotifyMonitoringStatus(eSeverityCode severity, string message)
+    {
+        var eventArgs = new TransferNotificationEventArgs(severity, message);
+        if (HotfolderStatusNotification != null)
+            HotfolderStatusNotification(this, eventArgs);
     }
     #endregion
 }

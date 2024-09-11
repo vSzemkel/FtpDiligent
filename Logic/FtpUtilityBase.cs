@@ -77,8 +77,8 @@ public abstract class FtpUtilityBase
     {
         if (!Directory.Exists(m_sLocalDir)) {
             string sMsg = "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir;
-            if (FtpDispatcherGlobals.ShowError != null) {
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, sMsg);
+            if (NotifyTransferStatus != null) {
+                NotifyTransferStatus(eSeverityCode.Error, sMsg);
                 return false;
             } else
                 throw new FtpUtilityException(sMsg);
@@ -134,8 +134,8 @@ public abstract class FtpUtilityBase
     {
         if (m_Disp == null && m_SyncMode == eSyncFileMode.UniqueDateAndSizeInDatabase) {
             string sMsg = "Pobieranie plików w tym trybie wymaga dispatchera";
-            if (FtpDispatcherGlobals.ShowError != null) {
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, sMsg);
+            if (NotifyTransferStatus != null) {
+                NotifyTransferStatus(eSeverityCode.Error, sMsg);
                 return false;
             } else
                 throw new FtpUtilityException(sMsg);

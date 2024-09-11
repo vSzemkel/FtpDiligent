@@ -31,7 +31,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     private const int m_bufferSize = 1 << 12;
 
     /// <summary>
-    /// Klient us�ugi SFTP z biblioteki Renci.SshNet
+    /// Klient usługi SFTP z biblioteki Renci.SshNet
     /// </summary>
     private SftpClient m_sftpClient;
 

@@ -22,17 +22,17 @@ public class SendEmails
     private readonly string m_mailServer = "smtp.sendgrid.net";
 
     /// <summary>
-    /// Klucz us�ugi SendGrid
+    /// Klucz usługi SendGrid
     /// </summary>
     public string m_sendGridKey;
 
     /// <summary>
-    /// Referencja do g��wnego okna
+    /// Referencja do głównego okna
     /// </summary>
     public MainWindow m_mainWnd;
 
     /// <summary>
-    /// Na jaki adres wys�a� mailowe powiadomienia o b��dach
+    /// Na jaki adres wysłać mailowe powiadomienia o błędach
     /// </summary>
     public string m_errorsMailTo;
     #endregion
@@ -43,7 +43,7 @@ public class SendEmails
     /// </summary>
     /// <param name="wnd">G��wne okno aplikacji WPF</param>
     /// <param name="errorsMailTo">Lista adres�w odbiorc�w, rozdzialona �rednikami</param>
-    /// <param name="apiKey">Klucz prywatny do us�ugi SendGrid</param>
+    /// <param name="apiKey">Klucz prywatny do usługi SendGrid</param>
     public SendEmails(MainWindow wnd, string errorsMailTo, string apiKey)
     {
         m_mainWnd = wnd;
@@ -53,9 +53,9 @@ public class SendEmails
     #endregion
 
     /// <summary>
-    /// Uruchamia wysy�k� maili przez us�ug� SendGrid
+    /// Uruchamia wysyłkę maili przez usługę SendGrid
     /// </summary>
-    /// <param name="error">B��d do wys�ania</param>
+    /// <param name="error">Błąd do wysłania</param>
     public void Run(string error)
     {
         if (!string.IsNullOrEmpty(m_errorsMailTo)) {
@@ -68,7 +68,7 @@ public class SendEmails
     /// Buduje wiadomość na podstawie danych wyciągniętych z bazy
     /// </summary>
     /// <param name="sdr">Rekord z bazy danych</param>
-    /// <returns>Wiadomo�� do wys�ania</returns>
+    /// <returns>Wiadomość do wysłania</returns>
     private MimeMessage PrepareMimeMessage(string error) {
         try { 
             var msg = new MimeMessage();
