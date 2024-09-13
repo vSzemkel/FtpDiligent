@@ -6,9 +6,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Data;
+using System.Linq;
+
 namespace FtpDiligent;
 
-public class FtpDiligentDatabaseClientBase
+public abstract class FtpDiligentDatabaseClientBase
 {
     #region fields
     /// <summary>
@@ -28,5 +33,33 @@ public class FtpDiligentDatabaseClientBase
     /// </summary>
     /// <returns>Wartość ostatnio wygenerowanego identyfikatora</returns>
     public int GetLastInsertedKey() => m_lastInsertedKey;
+
+    /// <summary>
+    /// Konwertuje kolekcję DataRow na bindowalną w WPF kolekcję
+    /// </summary>
+    /// <param name="rows">Kolekcja obiektów pobrana z bazy danych</param>
+    /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
+    public ObservableCollection<FtpEndpoint> GetEndpointsCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => CreateFtpEndpoint(dr)));
+
+    /// <summary>
+    /// Konwertuje kolekcję DataRow na bindowalną w WPF kolekcję
+    /// </summary>
+    /// <param name="rows">Kolekcja obiektów pobrana z bazy danych</param>
+    /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
+    public ObservableCollection<FtpSchedule> GetSchedulesCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => CreateFtpSchedule(dr)));
+    #endregion
+
+    #region protected
+    /// <summary>
+    /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
+    /// </summary>
+    /// <param name="row">Wiersz danych</param>
+    protected abstract FtpEndpoint CreateFtpEndpoint(DataRow row);
+
+    /// <summary>
+    /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
+    /// </summary>
+    /// <param name="row">Wiersz danych</param>
+    protected abstract FtpSchedule CreateFtpSchedule(DataRow row);
     #endregion
 }

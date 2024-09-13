@@ -9,10 +9,7 @@
 namespace FtpDiligent;
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
-using System.Linq;
 using System.Threading.Tasks;
 
 using Oracle.ManagedDataAccess.Client;
@@ -72,25 +69,6 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     }
 
     /// <summary>
-    /// Konwertuje obiekt typu DataTable na bindowalną w WPF kolekcję
-    /// </summary>
-    /// <param name="tab">Tabela z endpointami</param>
-    /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    public ObservableCollection<FtpEndpoint> GetEndpointsCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => new FtpEndpoint(new FtpEndpointModel() {
-        xx = (int)(decimal)dr[0],
-        insXX = (int)(decimal)dr[1],
-        host = dr[2].ToString(),
-        uid = dr[3].ToString(),
-        pwd = dr[4].ToString(),
-        remDir = dr[5].ToString(),
-        locDir = dr[6].ToString(),
-        lastSync = (DateTime)dr[7],
-        protocol = (eFtpProtocol)(short)dr[8],
-        direction = (eFtpDirection)(short)dr[9],
-        mode = (eFtpTransferMode)(short)dr[10]
-    })));
-
-    /// <summary>
     /// Pobiera bieżący harmonogram dla wskazanej instancji FtpGetWorkera
     /// </summary>
     /// <param name="endpoint">Identyfikator endpointu FTP skonfigurowanego dla tej instancji</param>
@@ -103,22 +81,6 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
 
         return ExecuteReaderAsync(cmd).Result;
     }
-
-    /// <summary>
-    /// Konwertuje obiekt typu DataTable na bindowalną w WPF kolekcję
-    /// </summary>
-    /// <param name="tab">Tabela z endpointami</param>
-    /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    public ObservableCollection<FtpSchedule> GetSchedulesCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => new FtpSchedule(new FtpScheduleModel()
-    {
-        xx = (int)(decimal)dr[0],
-        endXX = (int)(decimal)dr[1],
-        name = dr[2].ToString(),
-        startSpan = new TimeSpan(0, minutes: (short)(decimal)dr[3], 0),
-        stopSpan = new TimeSpan(0, minutes: (short)(decimal)dr[4], 0),
-        stride = (short)(decimal)dr[5],
-        enabled = dr[6] == DBNull.Value,
-    })));
 
     /// <summary>
     /// Tworzenie, modyfikacja, usunięcie endpointu FTP
@@ -333,6 +295,42 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
         var (status,msg) = ExecuteScalarAsync<decimal>(cmd).Result;
         return (status > 0, msg);
     }
+    #endregion
+
+    #region protected
+    /// <summary>
+    /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
+    /// </summary>
+    /// <param name="row">Wiersz danych</param>
+    protected override FtpEndpoint CreateFtpEndpoint(DataRow row) => new FtpEndpoint(new FtpEndpointModel()
+    {
+        xx = (int)(decimal)row[0],
+        insXX = (int)(decimal)row[1],
+        host = row[2].ToString(),
+        uid = row[3].ToString(),
+        pwd = row[4].ToString(),
+        remDir = row[5].ToString(),
+        locDir = row[6].ToString(),
+        lastSync = (DateTime)row[7],
+        protocol = (eFtpProtocol)(short)row[8],
+        direction = (eFtpDirection)(short)row[9],
+        mode = (eFtpTransferMode)(short)row[10]
+    });
+
+    /// <summary>
+    /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
+    /// </summary>
+    /// <param name="row">Wiersz danych</param>
+    protected override FtpSchedule CreateFtpSchedule(DataRow row) => new FtpSchedule(new FtpScheduleModel()
+    {
+        xx = (int)(decimal)row[0],
+        endXX = (int)(decimal)row[1],
+        name = row[2].ToString(),
+        startSpan = new TimeSpan(0, minutes: (short)(decimal)row[3], 0),
+        stopSpan = new TimeSpan(0, minutes: (short)(decimal)row[4], 0),
+        stride = (short)(decimal)row[5],
+        enabled = row[6] == DBNull.Value,
+    });
     #endregion
 
     #region private static
