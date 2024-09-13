@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Data.SqlClient;
 
-class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
+sealed class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
 {
     #region fields
     /// <summary>
@@ -294,7 +294,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
     /// </summary>
     /// <param name="row">Wiersz danych</param>
-    protected override FtpEndpoint CreateFtpEndpoint(DataRow row) => new FtpEndpoint(new FtpEndpointModel()
+    protected override FtpEndpoint CreateFtpEndpoint(DataRow row) => new (new FtpEndpointModel()
     {
         xx = (int)row[0],
         insXX = (int)row[1],
@@ -313,7 +313,7 @@ class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabase
     /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
     /// </summary>
     /// <param name="row">Wiersz danych</param>
-    protected override FtpSchedule CreateFtpSchedule(DataRow row) => new FtpSchedule(new FtpScheduleModel()
+    protected override FtpSchedule CreateFtpSchedule(DataRow row) => new (new FtpScheduleModel()
     {
         xx = (int)row[0],
         endXX = (int)row[1],

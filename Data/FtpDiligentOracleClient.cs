@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 using Oracle.ManagedDataAccess.Client;
 
-class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
+sealed class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
 {
     #region fields
     /// <summary>
@@ -302,7 +302,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
     /// </summary>
     /// <param name="row">Wiersz danych</param>
-    protected override FtpEndpoint CreateFtpEndpoint(DataRow row) => new FtpEndpoint(new FtpEndpointModel()
+    protected override FtpEndpoint CreateFtpEndpoint(DataRow row) => new (new FtpEndpointModel()
     {
         xx = (int)(decimal)row[0],
         insXX = (int)(decimal)row[1],
@@ -321,7 +321,7 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// Konwertuje wiersz z tabeli bazodanowej na konkretny typ
     /// </summary>
     /// <param name="row">Wiersz danych</param>
-    protected override FtpSchedule CreateFtpSchedule(DataRow row) => new FtpSchedule(new FtpScheduleModel()
+    protected override FtpSchedule CreateFtpSchedule(DataRow row) => new (new FtpScheduleModel()
     {
         xx = (int)(decimal)row[0],
         endXX = (int)(decimal)row[1],

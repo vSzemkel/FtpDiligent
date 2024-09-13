@@ -39,14 +39,14 @@ public abstract class FtpDiligentDatabaseClientBase
     /// </summary>
     /// <param name="rows">Kolekcja obiektów pobrana z bazy danych</param>
     /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    public ObservableCollection<FtpEndpoint> GetEndpointsCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => CreateFtpEndpoint(dr)));
+    public ObservableCollection<FtpEndpoint> GetEndpointsCollection(IEnumerable<DataRow> rows) => new (rows.Select(CreateFtpEndpoint));
 
     /// <summary>
     /// Konwertuje kolekcję DataRow na bindowalną w WPF kolekcję
     /// </summary>
     /// <param name="rows">Kolekcja obiektów pobrana z bazy danych</param>
     /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    public ObservableCollection<FtpSchedule> GetSchedulesCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => CreateFtpSchedule(dr)));
+    public ObservableCollection<FtpSchedule> GetSchedulesCollection(IEnumerable<DataRow> rows) => new (rows.Select(CreateFtpSchedule));
     #endregion
 
     #region protected
