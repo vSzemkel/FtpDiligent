@@ -9,9 +9,10 @@
 namespace FtpDiligent;
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.Security.Cryptography;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Oracle.ManagedDataAccess.Client;
@@ -75,26 +76,19 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// </summary>
     /// <param name="tab">Tabela z endpointami</param>
     /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    public ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab)
-    {
-        var ret = new ObservableCollection<FtpEndpoint>();
-        foreach (DataRow dr in tab.Rows)
-            ret.Add(new (
-                xx: (int)(decimal)dr[0],
-                insXX: (int)(decimal)dr[1],
-                host: dr[2].ToString(),
-                uid: dr[3].ToString(),
-                pwd: dr[4].ToString(),
-                remDir: dr[5].ToString(),
-                locDir: dr[6].ToString(),
-                lastSync: (DateTime)dr[7],
-                prot: (eFtpProtocol)(short)dr[8],
-                dir: (eFtpDirection)(short)dr[9],
-                mode: (eFtpTransferMode)(short)dr[10])
-            );
-
-        return ret;
-    }
+    public ObservableCollection<FtpEndpoint> GetEndpointsCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => new FtpEndpoint(new FtpEndpointModel() {
+        xx = (int)(decimal)dr[0],
+        insXX = (int)(decimal)dr[1],
+        host = dr[2].ToString(),
+        uid = dr[3].ToString(),
+        pwd = dr[4].ToString(),
+        remDir = dr[5].ToString(),
+        locDir = dr[6].ToString(),
+        lastSync = (DateTime)dr[7],
+        protocol = (eFtpProtocol)(short)dr[8],
+        direction = (eFtpDirection)(short)dr[9],
+        mode = (eFtpTransferMode)(short)dr[10]
+    })));
 
     /// <summary>
     /// Pobiera bieżący harmonogram dla wskazanej instancji FtpGetWorkera
@@ -115,23 +109,16 @@ class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatab
     /// </summary>
     /// <param name="tab">Tabela z endpointami</param>
     /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    public ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab)
+    public ObservableCollection<FtpSchedule> GetSchedulesCollection(IEnumerable<DataRow> rows) => new (rows.Select(dr => new FtpSchedule(new FtpScheduleModel()
     {
-        var ret = new ObservableCollection<FtpSchedule>();
-        foreach (DataRow dr in tab.Rows) {
-            ret.Add(new FtpSchedule(new FtpScheduleModel() {
-                xx = (int)(decimal)dr[0],
-                endXX = (int)(decimal)dr[1],
-                name = dr[2].ToString(),
-                startSpan = new TimeSpan(0, minutes: (short)(decimal)dr[3], 0),
-                stopSpan = new TimeSpan(0, minutes: (short)(decimal)dr[4], 0),
-                stride = (short)(decimal)dr[5],
-                enabled = dr[6] == DBNull.Value,
-            }));
-        }
-
-        return ret;
-    }
+        xx = (int)(decimal)dr[0],
+        endXX = (int)(decimal)dr[1],
+        name = dr[2].ToString(),
+        startSpan = new TimeSpan(0, minutes: (short)(decimal)dr[3], 0),
+        stopSpan = new TimeSpan(0, minutes: (short)(decimal)dr[4], 0),
+        stride = (short)(decimal)dr[5],
+        enabled = dr[6] == DBNull.Value,
+    })));
 
     /// <summary>
     /// Tworzenie, modyfikacja, usunięcie endpointu FTP

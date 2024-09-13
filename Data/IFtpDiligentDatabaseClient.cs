@@ -9,6 +9,7 @@
 namespace FtpDiligent;
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ public interface IFtpDiligentDatabaseClient
     /// </summary>
     /// <param name="tab">Tabela z endpointami</param>
     /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    ObservableCollection<FtpEndpoint> GetEndpointsCollection(DataTable tab) => throw new NotImplementedException();
+    ObservableCollection<FtpEndpoint> GetEndpointsCollection(IEnumerable<DataRow> rows) => throw new NotImplementedException();
 
     /// <summary>
     /// Pobiera bieżący harmonogram dla wskazanej instancji FtpGetWorkera
@@ -50,7 +51,7 @@ public interface IFtpDiligentDatabaseClient
     /// </summary>
     /// <param name="tab">Tabela z endpointami</param>
     /// <returns>Bindowalna w WPF kolekcja endpointów</returns>
-    ObservableCollection<FtpSchedule> GetSchedulesCollection(DataTable tab) => throw new NotImplementedException();
+    ObservableCollection<FtpSchedule> GetSchedulesCollection(IEnumerable<DataRow> rows) => throw new NotImplementedException();
 
     /// <summary>
     /// Tworzenie, modyfikacja, usunięcie endpointu FTP

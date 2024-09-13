@@ -10,7 +10,6 @@ namespace FtpDiligent;
 
 using System;
 using System.Collections.ObjectModel;
-using System.Data;
 
 class FtpDiligentDesignTimeClient
 {
@@ -22,36 +21,36 @@ class FtpDiligentDesignTimeClient
     /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
     public static ObservableCollection<FtpEndpoint> GetEndpoints(int instance)
     {
-        var ret = new ObservableCollection<FtpEndpoint> {
-            new (
-                xx: 1,
-                insXX: instance,
-                host: "gwmanam5.agora.pl",
-                uid: "ftp",
-                pwd: "ftp",
-                remDir: "/",
-                locDir: @"C:\Tmp\Ftp",
-                lastSync: DateTime.MinValue,
-                prot: eFtpProtocol.FTP,
-                dir: eFtpDirection.Put,
-                mode: eFtpTransferMode.Ascii
-            ) { NextSyncTime = DateTime.Now.AddMinutes(15) },
-            new (
-                xx: 2,
-                insXX: instance,
-                host: "ftp.ftpdiligentdesigntimeclient.pl",
-                uid: "ftp",
-                pwd: "pa$$word76",
-                locDir:  @"C:\Tmp\Ftp",
-                remDir: "/",
-                lastSync: DateTime.MinValue,
-                prot: eFtpProtocol.SFTP,
-                dir: eFtpDirection.Get | eFtpDirection.Put,
-                mode: eFtpTransferMode.Ascii
-            ) { NextSyncTime = DateTime.Now.AddMinutes(1) },
+        return new ObservableCollection<FtpEndpoint> {
+            new () {
+                XX = 1,
+                Instance = instance,
+                Host = "gwmanam5.agora.pl",
+                Userid = "ftp",
+                Password = "ftp",
+                RemoteDirectory = "/",
+                LocalDirectory = @"C:\Tmp\Ftp",
+                Protocol = eFtpProtocol.FTP,
+                Direction = eFtpDirection.Put,
+                Mode = eFtpTransferMode.Ascii,
+                LastSyncTime = DateTime.MinValue,
+                NextSyncTime = DateTime.Now.AddMinutes(15)
+            },
+            new () {
+                XX = 2,
+                Instance = instance,
+                Host = "ftp.ftpdiligentdesigntimeclient.pl",
+                Userid = "ftp",
+                Password = "pa$$word76",
+                RemoteDirectory = "/",
+                LocalDirectory = @"C:\Tmp\Ftp",
+                Protocol = eFtpProtocol.SFTP,
+                Direction = eFtpDirection.Get | eFtpDirection.Put,
+                Mode = eFtpTransferMode.Ascii,
+                LastSyncTime = DateTime.MinValue,
+                NextSyncTime = DateTime.Now.AddMinutes(1)
+            }
         };
-
-        return ret;
     }
 
     /// <summary>
@@ -61,8 +60,8 @@ class FtpDiligentDesignTimeClient
     /// <returns>Tabela z harmonogramem lub komunikat o błędzie</returns>
     public static ObservableCollection<FtpSchedule> GetSchedules(int endpoint)
     {
-        var ret = new ObservableCollection<FtpSchedule>() {
-            new FtpSchedule() {
+        return new ObservableCollection<FtpSchedule>() {
+            new () {
                 XX = 1,
                 Endpoint = endpoint,
                 Name = "DesignTimeSchedule 1",
@@ -73,7 +72,7 @@ class FtpDiligentDesignTimeClient
                 Stride = 10,
                 Enabled = true
             },
-            new FtpSchedule() {
+            new () {
                 XX = 2,
                 Endpoint = endpoint,
                 Name = "DesignTimeSchedule 2",
@@ -84,7 +83,7 @@ class FtpDiligentDesignTimeClient
                 Stride = 120,
                 Enabled = false
             },
-            new FtpSchedule() {
+            new () {
                 XX = 3,
                 Endpoint = endpoint,
                 Name = "DesignTimeSchedule 3",
@@ -95,7 +94,7 @@ class FtpDiligentDesignTimeClient
                 Stride = 60,
                 Enabled = true
             },
-            new FtpSchedule() {
+            new () {
                 XX = 4,
                 Endpoint = endpoint,
                 Name = "DesignTimeSchedule 4",
@@ -106,7 +105,7 @@ class FtpDiligentDesignTimeClient
                 Stride = 90,
                 Enabled = true
             },
-            new FtpSchedule() {
+            new () {
                 XX = 5,
                 Endpoint = endpoint,
                 Name = "DesignTimeSchedule 5",
@@ -118,8 +117,6 @@ class FtpDiligentDesignTimeClient
                 Enabled = true
             },
         };
-
-        return ret;
     }
     #endregion
 }

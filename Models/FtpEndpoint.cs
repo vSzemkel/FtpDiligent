@@ -17,24 +17,14 @@ public class FtpEndpoint : EditableItem<FtpEndpointModel>
 {
     #region constructors
     /// <summary>
-    /// Inicjalizacja obiektu odczytanego z bazy
+    /// Konstruktor używany do inicjowania obiektu na podstawie bazy danych
     /// </summary>
-    public FtpEndpoint(int xx, int insXX, string host, string uid, string pwd, string remDir,
-        string locDir, DateTime lastSync, eFtpProtocol prot, eFtpDirection dir, eFtpTransferMode mode)
+    /// <param name="endpoint">Model bazodanowy</param>
+    public FtpEndpoint(FtpEndpointModel endpoint)
     {
-        XX = xx;
-        Instance = insXX;
-        Host = host;
-        Userid = uid;
-        Password = pwd;
-        RemoteDirectory = remDir;
-        LocalDirectory = locDir;
-        LastSyncTime = lastSync;
-        Protocol = prot;
-        Direction = dir;
-        Mode = mode;
+        _currentData = endpoint;
     }
-
+ 
     /// <summary>
     /// Inicjalizacja nowego obiektu
     /// </summary>

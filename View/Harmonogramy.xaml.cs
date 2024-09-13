@@ -10,6 +10,7 @@ namespace FtpDiligent;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -135,7 +136,7 @@ public partial class Harmonogramy : UserControl
         if (!string.IsNullOrEmpty(errmsg))
             FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
         else
-            m_schedules = m_database.GetSchedulesCollection(tab);
+            m_schedules = m_database.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
 
         lvHarmonogramy.DataContext = m_schedules;
     }

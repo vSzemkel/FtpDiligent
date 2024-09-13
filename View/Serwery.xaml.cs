@@ -11,6 +11,7 @@ namespace FtpDiligent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -156,7 +157,7 @@ public partial class Serwery : UserControl
             FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
             m_endpoints = new ObservableCollection<FtpEndpoint>();
         } else
-            m_endpoints = m_database.GetEndpointsCollection(tab);
+            m_endpoints = m_database.GetEndpointsCollection(tab.Rows.Cast<System.Data.DataRow>());
 
         lvSerwery.DataContext = m_endpoints;
     }
