@@ -94,7 +94,7 @@ public partial class Serwery : UserControl
             if (string.IsNullOrEmpty(errmsg))
                 collection.Remove(endpoint);
             else
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         }
     }
 
@@ -154,7 +154,7 @@ public partial class Serwery : UserControl
         //m_endpoints = FtpDiligentDesignTimeClient.GetEndpoints(m_mainWnd.m_instance);
         var (tab, errmsg) = m_database.GetEndpoints(FtpDispatcherGlobals.Instance);
         if (!string.IsNullOrEmpty(errmsg)) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
             m_endpoints = new ObservableCollection<FtpEndpoint>();
         } else
             m_endpoints = m_database.GetEndpointsCollection(tab.Rows.Cast<System.Data.DataRow>());

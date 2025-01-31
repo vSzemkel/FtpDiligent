@@ -81,7 +81,7 @@ public partial class Harmonogramy : UserControl
             if (string.IsNullOrEmpty(errmsg))
                 collection.Remove(schedule);
             else
-                FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         }
     }
 
@@ -134,7 +134,7 @@ public partial class Harmonogramy : UserControl
         //m_schedules = FtpDiligentDesignTimeClient.GetSchedules(endpoint);
         var (tab, errmsg) = m_database.GetSchedules(endpoint);
         if (!string.IsNullOrEmpty(errmsg))
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         else
             m_schedules = m_database.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
 

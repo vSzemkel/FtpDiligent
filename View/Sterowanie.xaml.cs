@@ -80,7 +80,6 @@ public partial class Sterowanie : UserControl
         btStopSync.IsEnabled = false;
         m_dispatcher.Stop();
         m_mainWnd.m_tbSerwery.StopHotfolders();
-        FtpDispatcherGlobals.ShowError(eSeverityCode.NextSync, string.Empty);
     }
 
     /// <summary>
@@ -105,7 +104,7 @@ public partial class Sterowanie : UserControl
     {
         if (m_dispatcher.GetNumberOfFilesTransferred() > 0) {
             m_dispatcher.Stop();
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, "Restarting dispatcher");
+            m_mainWnd.ShowErrorInfo(eSeverityCode.Message, "Restarting dispatcher");
             Thread.Sleep(5000);
             m_dispatcher.Start();
         }

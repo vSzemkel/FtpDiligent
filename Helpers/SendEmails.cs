@@ -27,31 +27,32 @@ public class SendEmails
     public string m_sendGridKey;
 
     /// <summary>
-    /// Referencja do głównego okna
-    /// </summary>
-    public MainWindow m_mainWnd;
-
-    /// <summary>
     /// Na jaki adres wysłać mailowe powiadomienia o błędach
     /// </summary>
     public string m_errorsMailTo;
     #endregion
 
+    #region events
+    /// <summary>
+    /// Rozgłasza status powiadomienia email
+    /// </summary>
+    public static event EventHandler<TransferNotificationEventArgs> MailNotificationStatus;
+    #endregion
+
     #region constructor
     /// <summary>
-    /// Klasa pomocnicza do wysy�ania maili
+    /// Klasa pomocnicza do wysyłania maili
     /// </summary>
-    /// <param name="wnd">G��wne okno aplikacji WPF</param>
-    /// <param name="errorsMailTo">Lista adres�w odbiorc�w, rozdzialona �rednikami</param>
+    /// <param name="errorsMailTo">Lista adresów odbiorców, rozdzialona średnikami</param>
     /// <param name="apiKey">Klucz prywatny do usługi SendGrid</param>
-    public SendEmails(MainWindow wnd, string errorsMailTo, string apiKey)
+    public SendEmails(string errorsMailTo, string apiKey)
     {
-        m_mainWnd = wnd;
         m_sendGridKey = apiKey;
         m_errorsMailTo = errorsMailTo;
     }
     #endregion
 
+    #region public
     /// <summary>
     /// Uruchamia wysyłkę maili przez usługę SendGrid
     /// </summary>
@@ -63,7 +64,9 @@ public class SendEmails
             SendEmail(message);
         }
     }
+    #endregion
 
+    #region private
     /// <summary>
     /// Buduje wiadomość na podstawie danych wyciągniętych z bazy
     /// </summary>
@@ -83,7 +86,7 @@ public class SendEmails
 
             return msg;
         } catch (Exception exc) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
+            NotifyMailNotificatioStatus(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
             return null;
         }
     }
@@ -106,11 +109,24 @@ public class SendEmails
                 client.Disconnect(true);
             }
 
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe.");
+            NotifyMailNotificatioStatus(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe.");
             return true;
         } catch (Exception exc) {
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
+            NotifyMailNotificatioStatus(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
             return false;
         }
     }
+
+    /// <summary>
+    /// Triggers an FileTransferred event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+    protected void NotifyMailNotificatioStatus(eSeverityCode severity, string message)
+    {
+        var eventArgs = new TransferNotificationEventArgs(severity, message);
+        if (MailNotificationStatus != null)
+            MailNotificationStatus(this, eventArgs);
+    }
+    #endregion
 }

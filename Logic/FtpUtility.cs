@@ -145,7 +145,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
 
     #region public methods
     /// <summary>
-    /// Łączy się z endpointem i pobiera wszystkie pliki p�niejsze ni� data ostatniego pobrania
+    /// Łączy się z endpointem i pobiera wszystkie pliki póniejsze niż data ostatniego pobrania
     /// </summary>
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Download()
@@ -189,7 +189,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
                 NotifyFileTransferred(eFtpDirection.Get, new FileInfo(pFD.cFileName));
             }
 
-        if (m_Disp != null && !m_Disp.InProgress && FtpDispatcherGlobals.ShowError != null)
+        if (m_Disp != null && !m_Disp.InProgress)
             NotifyTransferStatus(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)

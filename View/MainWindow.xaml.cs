@@ -115,6 +115,7 @@ public partial class MainWindow : Window
         FtpUtilityBase.FileTransferred += ShowNotification;
         FtpUtilityBase.TransferStatusNotification += ShowStatus;
         FtpDispatcher.DispatcherStatusNotification += ShowStatus;
+        SendEmails.MailNotificationStatus += ShowStatus;
 
         m_database = database;
         CheckEventLog();
@@ -258,7 +259,7 @@ public partial class MainWindow : Window
         Int32.TryParse(settings["InstanceID"], out FtpDispatcherGlobals.Instance);
         Int32.TryParse(settings["HotfolderInterval"], out FtpDispatcherGlobals.HotfolderInterval);
         FtpDispatcherGlobals.TraceLevel = (eSeverityCode)traceLevel;
-        m_mailer = new SendEmails(this, settings["ErrorsMailTo"], settings["SendGridKey"]);
+        m_mailer = new SendEmails(settings["ErrorsMailTo"], settings["SendGridKey"]);
         FtpDispatcherGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
         if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDispatcherGlobals.SyncMode)) {

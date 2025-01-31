@@ -81,7 +81,7 @@ public partial class SerweryDetails : UserControl
         if (string.IsNullOrEmpty(errmsg))
             RestoreTabControl();
         else
-            FtpDispatcherGlobals.ShowError(eSeverityCode.Error, errmsg);
+            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
     }
 
     /// <summary>

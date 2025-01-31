@@ -50,11 +50,6 @@ public static class FtpDispatcherGlobals
     public static Action StartProcessing;
 
     /// <summary>
-    /// Wrapper do metody ShowErrorInfoInternal
-    /// </summary>
-    public static Action<eSeverityCode, string> ShowError;
-
-    /// <summary>
     /// Interfejs do kontenera DI
     /// </summary>
     public static ILifetimeScope AutofacScope;
