@@ -6,7 +6,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent;
+namespace FtpDiligent.Views;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

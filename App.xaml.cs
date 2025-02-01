@@ -24,19 +24,19 @@ public partial class App : Application
     {
         var builder = new ContainerBuilder();
         string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Local].ConnectionString;
-        builder.RegisterType<MainWindow>().SingleInstance();
+        builder.RegisterType<Views.MainWindow>().SingleInstance();
         builder.RegisterType<FtpDiligentSqlClient>()
             .WithParameter(new NamedParameter("connStr", connStr))
             .As<IFtpDiligentDatabaseClient>();
         builder.RegisterType<FtpDispatcher>().As<IFtpDispatcher>();
-        builder.RegisterType<Sterowanie>().SingleInstance();
-        builder.RegisterType<Serwery>().SingleInstance();
-        builder.RegisterType<Harmonogramy>().SingleInstance();
+        builder.RegisterType<Views.Sterowanie>().SingleInstance();
+        builder.RegisterType<Views.Serwery>().SingleInstance();
+        builder.RegisterType<Views.Harmonogramy>().SingleInstance();
         container = builder.Build();
 
         using (var scope = container.BeginLifetimeScope()) {
             FtpDispatcherGlobals.AutofacScope = scope;
-            scope.Resolve<MainWindow>().Show();
+            scope.Resolve<Views.MainWindow>().Show();
         }
     }
 }
