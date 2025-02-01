@@ -46,7 +46,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Zakładka do edycji danych serwera, leniwie inicjalizowana
     /// </summary>
-    public SerweryDetails _m_tbSerweryDetails;
+    private SerweryDetails _m_tbSerweryDetails;
 
     /// <summary>
     /// Zakładka Harmonogramy
@@ -56,7 +56,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Zakładka do edycji danych harmonogramu, leniwie inicjalizowana
     /// </summary>
-    public HarmonogramyDetails _m_tbHarmonogramyDetails;
+    private HarmonogramyDetails _m_tbHarmonogramyDetails;
 
     /// <summary>
     /// Klient bazy danych

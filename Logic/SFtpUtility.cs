@@ -187,8 +187,8 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
     /// <summary>
     /// Pobiera plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
     /// </summary>
-    /// <param name="file">struktura opisuj�ca plik lub katalog</param>
-    /// <returns>Czy dosz�o do pobrania pliku</returns>
+    /// <param name="file">struktura opisująca plik lub katalog</param>
+    /// <returns>Czy doszło do pobrania pliku</returns>
     private bool GetFile(SftpFile file)
     {
         if (file.Length == 0)
@@ -217,7 +217,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
         try {
             using (var stream = File.Create(localPath, m_bufferSize))
                 m_sftpClient.DownloadFile(file.Name, stream);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             var dirsep = m_sRemoteDir.EndsWith('/') ? string.Empty : "/";
             throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiodło się. {ex.Message}");
         }
