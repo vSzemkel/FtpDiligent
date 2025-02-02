@@ -6,11 +6,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using Autofac;
+namespace FtpDiligent;
 
 using System;
-
-namespace FtpDiligent;
+using Prism.Ioc;
 
 public static class FtpDispatcherGlobals
 {
@@ -52,5 +51,5 @@ public static class FtpDispatcherGlobals
     /// <summary>
     /// Interfejs do kontenera DI
     /// </summary>
-    public static ILifetimeScope AutofacScope;
+    public static IContainerProvider IoC;
 }

@@ -8,7 +8,7 @@ FTP transfer manager/scheduler
 - SyncModes: NewerThenRefreshDate, UniqueDateAndSizeOnDisk, UniqueDateAndSizeInDatabase, AllFiles
 - Client GUI: WPF, Microsoft.NET.Sdk.WindowsDesktop
 - Diagnostics: GUI, EventLog, Email ([SendGrid](https://sendgrid.com/))
-- DI container: ([Autofac](https://docs.autofac.org/))
+- DI container: ([Unity](https://docs.prismlibrary.com/))
 
 
 ![Main Window](https://github.com/vSzemkel/FtpDiligent/blob/master/Images/screen.gif?raw=true)

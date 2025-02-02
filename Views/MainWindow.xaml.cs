@@ -8,8 +8,6 @@
 
 namespace FtpDiligent.Views;
 
-using Autofac;
-
 using System;
 using System.Configuration;
 using System.Diagnostics;

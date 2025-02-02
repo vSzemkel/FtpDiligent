@@ -11,36 +11,27 @@ namespace FtpDiligent;
 using System.Configuration;
 using System.Windows;
 
-using Autofac;
+using FtpDiligent.Views;
+using Prism.Ioc;
+using Prism.Unity;
+using Unity.Injection;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
-public partial class App : Application
+public partial class App : PrismApplication
 {
-    public static IContainer container;
+    protected override Window CreateShell()
+    {
+        FtpDispatcherGlobals.IoC = Container;
+        return Container.Resolve<MainWindow>();
+    }
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override void RegisterTypes(IContainerRegistry containerRegistry)
     {
         string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Local].ConnectionString;
 
-        var builder = new ContainerBuilder();
-        builder.RegisterType<FtpDiligentSqlClient>()
-            .SingleInstance()
-            .WithParameter(new NamedParameter("connStr", connStr))
-            .As<IFtpDiligentDatabaseClient>();
-        builder.RegisterType<FtpDispatcher>()
-            .SingleInstance()
-            .As<IFtpDispatcher>();
-        container = builder.Build();
+        containerRegistry.RegisterSingleton<FtpDiligentSqlClient>(() => new FtpDiligentSqlClient(connStr));
+        containerRegistry.RegisterSingleton<IFtpDiligentDatabaseClient, FtpDiligentSqlClient>();
+        containerRegistry.RegisterSingleton<IFtpDispatcher, FtpDispatcher>();
+        containerRegistry.RegisterSingleton<MainWindow>();
 
-        var scope = container.BeginLifetimeScope();
-        FtpDispatcherGlobals.AutofacScope = scope;
-        new Views.MainWindow(scope.Resolve<IFtpDiligentDatabaseClient>(), scope.Resolve<IFtpDispatcher>()).Show();
-    }
-
-    protected override void OnExit(ExitEventArgs e)
-    {
-        FtpDispatcherGlobals.AutofacScope.Dispose();
     }
 }

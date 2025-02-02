@@ -15,9 +15,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+using Prism.Ioc;
 using Prism.Mvvm;
+using FtpDiligent;
 using FtpDiligent.Views;
-using Autofac;
 
 public class HarmonogramyViewModel : BindableBase
 {
@@ -54,9 +55,8 @@ public class HarmonogramyViewModel : BindableBase
     #region constructors
     public HarmonogramyViewModel()
     {
-        m_database = FtpDispatcherGlobals.AutofacScope.Resolve<FtpDiligentSqlClient>();
-        var diMainWindow = new TypedParameter(typeof(MainWindow), this);
-        m_mainWnd = FtpDispatcherGlobals.AutofacScope.Resolve<MainWindow>();
+        m_database = FtpDispatcherGlobals.IoC.Resolve<IFtpDiligentDatabaseClient>();
+        m_mainWnd = FtpDispatcherGlobals.IoC.Resolve<MainWindow>();
     }
     public HarmonogramyViewModel(MainWindow wnd, IFtpDiligentDatabaseClient database)
     {
