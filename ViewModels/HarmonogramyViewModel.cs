@@ -1,7 +1,6 @@
-﻿
-// -----------------------------------------------------------------------
-// <copyright file="HarmonogramyViewModel.cs" company="Agora SA">
-// <legal>Copyright (c) Development IT, kwiecien 2020</legal>
+﻿// -----------------------------------------------------------------------
+// <copyright file="App.cs" company="private project">
+// <legal>Copyright (c) MB, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
@@ -12,25 +11,31 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+using System.Windows.Data;
 
-using Prism.Ioc;
+using Prism.Commands;
 using Prism.Mvvm;
 using FtpDiligent;
 using FtpDiligent.Views;
 
-public class HarmonogramyViewModel : BindableBase
+public sealed class HarmonogramyViewModel : BindableBase
 {
     #region fields
     private MainWindow m_mainWnd;
     private IFtpDiligentDatabaseClient m_database;
-    private FtpEndpoint m_selectedEndpoint;
     private ObservableCollection<FtpSchedule> m_schedules;
+    private FtpEndpoint m_selectedEndpoint;
+    private FtpSchedule m_selectedSchedule;
     #endregion
 
     #region properties
     public ObservableCollection<FtpEndpoint> FtpEndpoints => m_mainWnd.m_tbSerwery.m_endpoints;
+
+    public ObservableCollection<FtpSchedule> FtpSchedules
+    {
+        get => m_schedules;
+        set { SetProperty(ref m_schedules, value); }
+    }
 
     public FtpEndpoint SelectedFtpEndpoint
     {
@@ -42,89 +47,89 @@ public class HarmonogramyViewModel : BindableBase
         }
     }
 
-    public ObservableCollection<FtpSchedule> Schedules
+    public FtpSchedule SelectedFtpSchedule
     {
-        get => m_schedules;
-        set
-        {
-            SetProperty(ref m_schedules, value);
-        }
+        get => m_selectedSchedule;
+        set { SetProperty(ref m_selectedSchedule, value); }
     }
     #endregion
 
+    #region commandes
+    public DelegateCommand AddScheduleCommand { get; private set; }
+    public DelegateCommand ModifyScheduleCommand { get; private set; }
+    public DelegateCommand DeleteScheduleCommand { get; private set; }
+    public DelegateCommand ReloadScheduleCommand { get; private set; }
+    #endregion
+
     #region constructors
-    public HarmonogramyViewModel()
-    {
-        m_database = FtpDispatcherGlobals.IoC.Resolve<IFtpDiligentDatabaseClient>();
-        m_mainWnd = FtpDispatcherGlobals.IoC.Resolve<MainWindow>();
-    }
     public HarmonogramyViewModel(MainWindow wnd, IFtpDiligentDatabaseClient database)
     {
         m_mainWnd = wnd;
         m_database = database;
+        SelectedFtpEndpoint = FtpEndpoints.FirstOrDefault();
+        AddScheduleCommand = new DelegateCommand(OnAdd, CanExecute);
+        ModifyScheduleCommand = new DelegateCommand(OnChange, CanExecute);
+        DeleteScheduleCommand = new DelegateCommand(OnRemove, CanExecute);
+        ReloadScheduleCommand = new DelegateCommand(OnRelo, () => true);
     }
     #endregion
 
-    #region commands
-    //public ICommand AddCommand => new Command(OnAdd);
-    //public ICommand ChangeCommand => new RelayCommand(OnChange);
-    //public ICommand RemoveCommand => new RelayCommand(OnRemove);
-    //public ICommand ReloadCommand => new RelayCommand(OnRelo);
-    //public ICommand ServerChangedCommand => new RelayCommand(OnSerwerChanged);
-    //public ICommand DoubleClickCommand => new RelayCommand(OnDoubleClick);
-    #endregion
-
     #region methods
-    private void OnAdd(object parameter)
+    private void OnAdd()
     {
         var details = m_mainWnd.m_tbHarmonogramyDetails;
-        details.m_schedules = m_schedules as IEditableCollectionView;
+        details.m_schedules = CollectionViewSource.GetDefaultView(m_schedules) as IEditableCollectionView;
         details.m_mode = eDbOperation.Insert;
         details.DataContext = details.m_schedules.AddNew();
 
         SwitchTabControl();
     }
 
-    private void OnChange(object parameter)
+    public void OnChange()
     {
         var details = m_mainWnd.m_tbHarmonogramyDetails;
-        details.m_schedules = m_schedules as IEditableCollectionView;
-        details.m_schedules.EditItem(parameter);
+        details.m_schedules = CollectionViewSource.GetDefaultView(m_schedules) as IEditableCollectionView;
+        details.m_schedules.EditItem(m_selectedSchedule);
         details.m_mode = eDbOperation.Update;
-        details.DataContext = parameter;
+        details.DataContext = m_selectedSchedule;
 
         SwitchTabControl();
     }
 
-    private void OnRemove(object parameter)
+    private void OnRemove()
     {
-        var schedule = parameter as FtpSchedule;
-        var collection = m_schedules as IEditableCollectionView;
-        if (MessageBoxResult.Yes == MessageBox.Show("Czy usunąć harmonogram " + schedule.Name, "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question))
+        var collection = CollectionViewSource.GetDefaultView(m_schedules) as IEditableCollectionView;
+        if (MessageBoxResult.Yes == MessageBox.Show($"Czy usunąć harmonogram {m_selectedSchedule.Name}?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question))
         {
-            var errmsg = m_database.ModifySchedule(schedule.GetModel(), eDbOperation.Delete);
+            var errmsg = m_database.ModifySchedule(m_selectedSchedule.GetModel(), eDbOperation.Delete);
             if (string.IsNullOrEmpty(errmsg))
-                collection.Remove(schedule);
+                collection.Remove(m_selectedSchedule);
             else
                 m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         }
     }
 
-    private void OnRelo(object parameter)
+    private void OnRelo()
     {
         m_mainWnd.m_tbSerwery.LoadEndpoints();
         LoadSchedules();
     }
 
-    private void OnDoubleClick(object parameter)
+    public void StoreViewInShell(Views.Harmonogramy vh)
     {
-        if (parameter != null)
-            OnChange(parameter);
+        m_mainWnd.m_tbHarmonogramy = vh;
+    }
+    #endregion
+
+    #region private
+    private bool CanExecute()
+    {
+        return m_selectedEndpoint != null;
     }
 
-    public void LoadSchedules()
+    private void LoadSchedules()
     {
-        if (FtpEndpoints== null || FtpEndpoints.Count == 0)
+        if (FtpEndpoints == null || FtpEndpoints.Count == 0)
             return;
         if (SelectedFtpEndpoint == null)
             SelectedFtpEndpoint = FtpEndpoints[0];
@@ -133,7 +138,7 @@ public class HarmonogramyViewModel : BindableBase
         if (!string.IsNullOrEmpty(errmsg))
             m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         else
-            Schedules = m_database.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
+            FtpSchedules = m_database.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
     }
 
     private void SwitchTabControl()

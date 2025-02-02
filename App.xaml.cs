@@ -1,7 +1,7 @@
 ﻿
 // -----------------------------------------------------------------------
-// <copyright file="App.cs" company="Agora SA">
-// <legal>Copyright (c) Development IT, kwiecien 2020</legal>
+// <copyright file="App.cs" company="private project">
+// <legal>Copyright (c) MB, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
@@ -14,7 +14,6 @@ using System.Windows;
 using FtpDiligent.Views;
 using Prism.Ioc;
 using Prism.Unity;
-using Unity.Injection;
 
 public partial class App : PrismApplication
 {
@@ -32,6 +31,5 @@ public partial class App : PrismApplication
         containerRegistry.RegisterSingleton<IFtpDiligentDatabaseClient, FtpDiligentSqlClient>();
         containerRegistry.RegisterSingleton<IFtpDispatcher, FtpDispatcher>();
         containerRegistry.RegisterSingleton<MainWindow>();
-
     }
 }

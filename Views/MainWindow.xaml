@@ -39,6 +39,9 @@
                     <TextBlock Text="Harmonogramy" Margin="8,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
             </TabItem.Header>
+            <TabItem.Content>
+                <Frame Source="Harmonogramy.xaml" />
+            </TabItem.Content>
         </TabItem>
         <TabItem Name="tabHarmonogramyDetails" Visibility="Collapsed">
             <TabItem.Header>

@@ -103,12 +103,10 @@ public partial class MainWindow : Window
         InitializeComponent();
         m_tbSterowanie = new Sterowanie(this, dispatcher);
         m_tbSerwery = new Serwery(this, database);
-        m_tbHarmonogramy = new Harmonogramy(this, database);
         m_tbSterowanie.tbFilesCount.DataContext = 0;
         m_tbSterowanie.cbSyncMode.DataContext = this;
         this.tabSterowanie.Content = m_tbSterowanie;
         this.tabSerwery.Content = m_tbSerwery;
-        this.tabHarmonogramy.Content = m_tbHarmonogramy;
         FtpUtilityBase.FileTransferred += ShowNotification;
         FtpUtilityBase.TransferStatusNotification += ShowStatus;
         FtpDispatcher.DispatcherStatusNotification += ShowStatus;
@@ -119,7 +117,6 @@ public partial class MainWindow : Window
         LoadConfig();
         CheckInstanceInitialization();
         m_tbSerwery.LoadEndpoints();
-        m_tbHarmonogramy.LoadSchedules(0);
 
         this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
     }
