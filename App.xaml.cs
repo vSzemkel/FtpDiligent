@@ -22,21 +22,25 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        var builder = new ContainerBuilder();
         string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Local].ConnectionString;
-        builder.RegisterType<Views.MainWindow>().SingleInstance();
+
+        var builder = new ContainerBuilder();
         builder.RegisterType<FtpDiligentSqlClient>()
+            .SingleInstance()
             .WithParameter(new NamedParameter("connStr", connStr))
             .As<IFtpDiligentDatabaseClient>();
-        builder.RegisterType<FtpDispatcher>().As<IFtpDispatcher>();
-        builder.RegisterType<Views.Sterowanie>().SingleInstance();
-        builder.RegisterType<Views.Serwery>().SingleInstance();
-        builder.RegisterType<Views.Harmonogramy>().SingleInstance();
+        builder.RegisterType<FtpDispatcher>()
+            .SingleInstance()
+            .As<IFtpDispatcher>();
         container = builder.Build();
 
-        using (var scope = container.BeginLifetimeScope()) {
-            FtpDispatcherGlobals.AutofacScope = scope;
-            scope.Resolve<Views.MainWindow>().Show();
-        }
+        var scope = container.BeginLifetimeScope();
+        FtpDispatcherGlobals.AutofacScope = scope;
+        new Views.MainWindow(scope.Resolve<IFtpDiligentDatabaseClient>(), scope.Resolve<IFtpDispatcher>()).Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        FtpDispatcherGlobals.AutofacScope.Dispose();
     }
 }

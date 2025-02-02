@@ -19,13 +19,15 @@
     <PackageReference Include="MailKit" Version="4.10.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.7.0" />
+    <PackageReference Include="Prism.Wpf" Version="9.0.537" />
     <PackageReference Include="SSH.NET" Version="2024.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <Folder Include="Images\" />
     <Folder Include="Data\" />
+    <Folder Include="Images\" />
+    <Folder Include="Models\" />
+    <Folder Include="ViewModels\" />
   </ItemGroup>
 
   <ItemGroup>

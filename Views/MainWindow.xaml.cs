@@ -100,13 +100,12 @@ public partial class MainWindow : Window
     /// Konstruktor okna głównego
     /// </summary>
     /// <param name="database">Klient bazy danych</param>
-    public MainWindow(IFtpDiligentDatabaseClient database)
+    public MainWindow(IFtpDiligentDatabaseClient database, IFtpDispatcher dispatcher)
     {
         InitializeComponent();
-        var diMainWindow = new TypedParameter(typeof(MainWindow), this);
-        m_tbSerwery = FtpDispatcherGlobals.AutofacScope.Resolve<Serwery>(diMainWindow);
-        m_tbSterowanie = FtpDispatcherGlobals.AutofacScope.Resolve<Sterowanie>(diMainWindow);
-        m_tbHarmonogramy = FtpDispatcherGlobals.AutofacScope.Resolve<Harmonogramy>(diMainWindow);
+        m_tbSterowanie = new Sterowanie(this, dispatcher);
+        m_tbSerwery = new Serwery(this, database);
+        m_tbHarmonogramy = new Harmonogramy(this, database);
         m_tbSterowanie.tbFilesCount.DataContext = 0;
         m_tbSterowanie.cbSyncMode.DataContext = this;
         this.tabSterowanie.Content = m_tbSterowanie;
