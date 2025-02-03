@@ -21,10 +21,6 @@ public partial class Harmonogramy : UserControl
     public Harmonogramy()
     {
         InitializeComponent();
-
-        var shell = PrismApplication.Current.MainWindow as MainWindow;
-        if (shell != null)
-            shell.m_tbHarmonogramy = this;
     }
     #endregion
 

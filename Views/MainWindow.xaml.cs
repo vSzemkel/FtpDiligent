@@ -15,6 +15,8 @@ using System.Globalization;
 using System.Net;
 using System.Windows;
 
+using FtpDiligent.ViewModels;
+
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
@@ -39,7 +41,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Zakładka Serwery
     /// </summary>
-    public Serwery m_tbSerwery;
+    public SerweryViewModel m_tbSerwery;
 
     /// <summary>
     /// Zakładka do edycji danych serwera, leniwie inicjalizowana
@@ -49,7 +51,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Zakładka Harmonogramy
     /// </summary>
-    public Harmonogramy m_tbHarmonogramy;
+    public HarmonogramyViewModel m_tbHarmonogramy;
 
     /// <summary>
     /// Zakładka do edycji danych harmonogramu, leniwie inicjalizowana

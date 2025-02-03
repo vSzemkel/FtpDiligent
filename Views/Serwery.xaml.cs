@@ -18,10 +18,6 @@ public partial class Serwery : UserControl
     public Serwery()
     {
         InitializeComponent();
-
-        var shell = PrismApplication.Current.MainWindow as MainWindow;
-        if (shell != null)
-            shell.m_tbSerwery = this;
     }
     #endregion
 

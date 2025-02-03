@@ -66,7 +66,7 @@ public partial class HarmonogramyDetails : UserControl
             if (!ValidateSchedule(schedule))
                 return;
 
-            schedule.Endpoint = (m_mainWnd.m_tbHarmonogramy.cbSerwery.SelectedItem as FtpEndpoint).XX;
+            schedule.Endpoint = m_mainWnd.m_tbHarmonogramy.SelectedFtpEndpoint.XX;
             errmsg = m_database.ModifySchedule(schedule.GetModel(), m_mode);
             if (string.IsNullOrEmpty(errmsg)) {
                 schedule.XX = m_database.GetLastInsertedKey();

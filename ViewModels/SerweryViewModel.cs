@@ -13,14 +13,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 using Prism.Commands;
 using Prism.Mvvm;
 using FtpDiligent;
 using FtpDiligent.Views;
-using System.Windows.Data;
 
 public sealed class SerweryViewModel : BindableBase
 {
@@ -90,6 +89,8 @@ public sealed class SerweryViewModel : BindableBase
     #region constructors
     public SerweryViewModel(MainWindow wnd, IFtpDiligentDatabaseClient database)
     {
+        wnd.m_tbSerwery = this;
+
         m_mainWnd = wnd;
         m_database = database;
         AddEndpointCommand = new DelegateCommand(OnAdd);

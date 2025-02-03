@@ -29,7 +29,7 @@ public sealed class HarmonogramyViewModel : BindableBase
     #endregion
 
     #region properties
-    public ObservableCollection<FtpEndpoint> FtpEndpoints => (m_mainWnd.m_tbSerwery.DataContext as SerweryViewModel).m_endpoints;
+    public ObservableCollection<FtpEndpoint> FtpEndpoints => m_mainWnd.m_tbSerwery.m_endpoints;
 
     public ObservableCollection<FtpSchedule> FtpSchedules
     {
@@ -73,6 +73,8 @@ public sealed class HarmonogramyViewModel : BindableBase
     #region constructors
     public HarmonogramyViewModel(MainWindow wnd, IFtpDiligentDatabaseClient database)
     {
+        wnd.m_tbHarmonogramy = this;
+
         m_mainWnd = wnd;
         m_database = database;
         SelectedFtpEndpoint = FtpEndpoints.FirstOrDefault();
@@ -122,7 +124,7 @@ public sealed class HarmonogramyViewModel : BindableBase
 
     private void OnRelo()
     {
-        (m_mainWnd.m_tbSerwery.DataContext as SerweryViewModel).LoadEndpoints();
+        m_mainWnd.m_tbSerwery.LoadEndpoints();
         LoadSchedules();
     }
 
