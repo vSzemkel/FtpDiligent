@@ -66,7 +66,7 @@ public partial class Sterowanie : UserControl
             btRunSync.IsEnabled = false;
             btStopSync.IsEnabled = true;
             m_dispatcher.Start();
-            m_mainWnd.m_tbSerwery.StartHotfolders();
+            (m_mainWnd.m_tbSerwery.DataContext as ViewModels.SerweryViewModel).StartHotfolders();
         } else
             MessageBox.Show($"Katalog lokalny {hostWithBadDir} jest niepoprawny", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
     }
@@ -79,7 +79,7 @@ public partial class Sterowanie : UserControl
         btRunSync.IsEnabled = true;
         btStopSync.IsEnabled = false;
         m_dispatcher.Stop();
-        m_mainWnd.m_tbSerwery.StopHotfolders();
+        (m_mainWnd.m_tbSerwery.DataContext as ViewModels.SerweryViewModel).StopHotfolders();
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public partial class Sterowanie : UserControl
     /// <returns>Niepoprawny katalog</returns>
     private string CheckLocDirs()
     {
-        foreach (var enp in m_mainWnd.m_tbSerwery.m_endpoints)
+        foreach (var enp in (m_mainWnd.m_tbSerwery.DataContext as ViewModels.SerweryViewModel).m_endpoints)
             if (!System.IO.Directory.Exists(enp.LocalDirectory))
                 return enp.LocalDirectory;
 

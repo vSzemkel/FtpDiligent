@@ -118,8 +118,10 @@ public partial class SerweryDetails : UserControl
     /// <param name="enp">Modyfikowany endpoint</param>
     private void SanitizeDirectories(ref FtpEndpoint enp)
     {
-        if (enp.Protocol != eFtpProtocol.FileCopy && !enp.RemoteDirectory.StartsWith('/'))
-            enp.RemoteDirectory = '/' + enp.RemoteDirectory;
+        if (enp.Protocol != eFtpProtocol.FileCopy && (string.IsNullOrEmpty(enp.RemoteDirectory) || !enp.RemoteDirectory.StartsWith('/')))
+            enp.RemoteDirectory = '/' + (enp.RemoteDirectory ?? string.Empty);
+        if (string.IsNullOrEmpty(enp.LocalDirectory))
+            enp.LocalDirectory = "\\";
         if (!enp.LocalDirectory.EndsWith('\\'))
             enp.LocalDirectory += '\\';
     }

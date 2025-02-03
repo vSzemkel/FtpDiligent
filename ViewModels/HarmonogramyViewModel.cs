@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="App.cs" company="private project">
+// <copyright file="HarmonogramyViewModel.cs" company="private project">
 // <legal>Copyright (c) MB, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
@@ -29,7 +29,7 @@ public sealed class HarmonogramyViewModel : BindableBase
     #endregion
 
     #region properties
-    public ObservableCollection<FtpEndpoint> FtpEndpoints => m_mainWnd.m_tbSerwery.m_endpoints;
+    public ObservableCollection<FtpEndpoint> FtpEndpoints => (m_mainWnd.m_tbSerwery.DataContext as SerweryViewModel).m_endpoints;
 
     public ObservableCollection<FtpSchedule> FtpSchedules
     {
@@ -110,12 +110,11 @@ public sealed class HarmonogramyViewModel : BindableBase
 
     private void OnRemove()
     {
-        var collection = CollectionViewSource.GetDefaultView(m_schedules) as IEditableCollectionView;
         if (MessageBoxResult.Yes == MessageBox.Show($"Czy usunąć harmonogram {m_selectedSchedule.Name}?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question))
         {
             var errmsg = m_database.ModifySchedule(m_selectedSchedule.GetModel(), eDbOperation.Delete);
             if (string.IsNullOrEmpty(errmsg))
-                collection.Remove(m_selectedSchedule);
+                m_schedules.Remove(m_selectedSchedule);
             else
                 m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         }
@@ -123,7 +122,7 @@ public sealed class HarmonogramyViewModel : BindableBase
 
     private void OnRelo()
     {
-        m_mainWnd.m_tbSerwery.LoadEndpoints();
+        (m_mainWnd.m_tbSerwery.DataContext as SerweryViewModel).LoadEndpoints();
         LoadSchedules();
     }
 
