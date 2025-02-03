@@ -195,3 +195,7 @@ _Pvt_Extensions/
 ModelManifest.xml
 *.cab
 *.CAB
+
+# Exclude FtpDiligent specific files
+/App.config
+

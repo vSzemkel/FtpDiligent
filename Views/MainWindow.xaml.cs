@@ -101,22 +101,19 @@ public partial class MainWindow : Window
     public MainWindow(IFtpDiligentDatabaseClient database, IFtpDispatcher dispatcher)
     {
         InitializeComponent();
+        m_database = database;
         m_tbSterowanie = new Sterowanie(this, dispatcher);
-        m_tbSerwery = new Serwery(this, database);
         m_tbSterowanie.tbFilesCount.DataContext = 0;
         m_tbSterowanie.cbSyncMode.DataContext = this;
         this.tabSterowanie.Content = m_tbSterowanie;
-        this.tabSerwery.Content = m_tbSerwery;
         FtpUtilityBase.FileTransferred += ShowNotification;
         FtpUtilityBase.TransferStatusNotification += ShowStatus;
         FtpDispatcher.DispatcherStatusNotification += ShowStatus;
         SendEmails.MailNotificationStatus += ShowStatus;
 
-        m_database = database;
         CheckEventLog();
         LoadConfig();
         CheckInstanceInitialization();
-        m_tbSerwery.LoadEndpoints();
 
         this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
     }

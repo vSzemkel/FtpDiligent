@@ -10,6 +10,8 @@ namespace FtpDiligent.Views;
 
 using System.Windows.Controls;
 
+using Prism.Unity;
+
 /// <summary>
 /// Interaction logic for Harmonogramy.xaml
 /// </summary>
@@ -19,7 +21,10 @@ public partial class Harmonogramy : UserControl
     public Harmonogramy()
     {
         InitializeComponent();
-        (DataContext as ViewModels.HarmonogramyViewModel).StoreViewInShell(this);
+
+        var shell = PrismApplication.Current.MainWindow as MainWindow;
+        if (shell != null)
+            shell.m_tbHarmonogramy = this;
     }
     #endregion
 

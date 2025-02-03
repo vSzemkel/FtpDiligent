@@ -16,6 +16,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+using Prism.Unity;
+
 /// <summary>
 /// Interaction logic for Sterowanie.xaml
 /// </summary>
@@ -55,11 +57,21 @@ public partial class Serwery : UserControl
     #endregion
 
     #region constructors
+    public Serwery() : this((MainWindow)FtpDispatcherGlobals.IoC.Resolve(typeof(MainWindow)), (IFtpDiligentDatabaseClient)FtpDispatcherGlobals.IoC.Resolve(typeof(IFtpDiligentDatabaseClient)))
+    {
+    }
+
     public Serwery(MainWindow wnd, IFtpDiligentDatabaseClient database)
     {
-        InitializeComponent();
         m_mainWnd = wnd;
         m_database = database;
+        InitializeComponent();
+
+        var shell = PrismApplication.Current.MainWindow as MainWindow;
+        if (shell != null)
+            shell.m_tbSerwery = this;
+
+        LoadEndpoints();
     }
     #endregion
 

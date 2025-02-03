@@ -19,9 +19,8 @@
         </Grid.ColumnDefinitions>
         <Canvas>
             <TextBox Canvas.Left="10" Canvas.Top="10" Text="Serwer:" IsReadOnly="True"/>
-            <ComboBox Canvas.Left="10" Canvas.Top="30" Name="cbSerwery"
-                      ItemsSource="{Binding FtpEndpoints}"
-                      SelectedItem="{Binding SelectedFtpEndpoint, Mode=TwoWay}" Width="300" Height="27">
+            <ComboBox Canvas.Left="10" Canvas.Top="30" Name="cbSerwery" Width="300" Height="27"
+                      ItemsSource="{Binding FtpEndpoints}" SelectedItem="{Binding SelectedFtpEndpoint, Mode=TwoWay}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock>

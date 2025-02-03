@@ -23,6 +23,9 @@
                     <TextBlock Text="Serwery" Margin="8,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
             </TabItem.Header>
+            <TabItem.Content>
+                <Frame Source="Serwery.xaml" />
+            </TabItem.Content>
         </TabItem>
         <TabItem Name="tabSerweryDetails" Visibility="Collapsed">
             <TabItem.Header>

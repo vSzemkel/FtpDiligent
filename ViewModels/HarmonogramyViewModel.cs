@@ -50,11 +50,20 @@ public sealed class HarmonogramyViewModel : BindableBase
     public FtpSchedule SelectedFtpSchedule
     {
         get => m_selectedSchedule;
-        set { SetProperty(ref m_selectedSchedule, value); }
+        set
+        {
+            SetProperty(ref m_selectedSchedule, value);
+            RaisePropertyChanged(nameof(DetailsAvailable));
+        }
+    }
+
+    private bool DetailsAvailable
+    {
+        get => m_selectedSchedule != null;
     }
     #endregion
 
-    #region commandes
+    #region commands
     public DelegateCommand AddScheduleCommand { get; private set; }
     public DelegateCommand ModifyScheduleCommand { get; private set; }
     public DelegateCommand DeleteScheduleCommand { get; private set; }
@@ -67,14 +76,17 @@ public sealed class HarmonogramyViewModel : BindableBase
         m_mainWnd = wnd;
         m_database = database;
         SelectedFtpEndpoint = FtpEndpoints.FirstOrDefault();
-        AddScheduleCommand = new DelegateCommand(OnAdd, CanExecute);
-        ModifyScheduleCommand = new DelegateCommand(OnChange, CanExecute);
-        DeleteScheduleCommand = new DelegateCommand(OnRemove, CanExecute);
-        ReloadScheduleCommand = new DelegateCommand(OnRelo, () => true);
+        AddScheduleCommand = new DelegateCommand(OnAdd);
+        ModifyScheduleCommand = new DelegateCommand(OnChange).ObservesCanExecute(() => DetailsAvailable);
+        DeleteScheduleCommand = new DelegateCommand(OnRemove).ObservesCanExecute(() => DetailsAvailable);
+        ReloadScheduleCommand = new DelegateCommand(OnRelo);
     }
     #endregion
 
-    #region methods
+    #region public
+    #endregion
+
+    #region private
     private void OnAdd()
     {
         var details = m_mainWnd.m_tbHarmonogramyDetails;
@@ -115,24 +127,10 @@ public sealed class HarmonogramyViewModel : BindableBase
         LoadSchedules();
     }
 
-    public void StoreViewInShell(Views.Harmonogramy vh)
-    {
-        m_mainWnd.m_tbHarmonogramy = vh;
-    }
-    #endregion
-
-    #region private
-    private bool CanExecute()
-    {
-        return m_selectedEndpoint != null;
-    }
-
     private void LoadSchedules()
     {
-        if (FtpEndpoints == null || FtpEndpoints.Count == 0)
-            return;
         if (SelectedFtpEndpoint == null)
-            SelectedFtpEndpoint = FtpEndpoints[0];
+            return;
 
         var (tab, errmsg) = m_database.GetSchedules(SelectedFtpEndpoint.XX);
         if (!string.IsNullOrEmpty(errmsg))
