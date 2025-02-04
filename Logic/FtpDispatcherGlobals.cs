@@ -19,32 +19,32 @@ public static class FtpDispatcherGlobals
     public static int Instance;
 
     /// <summary>
-    /// Algotytm synchronizacji
+    /// Algorytm synchronizacji
     /// </summary>
     public static eSyncFileMode SyncMode;
 
     /// <summary>
-    /// Czy po transferowniu pliku zweryfikowaæ jego rozmiar
+    /// Czy po transferowniu pliku zweryfikowaÄ‡ jego rozmiar
     /// </summary>
     public static bool CheckTransferedStorage;
 
     /// <summary>
-    /// Co ile sekund sprawdzamy, czy pliki w hotfolderze s¹ w pe³ni zapisane
+    /// Co ile sekund sprawdzamy, czy pliki w hotfolderze sÄ… w peÅ‚ni zapisane
     /// </summary>
     public static int HotfolderInterval;
 
     /// <summary>
-    /// Poziom logowania komunikatów
+    /// Poziom logowania komunikatÃ³w
     /// </summary>
     public static eSeverityCode TraceLevel;
 
     /// <summary>
     /// Nazwa aplikacyjnego EventLogu
     /// </summary>
-    public static readonly string EventLog = "FtpDiligent";
+    public static readonly string EventLog = typeof(App).Namespace;
 
     /// <summary>
-    /// Umo¿liwia programowe uruchomienie transferu danych
+    /// UmoÅ¼liwia programowe uruchomienie transferu danych
     /// </summary>
     public static Action StartProcessing;
 
