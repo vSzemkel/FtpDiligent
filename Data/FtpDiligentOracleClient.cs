@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 using Oracle.ManagedDataAccess.Client;
 
-sealed class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
+sealed class FtpDiligentOracleClient : FtpDiligentDatabaseClientBase, IFtpRepository
 {
     #region fields
     /// <summary>

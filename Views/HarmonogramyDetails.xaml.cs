@@ -35,18 +35,18 @@ public partial class HarmonogramyDetails : UserControl
     public IEditableCollectionView m_schedules;
 
     /// <summary>
-    /// Klient bazy danych
+    /// Repozytorium danych
     /// </summary>
-    private IFtpDiligentDatabaseClient m_database { get; set; }
+    private IFtpRepository m_repository;
     #endregion
 
     #region constructors
-    public HarmonogramyDetails(MainWindow wnd, IFtpDiligentDatabaseClient database)
+    public HarmonogramyDetails(MainWindow wnd, IFtpRepository repository)
     {
         InitializeComponent();
 
         m_mainWnd = wnd;
-        m_database = database;
+        m_repository = repository;
         var dayNames = CultureInfo.CurrentUICulture.DateTimeFormat.DayNames;
         cbStartDay.ItemsSource = dayNames;
         cbStopDay.ItemsSource = dayNames;
@@ -67,16 +67,16 @@ public partial class HarmonogramyDetails : UserControl
                 return;
 
             schedule.Endpoint = m_mainWnd.m_tbHarmonogramy.SelectedFtpEndpoint.XX;
-            errmsg = m_database.ModifySchedule(schedule.GetModel(), m_mode);
+            errmsg = m_repository.ModifySchedule(schedule.GetModel(), m_mode);
             if (string.IsNullOrEmpty(errmsg)) {
-                schedule.XX = m_database.GetLastInsertedKey();
+                schedule.XX = m_repository.GetLastInsertedKey();
                 m_schedules.CommitNew();
             }
         } else {
             var schedule = m_schedules.CurrentEditItem as FtpSchedule;
             if (!ValidateSchedule(schedule))
                 return;
-            errmsg = m_database.ModifySchedule(schedule.GetModel(), m_mode);
+            errmsg = m_repository.ModifySchedule(schedule.GetModel(), m_mode);
             if (string.IsNullOrEmpty(errmsg))
                 m_schedules.CommitEdit();
         }

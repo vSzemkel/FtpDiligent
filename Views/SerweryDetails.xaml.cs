@@ -35,18 +35,18 @@ public partial class SerweryDetails : UserControl
     public IEditableCollectionView m_endpoints;
 
     /// <summary>
-    /// Klient bazy danych
+    /// Repozytorium danych
     /// </summary>
-    private IFtpDiligentDatabaseClient m_database { get; set; }
+    private IFtpRepository m_repository;
     #endregion
 
     #region constructors
-    public SerweryDetails(MainWindow wnd, IFtpDiligentDatabaseClient database)
+    public SerweryDetails(MainWindow wnd, IFtpRepository repository)
     {
         InitializeComponent();
 
         m_mainWnd = wnd;
-        m_database = database;
+        m_repository = repository;
         cbProtocol.ItemsSource = Enum.GetValues(typeof(eFtpProtocol));
         cbMode.ItemsSource = Enum.GetValues(typeof(eFtpTransferMode));
         cbDirection.ItemsSource = new eFtpDirection[] {eFtpDirection.Get, eFtpDirection.Put, eFtpDirection.Get|eFtpDirection.Put, eFtpDirection.HotfolderPut };
@@ -65,15 +65,15 @@ public partial class SerweryDetails : UserControl
             var endpoint = m_endpoints.CurrentAddItem as FtpEndpoint;
             endpoint.Instance = FtpDispatcherGlobals.Instance;
             SanitizeDirectories(ref endpoint);
-            errmsg = m_database.ModifyEndpoint(endpoint.GetModel(), m_mode);
+            errmsg = m_repository.ModifyEndpoint(endpoint.GetModel(), m_mode);
             if (string.IsNullOrEmpty(errmsg)) {
-                endpoint.XX = m_database.GetLastInsertedKey();
+                endpoint.XX = m_repository.GetLastInsertedKey();
                 m_endpoints.CommitNew();
             }
         } else {
             var endpoint = m_endpoints.CurrentEditItem as FtpEndpoint;
             SanitizeDirectories(ref endpoint);
-            errmsg = m_database.ModifyEndpoint(endpoint.GetModel(), m_mode);
+            errmsg = m_repository.ModifyEndpoint(endpoint.GetModel(), m_mode);
             if (string.IsNullOrEmpty(errmsg))
                 m_endpoints.CommitEdit();
         }

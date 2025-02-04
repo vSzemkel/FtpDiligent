@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Data.SqlClient;
 
-sealed class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpDiligentDatabaseClient
+sealed class FtpDiligentSqlClient : FtpDiligentDatabaseClientBase, IFtpRepository
 {
     #region fields
     /// <summary>

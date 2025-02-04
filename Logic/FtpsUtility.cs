@@ -193,8 +193,8 @@ public sealed class FtpsUtility : FtpUtilityBase, IFtpUtility
     /// <summary>
     /// Pobiera plik zmodyfikowany po dacie ostatniej synchronizacji endpointu
     /// </summary>
-    /// <param name="file">struktura opisuj�ca plik lub katalog</param>
-    /// <returns>Czy dosz�o do pobrania pliku</returns>
+    /// <param name="file">struktura opisująca plik lub katalog</param>
+    /// <returns>Czy doszło do pobrania pliku</returns>
     private bool GetFile(FtpListItem file)
     {
         if (file.Size == 0)

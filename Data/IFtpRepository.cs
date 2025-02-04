@@ -1,6 +1,6 @@
 ﻿
 // -----------------------------------------------------------------------
-// <copyright file="IFtpDiligentDatabaseClient.cs" company="Agora SA">
+// <copyright file="IFtpRepository.cs" company="Agora SA">
 // <legal>Copyright (c) Development IT, kwiecien 2020</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
@@ -14,7 +14,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Threading.Tasks;
 
-public interface IFtpDiligentDatabaseClient
+public interface IFtpRepository
 {
     #region public STA
     /// <summary>

@@ -22,7 +22,7 @@ public sealed class HarmonogramyViewModel : BindableBase
 {
     #region fields
     private MainWindow m_mainWnd;
-    private IFtpDiligentDatabaseClient m_database;
+    private IFtpRepository m_repository;
     private ObservableCollection<FtpSchedule> m_schedules;
     private FtpEndpoint m_selectedEndpoint;
     private FtpSchedule m_selectedSchedule;
@@ -71,12 +71,12 @@ public sealed class HarmonogramyViewModel : BindableBase
     #endregion
 
     #region constructors
-    public HarmonogramyViewModel(MainWindow wnd, IFtpDiligentDatabaseClient database)
+    public HarmonogramyViewModel(MainWindow wnd, IFtpRepository repository)
     {
         wnd.m_tbHarmonogramy = this;
 
         m_mainWnd = wnd;
-        m_database = database;
+        m_repository = repository;
         SelectedFtpEndpoint = FtpEndpoints.FirstOrDefault();
         AddScheduleCommand = new DelegateCommand(OnAdd);
         ModifyScheduleCommand = new DelegateCommand(OnChange).ObservesCanExecute(() => DetailsAvailable);
@@ -114,7 +114,7 @@ public sealed class HarmonogramyViewModel : BindableBase
     {
         if (MessageBoxResult.Yes == MessageBox.Show($"Czy usunąć harmonogram {m_selectedSchedule.Name}?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question))
         {
-            var errmsg = m_database.ModifySchedule(m_selectedSchedule.GetModel(), eDbOperation.Delete);
+            var errmsg = m_repository.ModifySchedule(m_selectedSchedule.GetModel(), eDbOperation.Delete);
             if (string.IsNullOrEmpty(errmsg))
                 m_schedules.Remove(m_selectedSchedule);
             else
@@ -133,11 +133,11 @@ public sealed class HarmonogramyViewModel : BindableBase
         if (SelectedFtpEndpoint == null)
             return;
 
-        var (tab, errmsg) = m_database.GetSchedules(SelectedFtpEndpoint.XX);
+        var (tab, errmsg) = m_repository.GetSchedules(SelectedFtpEndpoint.XX);
         if (!string.IsNullOrEmpty(errmsg))
             m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
         else
-            FtpSchedules = m_database.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
+            FtpSchedules = m_repository.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
     }
 
     private void SwitchTabControl()

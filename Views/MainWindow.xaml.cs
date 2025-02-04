@@ -59,9 +59,9 @@ public partial class MainWindow : Window
     private HarmonogramyDetails _m_tbHarmonogramyDetails;
 
     /// <summary>
-    /// Klient bazy danych
+    /// Repozytorium danych
     /// </summary>
-    private IFtpDiligentDatabaseClient m_database;
+    private IFtpRepository m_repository;
     #endregion
 
     #region properties
@@ -73,7 +73,7 @@ public partial class MainWindow : Window
     public SerweryDetails m_tbSerweryDetails {
         get {
             if (_m_tbSerweryDetails == null) {
-                _m_tbSerweryDetails = new SerweryDetails(this, m_database);
+                _m_tbSerweryDetails = new SerweryDetails(this, m_repository);
                 _m_tbSerweryDetails.m_mainWnd = this;
                 tabSerweryDetails.Content = _m_tbSerweryDetails;
             }
@@ -85,7 +85,7 @@ public partial class MainWindow : Window
     public HarmonogramyDetails m_tbHarmonogramyDetails {
         get {
             if (_m_tbHarmonogramyDetails == null) {
-                _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, m_database);
+                _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, m_repository);
                 _m_tbHarmonogramyDetails.m_mainWnd = this;
                 tabHarmonogramyDetails.Content = _m_tbHarmonogramyDetails;
             }
@@ -99,11 +99,11 @@ public partial class MainWindow : Window
     /// <summary>
     /// Konstruktor okna głównego
     /// </summary>
-    /// <param name="database">Klient bazy danych</param>
-    public MainWindow(IFtpDiligentDatabaseClient database, IFtpDispatcher dispatcher)
+    /// <param name="repository">Repozytorium danych</param>
+    public MainWindow(IFtpRepository repository, IFtpDispatcher dispatcher)
     {
         InitializeComponent();
-        m_database = database;
+        m_repository = repository;
         m_tbSterowanie = new Sterowanie(this, dispatcher);
         m_tbSterowanie.tbFilesCount.DataContext = 0;
         m_tbSterowanie.cbSyncMode.DataContext = this;
@@ -276,7 +276,7 @@ public partial class MainWindow : Window
             return;
 
         string errmsg, localHostname = Dns.GetHostName();
-        (FtpDispatcherGlobals.Instance, errmsg) = m_database.InitInstance(localHostname);
+        (FtpDispatcherGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
         if (!string.IsNullOrEmpty(errmsg))
             ShowErrorInfoInternal(eSeverityCode.Error, errmsg);
     }

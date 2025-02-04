@@ -45,9 +45,9 @@ public sealed class SerweryViewModel : BindableBase
     private FtpEndpoint m_selectedEndpoint;
 
     /// <summary>
-    /// Klient bazy danych
+    /// Repozytorium danych
     /// </summary>
-    private IFtpDiligentDatabaseClient m_database { get; set; }
+    private IFtpRepository m_repository;
     #endregion
 
     #region properties
@@ -87,12 +87,12 @@ public sealed class SerweryViewModel : BindableBase
     #endregion
 
     #region constructors
-    public SerweryViewModel(MainWindow wnd, IFtpDiligentDatabaseClient database)
+    public SerweryViewModel(MainWindow wnd, IFtpRepository repository)
     {
         wnd.m_tbSerwery = this;
 
         m_mainWnd = wnd;
-        m_database = database;
+        m_repository = repository;
         AddEndpointCommand = new DelegateCommand(OnAdd);
         ModifyEndpointCommand = new DelegateCommand(OnChange).ObservesCanExecute(() => DetailsAvailable);
         DeleteEndpointCommand = new DelegateCommand(OnRemove).ObservesCanExecute(() => DetailsAvailable);
@@ -107,14 +107,14 @@ public sealed class SerweryViewModel : BindableBase
     public void LoadEndpoints()
     {
         //m_endpoints = FtpDiligentDesignTimeClient.GetEndpoints(m_mainWnd.m_instance);
-        var (tab, errmsg) = m_database.GetEndpoints(FtpDispatcherGlobals.Instance);
+        var (tab, errmsg) = m_repository.GetEndpoints(FtpDispatcherGlobals.Instance);
         if (!string.IsNullOrEmpty(errmsg))
         {
             m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
             m_endpoints = new ObservableCollection<FtpEndpoint>();
         }
         else
-            m_endpoints = m_database.GetEndpointsCollection(tab.Rows.Cast<System.Data.DataRow>());
+            m_endpoints = m_repository.GetEndpointsCollection(tab.Rows.Cast<System.Data.DataRow>());
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public sealed class SerweryViewModel : BindableBase
         foreach (FtpEndpoint enp in m_endpoints)
             if (enp.Direction.HasFlag(eFtpDirection.HotfolderPut))
             {
-                var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_database);
+                var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_repository);
                 fhw.StartWatching();
                 m_hotfolders.Add(fhw);
             }
@@ -168,7 +168,7 @@ public sealed class SerweryViewModel : BindableBase
     private void OnRemove()
     {
         if (MessageBoxResult.Yes == MessageBox.Show($"Czy usunąć serwer {m_selectedEndpoint.Host}{m_selectedEndpoint.RemoteDirectory} ?", "Potwierdzenie", MessageBoxButton.YesNo, MessageBoxImage.Question)) {
-            var errmsg = m_database.ModifyEndpoint(m_selectedEndpoint.GetModel(), eDbOperation.Delete);
+            var errmsg = m_repository.ModifyEndpoint(m_selectedEndpoint.GetModel(), eDbOperation.Delete);
             if (string.IsNullOrEmpty(errmsg))
                 m_endpoints.Remove(m_selectedEndpoint);
             else
@@ -200,7 +200,7 @@ public sealed class SerweryViewModel : BindableBase
     private void OnSync()
     {
         if (m_selectedEndpoint != null) {
-            var disp = new FtpDispatcher(this.m_database);
+            var disp = new FtpDispatcher(this.m_repository);
             disp.StartNow(m_selectedEndpoint);
             m_mainWnd.tcMain.SelectedIndex = 0;
         }

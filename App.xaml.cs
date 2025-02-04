@@ -28,7 +28,7 @@ public partial class App : PrismApplication
         string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Local].ConnectionString;
 
         containerRegistry.RegisterSingleton<FtpDiligentSqlClient>(() => new FtpDiligentSqlClient(connStr));
-        containerRegistry.RegisterSingleton<IFtpDiligentDatabaseClient, FtpDiligentSqlClient>();
+        containerRegistry.RegisterSingleton<IFtpRepository, FtpDiligentSqlClient>();
         containerRegistry.RegisterSingleton<IFtpDispatcher, FtpDispatcher>();
         containerRegistry.RegisterSingleton<MainWindow>();
     }

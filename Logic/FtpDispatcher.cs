@@ -36,9 +36,9 @@ public sealed class FtpDispatcher : IFtpDispatcher
     private AutoResetEvent m_are = new(false);
 
     /// <summary>
-    /// Klient bazy danych
+    /// Repozytorium danych
     /// </summary>
-    private IFtpDiligentDatabaseClient m_database { get; set; }
+    private IFtpRepository m_repository;
     #endregion
 
     #region properties
@@ -67,9 +67,9 @@ public sealed class FtpDispatcher : IFtpDispatcher
     /// Konstruktor FtpDispatchera
     /// </summary>
     /// <param name="wnd">Główne okno aplikacji WPF</param>
-    public FtpDispatcher(IFtpDiligentDatabaseClient database)
+    public FtpDispatcher(IFtpRepository repository)
     {
-        m_database = database;
+        m_repository = repository;
     }
     #endregion
 
@@ -87,7 +87,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
         int lastSchedule = 0;
 
         while (InProgress) {
-            var (schedule, errmsg) = m_database.GetNextSync(FtpDispatcherGlobals.Instance);
+            var (schedule, errmsg) = m_repository.GetNextSync(FtpDispatcherGlobals.Instance);
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
                     NotifyTransferStatus(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie");
@@ -136,7 +136,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
     {
         FtpScheduleModel schedule = (FtpScheduleModel)o;
         int key = schedule.xx;
-        var (endpoint, errmsg) = m_database.SelectEndpoint(key).Result;
+        var (endpoint, errmsg) = m_repository.SelectEndpoint(key).Result;
         if (!string.IsNullOrEmpty(errmsg)) {
             if (errmsg == "0")
                 errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
@@ -167,11 +167,11 @@ public sealed class FtpDispatcher : IFtpDispatcher
                 // loguj zmiany
                 int filesTransfered = log.files.Length;
                 if (filesTransfered == 0) {
-                    m_database.LogActivation(log);
+                    m_repository.LogActivation(log);
                     NotifyTransferStatus(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
                 } else {
                     log.direction = eFtpDirection.Get;
-                    m_database.LogSync(log);
+                    m_repository.LogSync(log);
                     NotifyTransferStatus(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
                 }
             }
@@ -188,11 +188,11 @@ public sealed class FtpDispatcher : IFtpDispatcher
                 // loguj zmiany
                 int filesTransfered = log.files.Length;
                 if (filesTransfered == 0) {
-                    m_database.LogActivation(log);
+                    m_repository.LogActivation(log);
                     NotifyTransferStatus(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
                 } else {
                     log.direction = eFtpDirection.Put;
-                    m_database.LogSync(log);
+                    m_repository.LogSync(log);
                     NotifyTransferStatus(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
                 }
             }
@@ -253,7 +253,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
     }
 
     /// <summary>
-    /// Używana w trybie: UniqueDateAndSizeInDatabase. Sprawdza, czy z danej instancji FtpGetWorkera pobrano ju� dany plik
+    /// Używana w trybie: UniqueDateAndSizeInDatabase. Sprawdza, czy z danej instancji FtpGetWorkera pobrano już dany plik
     /// </summary>
     /// <param name="sFileName">Nazwa liku</param>
     /// <param name="lLength">Długość pliku</param>
@@ -268,7 +268,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
             FileDate = dtDate
         };
 
-        var (status, errmsg) = m_database.VerifyFile(file);
+        var (status, errmsg) = m_repository.VerifyFile(file);
         if (!string.IsNullOrEmpty(errmsg)) {
             NotifyTransferStatus(eSeverityCode.Error, errmsg);
             return false;

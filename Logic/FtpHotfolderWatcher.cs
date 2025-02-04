@@ -46,9 +46,9 @@ public class FtpHotfolderWatcher
     private FtpSyncModel m_log = new();
 
     /// <summary>
-    /// Klient bazy danych
+    /// Repozytorium danych
     /// </summary>
-    private IFtpDiligentDatabaseClient m_database { get; set; }
+    private IFtpRepository m_repository;
     #endregion
 
     #region events
@@ -63,10 +63,10 @@ public class FtpHotfolderWatcher
     /// Konstruktor FtpUtility dla pojedynczych usług
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
-    /// <param name="database">Klient bazy danych</param>
-    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IFtpDiligentDatabaseClient database)
+    /// <param name="repository">Repozytorium danych</param>
+    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IFtpRepository repository)
     {
-        m_database = database;
+        m_repository = repository;
         m_ftpUtility = IFtpUtility.Create(endpoint);
         m_log.xx = -endpoint.xx;
         m_log.syncTime = DateTime.Now;
@@ -200,7 +200,7 @@ public class FtpHotfolderWatcher
         m_log.files = log.ToArray();
 
         // not wait CS4014
-        m_database.LogSync(m_log);
+        m_repository.LogSync(m_log);
     }
     /// <summary>
     /// Triggers an DispatcherStatusNotification event with provided arguments
