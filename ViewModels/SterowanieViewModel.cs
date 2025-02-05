@@ -129,9 +129,13 @@ public sealed class SterowanieViewModel : BindableBase
         }
     }
 
-    public int NotifyFileTransfer()
+    /// <summary>
+    /// Aktualizuje statystytkę przekazanych plików
+    /// </summary>
+    public void NotifyFileTransfer()
     {
-        return m_dispatcher.NotifyFileTransfer();
+        m_dispatcher.NotifyFileTransfer();
+        RaisePropertyChanged(nameof(FilesCount));
     }
     #endregion
 

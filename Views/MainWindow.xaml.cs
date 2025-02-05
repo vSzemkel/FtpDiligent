@@ -131,17 +131,17 @@ public partial class MainWindow : Window
     public void ShowErrorInfo(eSeverityCode code, string message)
     {
         if (Dispatcher.CheckAccess())
-            ShowErrorInfoInternal(code, message);
+            ShowInfoInternal(code, message);
         else
-            Dispatcher.Invoke(ShowErrorInfoInternal, code, message);
+            Dispatcher.Invoke(ShowInfoInternal, code, message);
     }
 
     public void ShowStatus(object sender, TransferNotificationEventArgs arg)
     {
         if (Dispatcher.CheckAccess())
-            ShowErrorInfoInternal(arg.severity, arg.message);
+            ShowInfoInternal(arg.severity, arg.message);
         else
-            Dispatcher.Invoke(ShowErrorInfoInternal, arg.severity, arg.message);
+            Dispatcher.Invoke(ShowInfoInternal, arg.severity, arg.message);
     }
 
     public void ShowNotification(object sender, FileTransferredEventArgs arg)
@@ -159,14 +159,23 @@ public partial class MainWindow : Window
     /// </summary>
     /// <param name="code">Kategoria powiadomienia</param>
     /// <param name="message">Treść powiadomienia</param>
-    private void ShowErrorInfoInternal(eSeverityCode code, string message)
+    private void ShowInfoInternal(eSeverityCode code, string message)
     {
-        if (code == eSeverityCode.NextSync)
-            m_tbSterowanie.NextSyncDateTime = message;
-        else {
-            m_tbSterowanie.ErrorLog.Insert(0, new FtpErrorModel() { Category = code, Message = message });
-            if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
-                EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Warning);
+        switch (code)
+        {
+            case eSeverityCode.NextSync:
+                m_tbSterowanie.NextSyncDateTime = message;
+                break;
+            case eSeverityCode.Message:
+                m_tbSterowanie.MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {message}");
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Information);
+                break;
+            default:
+                m_tbSterowanie.ErrorLog.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Warning);
+                break;
         }
     }
 
@@ -205,7 +214,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Parsuje tekstową informację o przetworzonym pliku,
+    /// Przepisuje informację o przetworzonym pliku do struktury ze zdefiniowanymi polami bindowalnymi,
     /// aktualizuje liste plików i licznik
     /// </summary>
     /// <param name="message">eFtpDirection|Name|Size|Date</param>
@@ -254,14 +263,14 @@ public partial class MainWindow : Window
         FtpDispatcherGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
         if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDispatcherGlobals.SyncMode)) {
-            ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
+            ShowInfoInternal(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
             FtpDispatcherGlobals.SyncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
         }
 
         try {
             CultureInfo.CurrentUICulture = new CultureInfo(settings["CultureInfo"]);
         } catch {
-            ShowErrorInfoInternal(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość.");
+            ShowInfoInternal(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość.");
         }
     }
 
@@ -276,7 +285,7 @@ public partial class MainWindow : Window
         string errmsg, localHostname = Dns.GetHostName();
         (FtpDispatcherGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
         if (!string.IsNullOrEmpty(errmsg))
-            ShowErrorInfoInternal(eSeverityCode.Error, errmsg);
+            ShowInfoInternal(eSeverityCode.Error, errmsg);
     }
 
     /// <summary>
