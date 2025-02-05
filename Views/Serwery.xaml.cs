@@ -10,8 +10,6 @@ namespace FtpDiligent.Views;
 
 using System.Windows.Controls;
 
-using Prism.Unity;
-
 public partial class Serwery : UserControl
 {
     #region constructors

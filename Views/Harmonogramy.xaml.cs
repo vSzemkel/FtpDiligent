@@ -10,8 +10,6 @@ namespace FtpDiligent.Views;
 
 using System.Windows.Controls;
 
-using Prism.Unity;
-
 /// <summary>
 /// Interaction logic for Harmonogramy.xaml
 /// </summary>

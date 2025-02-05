@@ -47,9 +47,4 @@ public static class FtpDispatcherGlobals
     /// Umożliwia programowe uruchomienie transferu danych
     /// </summary>
     public static Action StartProcessing;
-
-    /// <summary>
-    /// Interfejs do kontenera DI
-    /// </summary>
-    public static IContainerProvider IoC;
 }

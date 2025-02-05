@@ -197,5 +197,5 @@ ModelManifest.xml
 *.CAB
 
 # Exclude FtpDiligent specific files
-/App.config
+App.config
 

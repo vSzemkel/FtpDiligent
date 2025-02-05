@@ -11,24 +11,22 @@ namespace FtpDiligent;
 using System.Configuration;
 using System.Windows;
 
-using FtpDiligent.Views;
+using DryIoc;
 using Prism.Ioc;
-using Prism.Unity;
 
-public partial class App : PrismApplication
+using FtpDiligent.Views;
+
+public partial class App : Prism.DryIoc.PrismApplication
 {
     protected override Window CreateShell()
     {
-        FtpDispatcherGlobals.IoC = Container;
         return Container.Resolve<MainWindow>();
     }
 
     protected override void RegisterTypes(IContainerRegistry containerRegistry)
     {
         string connStr = ConfigurationManager.ConnectionStrings[eDbLocation.Local].ConnectionString;
-
-        containerRegistry.RegisterSingleton<FtpDiligentSqlClient>(() => new FtpDiligentSqlClient(connStr));
-        containerRegistry.RegisterSingleton<IFtpRepository, FtpDiligentSqlClient>();
+        containerRegistry.RegisterInstance<IFtpRepository>(new FtpDiligentSqlClient(connStr));
         containerRegistry.RegisterSingleton<IFtpDispatcher, FtpDispatcher>();
         containerRegistry.RegisterSingleton<MainWindow>();
     }
