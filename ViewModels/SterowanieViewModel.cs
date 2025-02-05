@@ -31,11 +31,6 @@ public sealed class SterowanieViewModel : BindableBase
     private IFtpDispatcher m_dispatcher;
 
     /// <summary>
-    /// Czy trwa przetwarzanie
-    /// </summary>
-    private bool m_processing;
-
-    /// <summary>
     /// Lista ostatnio transferowanych plików
     /// </summary>
     private ObservableCollection<FtpFileModel> m_fileInfo = new();
@@ -49,6 +44,11 @@ public sealed class SterowanieViewModel : BindableBase
     /// Lista ostatnio zarejestrowanych błędów i ostrzeżeń
     /// </summary>
     private ObservableCollection<FtpErrorModel> m_errLog = new();
+
+    /// <summary>
+    /// Komunikat o czasie najbliższego transferu plików
+    /// </summary>
+    private string m_nextSync;
     #endregion
 
     #region properties
@@ -78,17 +78,20 @@ public sealed class SterowanieViewModel : BindableBase
         set { SetProperty(ref m_errLog, value); }
     }
 
+    public string NextSyncDateTime
+    {
+        get => m_nextSync;
+        set { SetProperty(ref m_nextSync, value); }
+    }
+
     public int FilesCount
     {
         get => m_dispatcher.GetNumberOfFilesTransferred();
     }
 
-    private bool Processing
-    {
-        get => m_processing;
-    }
+    private bool Processing { get; set; }
 
-    public string NextSyncDateTime { get; set; }
+    private bool NotProcessing { get => !Processing; }
     #endregion
 
     #region commands
@@ -104,7 +107,8 @@ public sealed class SterowanieViewModel : BindableBase
 
         m_mainWnd = wnd;
         m_dispatcher = dispatcher;
-        StartProcessingCommand = new DelegateCommand(OnStartSync).ObservesCanExecute(() => !Processing);
+        Processing = false;
+        StartProcessingCommand = new DelegateCommand(OnStartSync).ObservesCanExecute(() => NotProcessing);
         StopProcessingCommand = new DelegateCommand(OnStopSync).ObservesCanExecute(() => Processing);
         ClearLogsCommand = new DelegateCommand(OnClearLog);
     }
@@ -140,7 +144,7 @@ public sealed class SterowanieViewModel : BindableBase
         string hostWithBadDir = CheckLocDirs();
         if (string.IsNullOrEmpty(hostWithBadDir))
         {
-            m_processing = true;
+            Processing = true;
             m_dispatcher.Start();
             m_mainWnd.m_tbSerwery.StartHotfolders();
         } else
@@ -152,7 +156,7 @@ public sealed class SterowanieViewModel : BindableBase
     /// </summary>
     private void OnStopSync()
     {
-        m_processing = false;
+        Processing = false;
         m_dispatcher.Stop();
         m_mainWnd.m_tbSerwery.StopHotfolders();
     }

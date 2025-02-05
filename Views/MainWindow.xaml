@@ -15,6 +15,9 @@
                     <TextBlock Text="Sterownie" Margin="8,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
             </TabItem.Header>
+            <TabItem.Content>
+                <Frame Source="Sterowanie.xaml" />
+            </TabItem.Content>
         </TabItem>
         <TabItem Name="tabSerwery">
             <TabItem.Header>
