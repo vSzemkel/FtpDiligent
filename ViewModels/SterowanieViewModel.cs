@@ -49,6 +49,11 @@ public sealed class SterowanieViewModel : BindableBase
     /// Komunikat o czasie najbliższego transferu plików
     /// </summary>
     private string m_nextSync;
+
+    /// <summary>
+    /// Czy trwa przetwarzanie
+    /// </summary>
+    private bool m_processing;
     #endregion
 
     #region properties
@@ -89,9 +94,15 @@ public sealed class SterowanieViewModel : BindableBase
         get => m_dispatcher.GetNumberOfFilesTransferred();
     }
 
-    private bool Processing { get; set; }
+    public bool Processing {
+        get => m_processing;
+        set {
+            SetProperty(ref m_processing, value);
+            RaisePropertyChanged(nameof(NotProcessing));
+        }
+    }
 
-    private bool NotProcessing { get => !Processing; }
+    public bool NotProcessing { get => !m_processing; }
     #endregion
 
     #region commands
