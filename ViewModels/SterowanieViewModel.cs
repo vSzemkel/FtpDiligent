@@ -9,6 +9,7 @@ namespace FtpDiligent.ViewModels;
 
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 
@@ -20,6 +21,11 @@ using FtpDiligent.Views;
 public sealed class SterowanieViewModel : BindableBase
 {
     #region fields
+    /// <summary>
+    /// Długość logu transferowanych plików
+    /// </summary>
+    private const int m_fileLogSize = 100;
+
     /// <summary>
     /// Referencja do głównego okna
     /// </summary>
@@ -57,8 +63,6 @@ public sealed class SterowanieViewModel : BindableBase
     #endregion
 
     #region properties
-    public Array SynchronizationModes => Enum.GetValues(typeof(eSyncFileMode));
-
     public eSyncFileMode SelectedSyncMode
     {
         get => FtpDispatcherGlobals.SyncMode;
@@ -89,11 +93,6 @@ public sealed class SterowanieViewModel : BindableBase
         set { SetProperty(ref m_nextSync, value); }
     }
 
-    public int FilesCount
-    {
-        get => m_dispatcher.GetNumberOfFilesTransferred();
-    }
-
     public bool Processing {
         get => m_processing;
         set {
@@ -102,7 +101,11 @@ public sealed class SterowanieViewModel : BindableBase
         }
     }
 
-    public bool NotProcessing { get => !m_processing; }
+    public bool NotProcessing => !m_processing;
+
+    public int FilesCount => m_dispatcher.GetNumberOfFilesTransferred();
+
+    public Array SynchronizationModes => Enum.GetValues(typeof(eSyncFileMode));
     #endregion
 
     #region commands
@@ -134,19 +137,70 @@ public sealed class SterowanieViewModel : BindableBase
         if (m_dispatcher.GetNumberOfFilesTransferred() > 0)
         {
             m_dispatcher.Stop();
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Message, "Restarting dispatcher");
+            GuiShowInfo(eSeverityCode.Message, "Restarting dispatcher");
             Thread.Sleep(5000);
             m_dispatcher.Start();
         }
     }
 
     /// <summary>
-    /// Aktualizuje statystytkę przekazanych plików
+    /// Aktualizuje kontrolki na zakładce Sterowanie
     /// </summary>
-    public void NotifyFileTransfer()
+    /// <param name="code">Kategoria powiadomienia</param>
+    /// <param name="message">Treść powiadomienia</param>
+    public void GuiShowInfo(eSeverityCode code, string message)
     {
-        m_dispatcher.NotifyFileTransfer();
-        RaisePropertyChanged(nameof(FilesCount));
+        switch (code)
+        {
+            case eSeverityCode.NextSync:
+                NextSyncDateTime = message;
+                break;
+            case eSeverityCode.Message:
+                MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {message}");
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Information);
+                break;
+            default:
+                ErrorLog.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Warning);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Aktualizuje informacje o przesyłaniu plików na zakładce Sterowanie
+    /// </summary>
+    /// <param name="arg">Szczegóły operacji</param>
+    public void GuiShowTransferDetails(FileTransferredEventArgs arg)
+    {
+        switch (arg.severity)
+        {
+            case eSeverityCode.Message:
+                MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {arg.message}");
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Information);
+                break;
+            case eSeverityCode.FileInfo:
+                BindFileInfo(arg);
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.FileInfo))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.SuccessAudit);
+                break;
+            case eSeverityCode.Warning:
+                ErrorLog.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Warning);
+                break;
+            case eSeverityCode.TransferError:
+                RestartScheduler();
+                m_mainWnd.m_mailer.Run(arg.message);
+                goto case eSeverityCode.Error;
+            case eSeverityCode.Error:
+                ErrorLog.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
+                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
+                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Error);
+                break;
+        }
     }
     #endregion
 
@@ -201,6 +255,29 @@ public sealed class SterowanieViewModel : BindableBase
                 return enp.LocalDirectory;
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Przepisuje informację o przetworzonym pliku do struktury ze zdefiniowanymi polami bindowalnymi,
+    /// aktualizuje liste plików i licznik
+    /// </summary>
+    /// <param name="message">eFtpDirection|Name|Size|Date</param>
+    private void BindFileInfo(FileTransferredEventArgs arg)
+    {
+        var list = FtpFileLog;
+        list.Insert(0, new FtpFileModel()
+        {
+            Instance = (byte)arg.direction,
+            FileName = arg.file.FullName,
+            FileSize = arg.file.Length,
+            FileDate = arg.file.LastWriteTime
+        });
+
+        if (list.Count > m_fileLogSize)
+            list.RemoveAt(m_fileLogSize);
+
+        m_dispatcher.NotifyFileTransfer();
+        RaisePropertyChanged(nameof(FilesCount));
     }
     #endregion
 }

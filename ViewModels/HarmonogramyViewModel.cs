@@ -29,8 +29,6 @@ public sealed class HarmonogramyViewModel : BindableBase
     #endregion
 
     #region properties
-    public ObservableCollection<FtpEndpoint> FtpEndpoints => m_mainWnd.m_tbSerwery.m_endpoints;
-
     public ObservableCollection<FtpSchedule> FtpSchedules
     {
         get => m_schedules;
@@ -57,10 +55,9 @@ public sealed class HarmonogramyViewModel : BindableBase
         }
     }
 
-    private bool DetailsAvailable
-    {
-        get => m_selectedSchedule != null;
-    }
+    public ObservableCollection<FtpEndpoint> FtpEndpoints => m_mainWnd.m_tbSerwery.m_endpoints;
+
+    private bool DetailsAvailable => m_selectedSchedule != null;
     #endregion
 
     #region commands

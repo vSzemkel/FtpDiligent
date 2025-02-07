@@ -71,10 +71,7 @@ public sealed class SerweryViewModel : BindableBase
         }
     }
 
-    private bool DetailsAvailable
-    {
-        get => m_selectedEndpoint != null;
-    }
+    private bool DetailsAvailable => m_selectedEndpoint != null;
     #endregion
 
     #region commands
