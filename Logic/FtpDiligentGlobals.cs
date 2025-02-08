@@ -9,7 +9,6 @@
 namespace FtpDiligent;
 
 using System;
-using Prism.Ioc;
 
 public static class FtpDiligentGlobals
 {
@@ -47,4 +46,9 @@ public static class FtpDiligentGlobals
     /// Umożliwia programowe uruchomienie transferu danych
     /// </summary>
     public static Action StartProcessing;
+
+    /// <summary>
+    /// Wysyła mailem powiadomienia o błędach
+    /// </summary>
+    public static SendEmails Mailer;
 }

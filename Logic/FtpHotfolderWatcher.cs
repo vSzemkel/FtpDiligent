@@ -210,9 +210,8 @@ public class FtpHotfolderWatcher
 
     private void NotifyMonitoringStatus(eSeverityCode severity, string message)
     {
-        var eventArgs = new TransferNotificationEventArgs(severity, message);
         if (HotfolderStatusNotification != null)
-            HotfolderStatusNotification(this, eventArgs);
+            HotfolderStatusNotification(this, new TransferNotificationEventArgs(severity, message));
     }
     #endregion
 }

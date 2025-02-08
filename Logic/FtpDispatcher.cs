@@ -211,9 +211,8 @@ public sealed class FtpDispatcher : IFtpDispatcher
     /// <param name="message">Description</param>
     private void NotifyTransferStatus(eSeverityCode severity, string message)
     {
-        var eventArgs = new TransferNotificationEventArgs(severity, message);
         if (DispatcherStatusNotification != null)
-            DispatcherStatusNotification(this, eventArgs);
+            DispatcherStatusNotification(this, new TransferNotificationEventArgs(severity, message));
     }
     #endregion
 

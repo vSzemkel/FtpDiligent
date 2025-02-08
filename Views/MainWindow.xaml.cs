@@ -9,10 +9,6 @@
 namespace FtpDiligent.Views;
 
 using System;
-using System.Configuration;
-using System.Diagnostics;
-using System.Globalization;
-using System.Net;
 using System.Windows;
 
 using FtpDiligent.ViewModels;
@@ -57,6 +53,11 @@ public partial class MainWindow : Window
     /// Repozytorium danych
     /// </summary>
     private IFtpRepository m_repository;
+
+    /// <summary>
+    /// Konfiguracja aplikacji
+    /// </summary>
+    private IFtpDiligentConfig m_config;
     #endregion
 
     #region properties
@@ -90,18 +91,20 @@ public partial class MainWindow : Window
     /// Konstruktor okna głównego
     /// </summary>
     /// <param name="repository">Repozytorium danych</param>
-    public MainWindow(IFtpRepository repository)
+    /// <param name="config">Konfiguracja aplikacji</param>
+    public MainWindow(IFtpRepository repository, IFtpDiligentConfig config)
     {
-        InitializeComponent();
+        m_config = config;
         m_repository = repository;
+        InitializeComponent();
+
+        FtpDiligentConfig.InitializationStatusNotification += ShowStatus;
         FtpUtilityBase.FileTransferred += ShowNotification;
         FtpUtilityBase.TransferStatusNotification += ShowStatus;
         FtpDispatcher.DispatcherStatusNotification += ShowStatus;
         SendEmails.MailNotificationStatus += ShowStatus;
 
-        CheckEventLog();
-        LoadConfig();
-        CheckInstanceInitialization();
+        m_config.LoadConfig();
 
         this.Title = $"FtpDiligent [instance {FtpDiligentGlobals.Instance}]";
     }
@@ -113,7 +116,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void Window_Closed(object sender, EventArgs e)
     {
-        SaveConfig();
+        m_config.SaveConfig();
     }
     #endregion
 
@@ -140,76 +143,6 @@ public partial class MainWindow : Window
             m_tbSterowanie.GuiShowTransferDetails(arg);
         else
             Dispatcher.Invoke(m_tbSterowanie.GuiShowTransferDetails, arg);
-    }
-    #endregion
-
-    #region private
-    /// <summary>
-    /// Inicjalizuje EventLog, gdy działa z prawami Admina
-    /// </summary>
-    private void CheckEventLog()
-    {
-        try {
-            if (FtpDiligentGlobals.TraceLevel > 0 && !EventLog.SourceExists(FtpDiligentGlobals.EventLog))
-                EventLog.CreateEventSource(FtpDiligentGlobals.EventLog, FtpDiligentGlobals.EventLog);
-        } catch (System.Security.SecurityException) {
-            MessageBox.Show($"Aby dokończyć instalację, uruchom {System.Reflection.Assembly.GetExecutingAssembly().Location} po raz pierwszy jako Administrator.", "Wymagana inicjalizacja", MessageBoxButton.OK, MessageBoxImage.Error);
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Inicjalizuje konfigurację programu
-    /// </summary>
-    private void LoadConfig()
-    {
-        byte traceLevel;
-        var settings = ConfigurationManager.AppSettings;
-        Byte.TryParse(settings["TraceLevel"], out traceLevel);
-        Int32.TryParse(settings["InstanceID"], out FtpDiligentGlobals.Instance);
-        Int32.TryParse(settings["HotfolderInterval"], out FtpDiligentGlobals.HotfolderInterval);
-        FtpDiligentGlobals.TraceLevel = (eSeverityCode)traceLevel;
-        m_mailer = new SendEmails(settings["ErrorsMailTo"], settings["SendGridKey"]);
-        FtpDiligentGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
-
-        if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDiligentGlobals.SyncMode)) {
-            m_tbSterowanie.GuiShowInfo(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
-            FtpDiligentGlobals.SyncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
-        }
-
-        try {
-            CultureInfo.CurrentUICulture = new CultureInfo(settings["CultureInfo"]);
-        } catch {
-            m_tbSterowanie.GuiShowInfo(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość.");
-        }
-    }
-
-    /// <summary>
-    /// Inicjalizuje identyfikator instancji przy pierwszym uruchomieniu
-    /// </summary>
-    private void CheckInstanceInitialization()
-    {
-        if (FtpDiligentGlobals.Instance > 0)
-            return;
-
-        string errmsg, localHostname = Dns.GetHostName();
-        (FtpDiligentGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
-        if (!string.IsNullOrEmpty(errmsg))
-            m_tbSterowanie.GuiShowInfo(eSeverityCode.Error, errmsg);
-    }
-
-    /// <summary>
-    /// Zapisuje aktualne ustawienia konfiguracyjne
-    /// </summary>
-    private void SaveConfig()
-    {
-        string syncMethod = FtpDiligentGlobals.SyncMode.ToString();
-        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-        config.AppSettings.Settings.Remove("SyncMethod");
-        config.AppSettings.Settings.Add("SyncMethod", syncMethod);
-        config.AppSettings.Settings.Remove("InstanceId");
-        config.AppSettings.Settings.Add("InstanceId", FtpDiligentGlobals.Instance.ToString());
-        config.Save(ConfigurationSaveMode.Modified);
     }
     #endregion
 }

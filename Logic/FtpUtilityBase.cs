@@ -151,9 +151,8 @@ public abstract class FtpUtilityBase
     /// <param name="message">Description</param>
     protected void NotifyTransferStatus(eSeverityCode severity, string message)
     {
-        var eventArgs = new TransferNotificationEventArgs(severity, message);
         if (TransferStatusNotification != null)
-            TransferStatusNotification(this, eventArgs);
+            TransferStatusNotification(this, new TransferNotificationEventArgs(severity, message));
     }
 
     /// <summary>
@@ -164,9 +163,8 @@ public abstract class FtpUtilityBase
     /// <param name="file">File details</param>
     protected void NotifyFileTransferred(eFtpDirection operation, FileInfo file)
     {
-        var eventArgs = new FileTransferredEventArgs(eSeverityCode.FileInfo, operation, file, string.Empty);
         if (FileTransferred != null)
-            FileTransferred(this, eventArgs);
+            FileTransferred(this, new FileTransferredEventArgs(eSeverityCode.FileInfo, operation, file, string.Empty));
     }
     #endregion
 
