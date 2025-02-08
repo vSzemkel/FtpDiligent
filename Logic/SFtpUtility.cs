@@ -222,7 +222,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
             throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{file.Name} do {m_sLocalDir} nie powiodło się. {ex.Message}");
         }
 
-        if (FtpDispatcherGlobals.CheckTransferedStorage) {
+        if (FtpDiligentGlobals.CheckTransferedStorage) {
             bool bStatus = CheckLocalStorage(file.Name, file.Length);
             if (!bStatus && File.Exists(localPath))
                 File.Delete(localPath);
@@ -266,7 +266,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
         try {
             var stream = File.OpenRead(pFI.FullName);
             m_sftpClient.UploadFile(stream, remoteFilename);
-            if (FtpDispatcherGlobals.CheckTransferedStorage)
+            if (FtpDiligentGlobals.CheckTransferedStorage)
                 return CheckRemoteStorage(remoteFilename, pFI.Length);
         } catch (Exception ex) {
             throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się. {ex.Message}");

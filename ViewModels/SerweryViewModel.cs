@@ -104,7 +104,7 @@ public sealed class SerweryViewModel : BindableBase
     public void LoadEndpoints()
     {
         //m_endpoints = FtpDiligentDesignTimeClient.GetEndpoints(m_mainWnd.m_instance);
-        var (tab, errmsg) = m_repository.GetEndpoints(FtpDispatcherGlobals.Instance);
+        var (tab, errmsg) = m_repository.GetEndpoints(FtpDiligentGlobals.Instance);
         if (!string.IsNullOrEmpty(errmsg))
         {
             m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);

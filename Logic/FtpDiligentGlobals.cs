@@ -11,7 +11,7 @@ namespace FtpDiligent;
 using System;
 using Prism.Ioc;
 
-public static class FtpDispatcherGlobals
+public static class FtpDiligentGlobals
 {
     /// <summary>
     /// Identyfikator instancji workera

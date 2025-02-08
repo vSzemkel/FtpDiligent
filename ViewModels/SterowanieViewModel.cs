@@ -65,8 +65,8 @@ public sealed class SterowanieViewModel : BindableBase
     #region properties
     public eSyncFileMode SelectedSyncMode
     {
-        get => FtpDispatcherGlobals.SyncMode;
-        set { SetProperty(ref FtpDispatcherGlobals.SyncMode, value); }
+        get => FtpDiligentGlobals.SyncMode;
+        set { SetProperty(ref FtpDiligentGlobals.SyncMode, value); }
     }
 
     public ObservableCollection<FtpFileModel> FtpFileLog
@@ -157,13 +157,13 @@ public sealed class SterowanieViewModel : BindableBase
                 break;
             case eSeverityCode.Message:
                 MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {message}");
-                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Information);
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, message, EventLogEntryType.Information);
                 break;
             default:
                 ErrorLog.Insert(0, new FtpErrorModel() { Category = code, Message = message });
-                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, message, EventLogEntryType.Warning);
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, message, EventLogEntryType.Warning);
                 break;
         }
     }
@@ -178,18 +178,18 @@ public sealed class SterowanieViewModel : BindableBase
         {
             case eSeverityCode.Message:
                 MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {arg.message}");
-                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Information);
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.Information);
                 break;
             case eSeverityCode.FileInfo:
                 BindFileInfo(arg);
-                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.FileInfo))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.SuccessAudit);
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.FileInfo))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.SuccessAudit);
                 break;
             case eSeverityCode.Warning:
                 ErrorLog.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
-                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Warning);
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.Warning);
                 break;
             case eSeverityCode.TransferError:
                 RestartScheduler();
@@ -197,8 +197,8 @@ public sealed class SterowanieViewModel : BindableBase
                 goto case eSeverityCode.Error;
             case eSeverityCode.Error:
                 ErrorLog.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
-                if (FtpDispatcherGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
-                    EventLog.WriteEntry(FtpDispatcherGlobals.EventLog, arg.message, EventLogEntryType.Error);
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.Error);
                 break;
         }
     }

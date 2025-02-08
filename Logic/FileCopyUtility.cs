@@ -145,7 +145,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
         string localPath = m_sLocalDir + file.Name;
         File.Copy(file.FullName, localPath);
 
-        if (FtpDispatcherGlobals.CheckTransferedStorage) {
+        if (FtpDiligentGlobals.CheckTransferedStorage) {
             bool bStatus = CheckLocalStorage(file.Name, file.Length);
             if (!bStatus && File.Exists(localPath))
                 File.Delete(localPath);
@@ -185,7 +185,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
         string destPath = m_sRemoteDir + file.Name;
         File.Copy(file.FullName, destPath);
 
-        if (FtpDispatcherGlobals.CheckTransferedStorage)
+        if (FtpDiligentGlobals.CheckTransferedStorage)
             return CheckRemoteStorage(destPath, file.Length);
 
         return true;

@@ -30,7 +30,7 @@ public class FtpEndpoint : EditableItem<FtpEndpointModel>
     /// </summary>
     public FtpEndpoint()
     {
-        Instance = FtpDispatcherGlobals.Instance;
+        Instance = FtpDiligentGlobals.Instance;
         Protocol = eFtpProtocol.FTP;
         Direction = eFtpDirection.Get;
         Mode = eFtpTransferMode.Binary;

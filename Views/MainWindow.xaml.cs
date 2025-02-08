@@ -103,7 +103,7 @@ public partial class MainWindow : Window
         LoadConfig();
         CheckInstanceInitialization();
 
-        this.Title = $"FtpDiligent [instance {FtpDispatcherGlobals.Instance}]";
+        this.Title = $"FtpDiligent [instance {FtpDiligentGlobals.Instance}]";
     }
     #endregion
 
@@ -150,8 +150,8 @@ public partial class MainWindow : Window
     private void CheckEventLog()
     {
         try {
-            if (FtpDispatcherGlobals.TraceLevel > 0 && !EventLog.SourceExists(FtpDispatcherGlobals.EventLog))
-                EventLog.CreateEventSource(FtpDispatcherGlobals.EventLog, FtpDispatcherGlobals.EventLog);
+            if (FtpDiligentGlobals.TraceLevel > 0 && !EventLog.SourceExists(FtpDiligentGlobals.EventLog))
+                EventLog.CreateEventSource(FtpDiligentGlobals.EventLog, FtpDiligentGlobals.EventLog);
         } catch (System.Security.SecurityException) {
             MessageBox.Show($"Aby dokończyć instalację, uruchom {System.Reflection.Assembly.GetExecutingAssembly().Location} po raz pierwszy jako Administrator.", "Wymagana inicjalizacja", MessageBoxButton.OK, MessageBoxImage.Error);
             throw;
@@ -166,15 +166,15 @@ public partial class MainWindow : Window
         byte traceLevel;
         var settings = ConfigurationManager.AppSettings;
         Byte.TryParse(settings["TraceLevel"], out traceLevel);
-        Int32.TryParse(settings["InstanceID"], out FtpDispatcherGlobals.Instance);
-        Int32.TryParse(settings["HotfolderInterval"], out FtpDispatcherGlobals.HotfolderInterval);
-        FtpDispatcherGlobals.TraceLevel = (eSeverityCode)traceLevel;
+        Int32.TryParse(settings["InstanceID"], out FtpDiligentGlobals.Instance);
+        Int32.TryParse(settings["HotfolderInterval"], out FtpDiligentGlobals.HotfolderInterval);
+        FtpDiligentGlobals.TraceLevel = (eSeverityCode)traceLevel;
         m_mailer = new SendEmails(settings["ErrorsMailTo"], settings["SendGridKey"]);
-        FtpDispatcherGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
+        FtpDiligentGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
-        if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDispatcherGlobals.SyncMode)) {
+        if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDiligentGlobals.SyncMode)) {
             m_tbSterowanie.GuiShowInfo(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
-            FtpDispatcherGlobals.SyncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
+            FtpDiligentGlobals.SyncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
         }
 
         try {
@@ -189,11 +189,11 @@ public partial class MainWindow : Window
     /// </summary>
     private void CheckInstanceInitialization()
     {
-        if (FtpDispatcherGlobals.Instance > 0)
+        if (FtpDiligentGlobals.Instance > 0)
             return;
 
         string errmsg, localHostname = Dns.GetHostName();
-        (FtpDispatcherGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
+        (FtpDiligentGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
         if (!string.IsNullOrEmpty(errmsg))
             m_tbSterowanie.GuiShowInfo(eSeverityCode.Error, errmsg);
     }
@@ -203,12 +203,12 @@ public partial class MainWindow : Window
     /// </summary>
     private void SaveConfig()
     {
-        string syncMethod = FtpDispatcherGlobals.SyncMode.ToString();
+        string syncMethod = FtpDiligentGlobals.SyncMode.ToString();
         Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
         config.AppSettings.Settings.Remove("SyncMethod");
         config.AppSettings.Settings.Add("SyncMethod", syncMethod);
         config.AppSettings.Settings.Remove("InstanceId");
-        config.AppSettings.Settings.Add("InstanceId", FtpDispatcherGlobals.Instance.ToString());
+        config.AppSettings.Settings.Add("InstanceId", FtpDiligentGlobals.Instance.ToString());
         config.Save(ConfigurationSaveMode.Modified);
     }
     #endregion

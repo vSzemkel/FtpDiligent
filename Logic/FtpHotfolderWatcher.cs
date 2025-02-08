@@ -164,7 +164,7 @@ public class FtpHotfolderWatcher
             if (good2go.Any())
                 ThreadPool.QueueUserWorkItem(UploadFiles, good2go.ToArray());
             // wait for the next run
-            Thread.Sleep(1000 * FtpDispatcherGlobals.HotfolderInterval);
+            Thread.Sleep(1000 * FtpDiligentGlobals.HotfolderInterval);
             // clear
             staged.Clear();
             good2go.Clear();

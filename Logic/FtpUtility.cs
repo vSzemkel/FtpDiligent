@@ -265,7 +265,7 @@ noFilesFound:
     {
         iContext = IntPtr.Zero;
 
-        hFtpConn = InternetOpen($"{FtpDispatcherGlobals.EventLog} {FtpDispatcherGlobals.Instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
+        hFtpConn = InternetOpen($"{FtpDiligentGlobals.EventLog} {FtpDiligentGlobals.Instance}", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
         if (hFtpConn == IntPtr.Zero) throw new FtpUtilityException("InternetOpen failed");
 
         hFtpSess = InternetConnect(hFtpConn, m_sHost, iPort, m_sUser, m_sPass, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, iContext);
@@ -316,7 +316,7 @@ noFilesFound:
             throw new FtpUtilityException($"Kopiowanie {m_sHost}{m_sRemoteDir}{dirsep}{pFD.cFileName} do {m_sLocalDir} nie powiodło się");
         }
 
-        if (FtpDispatcherGlobals.CheckTransferedStorage) {
+        if (FtpDiligentGlobals.CheckTransferedStorage) {
             bool bStatus = CheckLocalStorage(pFD.cFileName, size);
             if (!bStatus && File.Exists(localPath))
                 File.Delete(localPath);
@@ -359,7 +359,7 @@ noFilesFound:
         if (iWin32Error > 0 && iWin32Error != 512 && iWin32Error != 12003)
             throw new FtpUtilityException($"Kopiowanie {pFI.FullName} do {m_sHost}{m_sRemoteDir} nie powiodło się", iWin32Error);
 
-        if (FtpDispatcherGlobals.CheckTransferedStorage)
+        if (FtpDiligentGlobals.CheckTransferedStorage)
             return CheckRemoteStorage(pFI.Name, pFI.Length);
 
         return true;

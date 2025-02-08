@@ -63,7 +63,7 @@ public partial class SerweryDetails : UserControl
 
         if (m_mode == eDbOperation.Insert) {
             var endpoint = m_endpoints.CurrentAddItem as FtpEndpoint;
-            endpoint.Instance = FtpDispatcherGlobals.Instance;
+            endpoint.Instance = FtpDiligentGlobals.Instance;
             SanitizeDirectories(ref endpoint);
             errmsg = m_repository.ModifyEndpoint(endpoint.GetModel(), m_mode);
             if (string.IsNullOrEmpty(errmsg)) {

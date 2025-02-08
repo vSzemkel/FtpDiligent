@@ -87,7 +87,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
         int lastSchedule = 0;
 
         while (InProgress) {
-            var (schedule, errmsg) = m_repository.GetNextSync(FtpDispatcherGlobals.Instance);
+            var (schedule, errmsg) = m_repository.GetNextSync(FtpDiligentGlobals.Instance);
             if (!string.IsNullOrEmpty(errmsg)) {
                 if (errmsg == "0")
                     NotifyTransferStatus(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie");
@@ -96,7 +96,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
                     NotifyTransferStatus(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po błędzie");
                     lastSchedule = 0;
                     Thread.Sleep(m_retryWaitTime);
-                    FtpDispatcherGlobals.StartProcessing();
+                    FtpDiligentGlobals.StartProcessing();
                 }
                 return;
             }
@@ -147,7 +147,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
 
         string remote = endpoint.host + endpoint.remDir;
         FtpSyncModel log = new() { xx = key, syncTime = endpoint.nextSync };
-        IFtpUtility fu = IFtpUtility.Create(endpoint, this, FtpDispatcherGlobals.SyncMode);
+        IFtpUtility fu = IFtpUtility.Create(endpoint, this, FtpDiligentGlobals.SyncMode);
         eFtpDirection eDirection = endpoint.direction;
 
         if (key < 0)
@@ -262,7 +262,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
     public bool CheckDatabase(string sFileName, long lLength, DateTime dtDate)
     {
         var file = new FtpFileModel() {
-            Instance = FtpDispatcherGlobals.Instance,
+            Instance = FtpDiligentGlobals.Instance,
             FileName = sFileName,
             FileSize = lLength,
             FileDate = dtDate
