@@ -37,7 +37,7 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
 
     #region events
     /// <summary>
-    /// Rozgłasza status operacji transferu pliku
+    /// Rozgłasza status operacji inicjalizacji aplikacji
     /// </summary>
     public static event EventHandler<TransferNotificationEventArgs> InitializationStatusNotification;
     #endregion
@@ -120,7 +120,7 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
     /// <summary>
     /// Umożliwia obserwatorom zareagowanie na błąd inicjalizacji
     /// </summary>
-    void NotifyInitStatus(eSeverityCode code, string message)
+    private void NotifyInitStatus(eSeverityCode code, string message)
     {
         if (InitializationStatusNotification != null)
             InitializationStatusNotification(this, new TransferNotificationEventArgs(code, message));

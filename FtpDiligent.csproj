@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PlatformTarget>x64</PlatformTarget>
-    <NoWarn>1701;1702;4014</NoWarn>
+    <NoWarn>1701;1702</NoWarn>
     <ApplicationIcon>Images\ftpgetw.ico</ApplicationIcon>
   </PropertyGroup>
 

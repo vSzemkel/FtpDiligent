@@ -33,7 +33,7 @@ public class FtpHotfolderWatcher
     /// <summary>
     /// Pliki teoretycznie nadal podlegające modyfikacji
     /// </summary>
-    private List<FileInfo> m_stagedFiles = new();
+    private Dictionary<int, FileInfo> m_stagedFiles = new();
 
     /// <summary>
     /// Umożliwia zatrzymanie pętli przeglądania <see cref="m_stagedFiles"/>
@@ -81,9 +81,9 @@ public class FtpHotfolderWatcher
     /// </summary>
     public void StartWatching()
     {
-        m_hotfolderWatcher.EnableRaisingEvents = true;
         m_cts = new CancellationTokenSource();
-        ThreadPool.QueueUserWorkItem(PumpStage, m_cts.Token);
+        m_hotfolderWatcher.EnableRaisingEvents = true;
+        ThreadPool.QueueUserWorkItem(PumpStaged, m_cts.Token);
     }
 
     /// <summary>
@@ -103,11 +103,9 @@ public class FtpHotfolderWatcher
     protected void OnStage(object source, FileSystemEventArgs e)
     {
         lock (m_stagedFiles) {
-            if (m_stagedFiles.All(fi => fi.FullName != e.FullPath)) {
-                var fi = new FileInfo(e.FullPath);
-                if (!fi.Attributes.HasFlag(FileAttributes.Directory))
-                    m_stagedFiles.Add(fi);
-            }
+            var file = new FileInfo(e.FullPath);
+            if (!file.Attributes.HasFlag(FileAttributes.Directory))
+                m_stagedFiles[file.FullName.GetHashCode()] = file; // potencialnie nadpisuje rekordy plików wciąż modyfikowanych
         }
     }
 
@@ -128,45 +126,43 @@ public class FtpHotfolderWatcher
     }
 
     /// <summary>
-    /// Wątek roboczy przegląda
+    /// Wątek roboczy przegląda pliki i przekazuje do transferu gotowe do przesłania
     /// </summary>
-    private void PumpStage(object o)
+    private void PumpStaged(object o)
     {
-        var staged = new List<FileInfo>();
-        var good2go = new List<FileInfo>();
         var ct = (CancellationToken)o;
+        var good2go = new List<FileInfo>();
+        var staged = new Dictionary<int, FileInfo>();
 
         while (!ct.IsCancellationRequested) {
-            // select
             lock (m_stagedFiles) {
-                foreach (FileInfo fi in m_stagedFiles.ToArray()) {
+                // select local files ready to upload
+                foreach (var stagedInfo in m_stagedFiles) {
+                    var file = stagedInfo.Value;
                     try {
-                        var f = fi.OpenWrite();
-                        if (!f.CanWrite)
-                            staged.Add(fi);
-                        else
-                            good2go.Add(fi);
-                        f.Close();
+                        using (var fs = file.OpenWrite()) 
+                            if (fs.CanWrite) {
+                                good2go.Add(file);
+                                continue;
+                            }
                     } catch (UnauthorizedAccessException) {
-                        staged.Add(fi);
-                        NotifyMonitoringStatus(eSeverityCode.Message, $"Odczyt pliku {fi.FullName} zostanie ponowiony");
+                        NotifyMonitoringStatus(eSeverityCode.Message, $"Odczyt pliku {file.FullName} zostanie ponowiony");
                     } catch (Exception e) {
-                        staged.Add(fi);
-                        NotifyMonitoringStatus(eSeverityCode.Warning, $"Nie udało się odczytać pliku {fi.FullName} {e.Message}");
+                        NotifyMonitoringStatus(eSeverityCode.Warning, $"Nie udało się odczytać pliku {file.FullName} {e.Message}");
                     }
 
+                    staged.Add(stagedInfo.Key, file);
                 }
 
-                m_stagedFiles.Clear();
-                m_stagedFiles.AddRange(staged);
+                m_stagedFiles = staged;
+                staged.Clear();
             }
-            // transfer (deep copy od good2go)
+            // transfer (deep copy of good2go)
             if (good2go.Any())
                 ThreadPool.QueueUserWorkItem(UploadFiles, good2go.ToArray());
             // wait for the next run
             Thread.Sleep(1000 * FtpDiligentGlobals.HotfolderInterval);
             // clear
-            staged.Clear();
             good2go.Clear();
         }
 
@@ -177,7 +173,6 @@ public class FtpHotfolderWatcher
     /// Czasochłonne kopiowanie plików w osobnym wątku
     /// </summary>
     /// <param name="o">Lista plików do transferu</param>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Await.Warning", "CS4014:Await.Warning")]
     private void UploadFiles(object o)
     {
         var files = o as FileInfo[];
@@ -199,9 +194,9 @@ public class FtpHotfolderWatcher
 
         m_log.files = log.ToArray();
 
-        // not wait CS4014
         m_repository.LogSync(m_log);
     }
+
     /// <summary>
     /// Triggers an DispatcherStatusNotification event with provided arguments
     /// </summary>

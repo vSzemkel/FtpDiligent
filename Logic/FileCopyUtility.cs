@@ -183,7 +183,12 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
         }
 
         string destPath = m_sRemoteDir + file.Name;
-        File.Copy(file.FullName, destPath);
+        try {
+            File.Copy(file.FullName, destPath);
+        } catch (Exception e) {
+            NotifyTransferStatus(eSeverityCode.Warning, $"Kopiowanie nie powiodło się {file.FullName} {e.Message}");
+            return false;
+        }
 
         if (FtpDiligentGlobals.CheckTransferedStorage)
             return CheckRemoteStorage(destPath, file.Length);
