@@ -1,7 +1,7 @@
 ﻿
 // -----------------------------------------------------------------------
-// <copyright file="IFtpDiligentConfig.cs" company="private project">
-// <legal>Copyright (c) MB, February 2025</legal>
+// <copyright file="IFtpDiligentConfig.cs">
+// <legal>Copyright (c) Marcin Buchwald, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------

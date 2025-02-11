@@ -8,8 +8,9 @@
 
 namespace FtpDiligent.Views;
 
-using System;
 using System.Windows;
+
+using Prism.Events;
 
 using FtpDiligent.ViewModels;
 
@@ -19,11 +20,6 @@ using FtpDiligent.ViewModels;
 public partial class MainWindow : Window
 {
     #region fields
-    /// <summary>
-    /// Wysyła mailem powiadomienia o błędach
-    /// </summary>
-    public SendEmails m_mailer;
-
     /// <summary>
     /// Zakładka Sterowanie
     /// </summary>
@@ -53,18 +49,13 @@ public partial class MainWindow : Window
     /// Repozytorium danych
     /// </summary>
     private IFtpRepository m_repository;
-
-    /// <summary>
-    /// Konfiguracja aplikacji
-    /// </summary>
-    private IFtpDiligentConfig m_config;
     #endregion
 
     #region properties
     public SerweryDetails m_tbSerweryDetails {
         get {
             if (_m_tbSerweryDetails == null) {
-                _m_tbSerweryDetails = new SerweryDetails(this, m_repository);
+                _m_tbSerweryDetails = new SerweryDetails(this, FtpDiligentGlobals.EventAggregator, m_repository);
                 _m_tbSerweryDetails.m_mainWnd = this;
                 tabSerweryDetails.Content = _m_tbSerweryDetails;
             }
@@ -76,7 +67,7 @@ public partial class MainWindow : Window
     public HarmonogramyDetails m_tbHarmonogramyDetails {
         get {
             if (_m_tbHarmonogramyDetails == null) {
-                _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, m_repository);
+                _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, FtpDiligentGlobals.EventAggregator, m_repository);
                 _m_tbHarmonogramyDetails.m_mainWnd = this;
                 tabHarmonogramyDetails.Content = _m_tbHarmonogramyDetails;
             }
@@ -92,57 +83,12 @@ public partial class MainWindow : Window
     /// </summary>
     /// <param name="repository">Repozytorium danych</param>
     /// <param name="config">Konfiguracja aplikacji</param>
-    public MainWindow(IFtpRepository repository, IFtpDiligentConfig config)
+    public MainWindow(IFtpRepository repository)
     {
-        m_config = config;
         m_repository = repository;
         InitializeComponent();
 
-        FtpDiligentConfig.InitializationStatusNotification += ShowStatus;
-        FtpUtilityBase.FileTransferred += ShowNotification;
-        FtpUtilityBase.TransferStatusNotification += ShowStatus;
-        FtpDispatcher.DispatcherStatusNotification += ShowStatus;
-        SendEmails.MailNotificationStatus += ShowStatus;
-
-        m_config.LoadConfig();
-
         this.Title = $"FtpDiligent [instance {FtpDiligentGlobals.Instance}]";
-    }
-    #endregion
-
-    #region handlers
-    /// <summary>
-    /// Gdy okno zostało zamknięte
-    /// </summary>
-    private void Window_Closed(object sender, EventArgs e)
-    {
-        m_config.SaveConfig();
-    }
-    #endregion
-
-    #region public
-    public void ShowErrorInfo(eSeverityCode code, string message)
-    {
-        if (Dispatcher.CheckAccess())
-            m_tbSterowanie.GuiShowInfo(code, message);
-        else
-            Dispatcher.Invoke(m_tbSterowanie.GuiShowInfo, code, message);
-    }
-
-    public void ShowStatus(object sender, TransferNotificationEventArgs arg)
-    {
-        if (Dispatcher.CheckAccess())
-            m_tbSterowanie.GuiShowInfo(arg.severity, arg.message);
-        else
-            Dispatcher.Invoke(m_tbSterowanie.GuiShowInfo, arg.severity, arg.message);
-    }
-
-    public void ShowNotification(object sender, FileTransferredEventArgs arg)
-    {
-        if (Dispatcher.CheckAccess())
-            m_tbSterowanie.GuiShowTransferDetails(arg);
-        else
-            Dispatcher.Invoke(m_tbSterowanie.GuiShowTransferDetails, arg);
     }
     #endregion
 }

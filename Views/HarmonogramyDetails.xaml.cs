@@ -8,10 +8,13 @@
 
 namespace FtpDiligent.Views;
 
+using Prism.Events;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+
+using FtpDiligent.Events;
 
 /// <summary>
 /// Interaction logic for Sterowanie.xaml
@@ -40,8 +43,12 @@ public partial class HarmonogramyDetails : UserControl
     private IFtpRepository m_repository;
     #endregion
 
+    #region events
+    private StatusEvent ShowStatus;
+    #endregion
+
     #region constructors
-    public HarmonogramyDetails(MainWindow wnd, IFtpRepository repository)
+    public HarmonogramyDetails(MainWindow wnd, IEventAggregator eventAggr, IFtpRepository repository)
     {
         InitializeComponent();
 
@@ -50,6 +57,7 @@ public partial class HarmonogramyDetails : UserControl
         var dayNames = CultureInfo.CurrentUICulture.DateTimeFormat.DayNames;
         cbStartDay.ItemsSource = dayNames;
         cbStopDay.ItemsSource = dayNames;
+        ShowStatus = eventAggr.GetEvent<StatusEvent>();
     }
     #endregion
 
@@ -84,7 +92,7 @@ public partial class HarmonogramyDetails : UserControl
         if (string.IsNullOrEmpty(errmsg))
             RestoreTabControl();
         else
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+            ShowStatus.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
     }
 
     /// <summary>

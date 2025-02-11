@@ -1,7 +1,7 @@
 ﻿
 // -----------------------------------------------------------------------
-// <copyright file="SerweryViewModel.cs" company="private project">
-// <legal>Copyright (c) MB, February 2025</legal>
+// <copyright file="SerweryViewModel.cs">
+// <legal>Copyright (c) Marcin Buchwald, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
@@ -20,6 +20,8 @@ using Prism.Commands;
 using Prism.Mvvm;
 using FtpDiligent;
 using FtpDiligent.Views;
+using FtpDiligent.Events;
+using Prism.Events;
 
 public sealed class SerweryViewModel : BindableBase
 {
@@ -83,13 +85,18 @@ public sealed class SerweryViewModel : BindableBase
     public DelegateCommand SynchronizeEndpointCommand { get; private set; }
     #endregion
 
+    #region events
+    private StatusEvent ShowStatus;
+    #endregion
+
     #region constructors
-    public SerweryViewModel(MainWindow wnd, IFtpRepository repository)
+    public SerweryViewModel(MainWindow wnd, IEventAggregator eventAggr, IFtpRepository repository)
     {
         wnd.m_tbSerwery = this;
 
         m_mainWnd = wnd;
         m_repository = repository;
+        ShowStatus = eventAggr.GetEvent<StatusEvent>();
         AddEndpointCommand = new DelegateCommand(OnAdd);
         ModifyEndpointCommand = new DelegateCommand(OnChange).ObservesCanExecute(() => DetailsAvailable);
         DeleteEndpointCommand = new DelegateCommand(OnRemove).ObservesCanExecute(() => DetailsAvailable);
@@ -107,7 +114,7 @@ public sealed class SerweryViewModel : BindableBase
         var (tab, errmsg) = m_repository.GetEndpoints(FtpDiligentGlobals.Instance);
         if (!string.IsNullOrEmpty(errmsg))
         {
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+            ShowStatus.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
             m_endpoints = new ObservableCollection<FtpEndpoint>();
         }
         else
@@ -122,7 +129,7 @@ public sealed class SerweryViewModel : BindableBase
         foreach (FtpEndpoint enp in m_endpoints)
             if (enp.Direction.HasFlag(eFtpDirection.HotfolderPut))
             {
-                var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_repository);
+                var fhw = new FtpHotfolderWatcher(enp.GetModel(), FtpDiligentGlobals.EventAggregator, m_repository);
                 fhw.StartWatching();
                 m_hotfolders.Add(fhw);
             }
@@ -169,7 +176,7 @@ public sealed class SerweryViewModel : BindableBase
             if (string.IsNullOrEmpty(errmsg))
                 m_endpoints.Remove(m_selectedEndpoint);
             else
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                ShowStatus.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
         }
     }
 
@@ -197,7 +204,7 @@ public sealed class SerweryViewModel : BindableBase
     private void OnSync()
     {
         if (m_selectedEndpoint != null) {
-            var disp = new FtpDispatcher(this.m_repository);
+            var disp = new FtpDispatcher(FtpDiligentGlobals.EventAggregator, this.m_repository);
             disp.StartNow(m_selectedEndpoint);
             m_mainWnd.tcMain.SelectedIndex = 0;
         }

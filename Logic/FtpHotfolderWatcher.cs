@@ -14,6 +14,10 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 
+using Prism.Events;
+
+using FtpDiligent.Events;
+
 /// <summary>
 /// Klasa monitorujace hotfolder i transmitująca nowe pliki
 /// </summary>
@@ -55,7 +59,7 @@ public class FtpHotfolderWatcher
     /// <summary>
     /// Rozgłasza status monitoringu
     /// </summary>
-    public static event EventHandler<TransferNotificationEventArgs> HotfolderStatusNotification;
+    private StatusEvent HotfolderStatusNotification;
     #endregion
 
     #region constructor
@@ -64,13 +68,14 @@ public class FtpHotfolderWatcher
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
     /// <param name="repository">Repozytorium danych</param>
-    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IFtpRepository repository)
+    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IEventAggregator eventAggr, IFtpRepository repository)
     {
         m_repository = repository;
         m_ftpUtility = IFtpUtility.Create(endpoint);
         m_log.xx = -endpoint.xx;
         m_log.syncTime = DateTime.Now;
         m_log.direction = eFtpDirection.HotfolderPut;
+        HotfolderStatusNotification = eventAggr.GetEvent<StatusEvent>();
         RegisterWatcher();
     }
     #endregion
@@ -146,9 +151,9 @@ public class FtpHotfolderWatcher
                                 continue;
                             }
                     } catch (UnauthorizedAccessException) {
-                        NotifyMonitoringStatus(eSeverityCode.Message, $"Odczyt pliku {file.FullName} zostanie ponowiony");
+                        HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Odczyt pliku {file.FullName} zostanie ponowiony"));
                     } catch (Exception e) {
-                        NotifyMonitoringStatus(eSeverityCode.Warning, $"Nie udało się odczytać pliku {file.FullName} {e.Message}");
+                        HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, $"Nie udało się odczytać pliku {file.FullName} {e.Message}"));
                     }
 
                     staged.Add(stagedInfo.Key, file);
@@ -187,26 +192,14 @@ public class FtpHotfolderWatcher
                         MD5 = fi.FullName.ComputeMD5()
                     });
         } catch (FtpUtilityException fex) {
-            NotifyMonitoringStatus(eSeverityCode.TransferError, fex.Message);
+            HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, fex.Message));
         } catch (System.Exception se) {
-            NotifyMonitoringStatus(eSeverityCode.TransferError, se.Message);
+            HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, se.Message));
         }
 
         m_log.files = log.ToArray();
 
         m_repository.LogSync(m_log);
-    }
-
-    /// <summary>
-    /// Triggers an DispatcherStatusNotification event with provided arguments
-    /// </summary>
-    /// <param name="severity">Severity code</param>
-    /// <param name="message">Description</param>
-
-    private void NotifyMonitoringStatus(eSeverityCode severity, string message)
-    {
-        if (HotfolderStatusNotification != null)
-            HotfolderStatusNotification(this, new TransferNotificationEventArgs(severity, message));
     }
     #endregion
 }

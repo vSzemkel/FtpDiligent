@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
+using FtpDiligent.Events;
+
 [StructLayout(LayoutKind.Sequential)]
 public class WIN32_FIND_DATA
 {
@@ -174,7 +176,7 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
                 Modified = last,
                 MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
             });
-            NotifyFileTransferred(eFtpDirection.Get, new FileInfo(pFD.cFileName));
+            FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Get, new FileInfo(pFD.cFileName)));
         }
         while (InternetFindNextFile(hFind, pFD) && m_Disp.InProgress)
             if (GetFile(pFD)) {
@@ -186,11 +188,11 @@ public sealed class FtpUtility : FtpUtilityBase, IFtpUtility, IDisposable
                     Modified = last,
                     MD5 = (m_sLocalDir + pFD.cFileName).ComputeMD5()
                 });
-                NotifyFileTransferred(eFtpDirection.Get, new FileInfo(pFD.cFileName));
+                FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Get, new FileInfo(pFD.cFileName)));
             }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            NotifyTransferStatus(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika"));
 
         if (Marshal.GetLastWin32Error() != ERROR_NO_MORE_FILES)
             throw new FtpUtilityException("Błąd pobierania z zasobu " + m_sHost + m_sRemoteDir);
@@ -223,12 +225,12 @@ noFilesFound:
                     Modified = fi.LastWriteTime,
                     MD5 = fi.FullName.ComputeMD5()
                 });
-                NotifyFileTransferred(eFtpDirection.Put, fi);
+                FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Put, fi));
             }
         }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            NotifyTransferStatus(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
+            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika"));
 
         Dispose();
 
@@ -248,7 +250,7 @@ noFilesFound:
 
         bool status = PutFile(file);
         if (status)
-            NotifyFileTransferred(eFtpDirection.HotfolderPut, file);
+            FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.HotfolderPut, file));
 
         Dispose();
 

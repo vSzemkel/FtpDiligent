@@ -1,6 +1,7 @@
-﻿// -----------------------------------------------------------------------
-// <copyright file="HarmonogramyViewModel.cs" company="private project">
-// <legal>Copyright (c) MB, February 2025</legal>
+﻿
+// -----------------------------------------------------------------------
+// <copyright file="HarmonogramyViewModel.cs">
+// <legal>Copyright (c) Marcin Buchwald, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
@@ -14,8 +15,11 @@ using System.Windows;
 using System.Windows.Data;
 
 using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
+
 using FtpDiligent;
+using FtpDiligent.Events;
 using FtpDiligent.Views;
 
 public sealed class HarmonogramyViewModel : BindableBase
@@ -67,13 +71,18 @@ public sealed class HarmonogramyViewModel : BindableBase
     public DelegateCommand ReloadScheduleCommand { get; private set; }
     #endregion
 
+    #region events
+    private StatusEvent ShowStatus;
+    #endregion
+
     #region constructors
-    public HarmonogramyViewModel(MainWindow wnd, IFtpRepository repository)
+    public HarmonogramyViewModel(MainWindow wnd, IEventAggregator eventAggr, IFtpRepository repository)
     {
         wnd.m_tbHarmonogramy = this;
 
         m_mainWnd = wnd;
         m_repository = repository;
+        ShowStatus = eventAggr.GetEvent<StatusEvent>();
         SelectedFtpEndpoint = FtpEndpoints.FirstOrDefault();
         AddScheduleCommand = new DelegateCommand(OnAdd);
         ModifyScheduleCommand = new DelegateCommand(OnChange).ObservesCanExecute(() => DetailsAvailable);
@@ -115,7 +124,7 @@ public sealed class HarmonogramyViewModel : BindableBase
             if (string.IsNullOrEmpty(errmsg))
                 m_schedules.Remove(m_selectedSchedule);
             else
-                m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+                ShowStatus.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
         }
     }
 
@@ -132,7 +141,7 @@ public sealed class HarmonogramyViewModel : BindableBase
 
         var (tab, errmsg) = m_repository.GetSchedules(SelectedFtpEndpoint.XX);
         if (!string.IsNullOrEmpty(errmsg))
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+            ShowStatus.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
         else
             FtpSchedules = m_repository.GetSchedulesCollection(tab.Rows.Cast<System.Data.DataRow>());
     }

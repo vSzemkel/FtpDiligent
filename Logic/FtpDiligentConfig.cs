@@ -1,10 +1,12 @@
 ﻿
 // -----------------------------------------------------------------------
-// <copyright file="FtpDiligentConfig.cs" company="private project">
-// <legal>Copyright (c) MB, February 2025</legal>
+// <copyright file="FtpDiligentConfig.cs">
+// <legal>Copyright (c) Marcin Buchwald, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
+
+namespace FtpDiligent;
 
 using System;
 using System.Configuration;
@@ -13,7 +15,9 @@ using System.Globalization;
 using System.Net;
 using System.Windows;
 
-namespace FtpDiligent;
+using Prism.Events;
+
+using FtpDiligent.Events;
 
 /// <summary>
 /// Ta implementacja posługuje się tradycyjnym plikiem XML app.config
@@ -25,13 +29,20 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
     /// <summary>
     /// Repozytorium danych
     /// </summary>
+    private IEventAggregator m_eventAggr;
+
+    /// <summary>
+    /// Repozytorium danych
+    /// </summary>
     private IFtpRepository m_repository;
     #endregion
 
     #region constructors
-    public FtpDiligentConfig(IFtpRepository repository)
+    public FtpDiligentConfig(IEventAggregator eventAggr, IFtpRepository repository)
     {
+        m_eventAggr = eventAggr;
         m_repository = repository;
+        InitializationStatusNotification = eventAggr.GetEvent<StatusEvent>();
     }
     #endregion
 
@@ -39,7 +50,7 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
     /// <summary>
     /// Rozgłasza status operacji inicjalizacji aplikacji
     /// </summary>
-    public static event EventHandler<TransferNotificationEventArgs> InitializationStatusNotification;
+    private StatusEvent InitializationStatusNotification;
     #endregion
 
     #region public
@@ -55,19 +66,20 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
         Byte.TryParse(settings["TraceLevel"], out traceLevel);
         Int32.TryParse(settings["InstanceID"], out FtpDiligentGlobals.Instance);
         Int32.TryParse(settings["HotfolderInterval"], out FtpDiligentGlobals.HotfolderInterval);
+        FtpDiligentGlobals.EventAggregator = m_eventAggr;
         FtpDiligentGlobals.TraceLevel = (eSeverityCode)traceLevel;
-        FtpDiligentGlobals.Mailer = new SendEmails(settings["ErrorsMailTo"], settings["SendGridKey"]);
+        FtpDiligentGlobals.Mailer = new SendEmails(m_eventAggr, settings["ErrorsMailTo"], settings["SendGridKey"]);
         FtpDiligentGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
         if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDiligentGlobals.SyncMode)) {
-            NotifyInitStatus(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
+            InitializationStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość."));
             FtpDiligentGlobals.SyncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
         }
 
         try {
             CultureInfo.CurrentUICulture = new CultureInfo(settings["CultureInfo"]);
         } catch{
-            NotifyInitStatus(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość.");
+            InitializationStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość."));
         }
 
         CheckInstanceInitialization();
@@ -114,16 +126,7 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
         string errmsg, localHostname = Dns.GetHostName();
         (FtpDiligentGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
         if (!string.IsNullOrEmpty(errmsg))
-            NotifyInitStatus(eSeverityCode.Error, errmsg);
-    }
-
-    /// <summary>
-    /// Umożliwia obserwatorom zareagowanie na błąd inicjalizacji
-    /// </summary>
-    private void NotifyInitStatus(eSeverityCode code, string message)
-    {
-        if (InitializationStatusNotification != null)
-            InitializationStatusNotification(this, new TransferNotificationEventArgs(code, message));
+            InitializationStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
     }
     #endregion
 }

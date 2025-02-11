@@ -1,17 +1,18 @@
-﻿
-// -----------------------------------------------------------------------
-// <copyright file="TransferNotificationEventArgs.cs">
+﻿// -----------------------------------------------------------------------
+// <copyright file="StatusEvent.cs">
 // <legal>Copyright (c) Marcin Buchwald, September 2024</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace FtpDiligent;
+namespace FtpDiligent.Events;
+
+using Prism.Events;
 
 /// <summary>
-/// Informacje o zakończonym transferze pliku
+/// Informacje o zdarzeniu w systemie
 /// </summary>
-public record struct TransferNotificationEventArgs
+public record struct StatusEventArgs
 (
     /// <summary>
     /// Podtyp powiadomienia
@@ -23,3 +24,7 @@ public record struct TransferNotificationEventArgs
     /// </summary>
     string message
 );
+
+public class StatusEvent : PubSubEvent<StatusEventArgs>
+{
+}

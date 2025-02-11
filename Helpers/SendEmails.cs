@@ -9,9 +9,11 @@ namespace FtpDiligent;
 
 using System;
 using System.Linq;
-
 using MailKit.Net.Smtp;
 using MimeKit;
+using Prism.Events;
+
+using FtpDiligent.Events;
 
 public class SendEmails
 {
@@ -36,19 +38,21 @@ public class SendEmails
     /// <summary>
     /// Rozgłasza status powiadomienia email
     /// </summary>
-    public static event EventHandler<TransferNotificationEventArgs> MailNotificationStatus;
+    private StatusEvent MailNotificationStatus;
     #endregion
 
     #region constructor
     /// <summary>
     /// Klasa pomocnicza do wysyłania maili
     /// </summary>
+    /// <param name="eventAggr">Mechanizm do przekazywania powiadomień</param>
     /// <param name="errorsMailTo">Lista adresów odbiorców, rozdzialona średnikami</param>
     /// <param name="apiKey">Klucz prywatny do usługi SendGrid</param>
-    public SendEmails(string errorsMailTo, string apiKey)
+    public SendEmails(IEventAggregator eventAggr, string errorsMailTo, string apiKey)
     {
         m_sendGridKey = apiKey;
         m_errorsMailTo = errorsMailTo;
+        MailNotificationStatus = eventAggr.GetEvent<StatusEvent>();
     }
     #endregion
 
@@ -86,7 +90,7 @@ public class SendEmails
 
             return msg;
         } catch (Exception exc) {
-            NotifyMailNotificatioStatus(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
+            MailNotificationStatus.Publish(new StatusEventArgs(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}"));
             return null;
         }
     }
@@ -109,24 +113,12 @@ public class SendEmails
                 client.Disconnect(true);
             }
 
-            NotifyMailNotificatioStatus(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe.");
+            MailNotificationStatus.Publish(new StatusEventArgs(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe."));
             return true;
         } catch (Exception exc) {
-            NotifyMailNotificatioStatus(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
+            MailNotificationStatus.Publish(new StatusEventArgs(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}"));
             return false;
         }
-    }
-
-    /// <summary>
-    /// Triggers an FileTransferred event with provided arguments
-    /// </summary>
-    /// <param name="severity">Severity code</param>
-    /// <param name="message">Description</param>
-    protected void NotifyMailNotificatioStatus(eSeverityCode severity, string message)
-    {
-        var eventArgs = new TransferNotificationEventArgs(severity, message);
-        if (MailNotificationStatus != null)
-            MailNotificationStatus(this, eventArgs);
     }
     #endregion
 }

@@ -1,14 +1,15 @@
 
 // -----------------------------------------------------------------------
-// <copyright file="FtpDispatcherGlobals.cs" company="Private Project">
-// <legal>Copyright (c) Marcin Buchwald, marzec 2023</legal>
+// <copyright file="FtpDispatcherGlobals.cs">
+// <legal>Copyright (c) Marcin Buchwald, September 2024</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
-
 namespace FtpDiligent;
 
 using System;
+
+using Prism.Events;
 
 public static class FtpDiligentGlobals
 {
@@ -51,4 +52,9 @@ public static class FtpDiligentGlobals
     /// Wysyła mailem powiadomienia o błędach
     /// </summary>
     public static SendEmails Mailer;
+
+    /// <summary>
+    /// Mechanizm do przekazywania powiadomień
+    /// </summary>
+    public static IEventAggregator EventAggregator;
 }

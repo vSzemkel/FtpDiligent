@@ -1,6 +1,7 @@
-﻿// -----------------------------------------------------------------------
-// <copyright file="SterowanieViewModel.cs" company="private project">
-// <legal>Copyright (c) MB, February 2025</legal>
+﻿
+// -----------------------------------------------------------------------
+// <copyright file="SterowanieViewModel.cs">
+// <legal>Copyright (c) Marcin Buchwald, February 2025</legal>
 // <author>Marcin Buchwald</author>
 // </copyright>
 // -----------------------------------------------------------------------
@@ -15,8 +16,11 @@ using System.Windows;
 
 using Prism.Commands;
 using Prism.Mvvm;
+
 using FtpDiligent;
 using FtpDiligent.Views;
+using FtpDiligent.Events;
+using Prism.Events;
 
 public sealed class SterowanieViewModel : BindableBase
 {
@@ -35,6 +39,16 @@ public sealed class SterowanieViewModel : BindableBase
     /// Zarządza wątkami roboczymi
     /// </summary>
     private IFtpDispatcher m_dispatcher;
+
+    /// <summary>
+    /// Konfiguracja aplikacji
+    /// </summary>
+    private IFtpDiligentConfig m_config;
+
+    /// <summary>
+    /// Mechanizm do przekazywania powiadomień
+    /// </summary>
+    private IEventAggregator m_eventAggr;
 
     /// <summary>
     /// Lista ostatnio transferowanych plików
@@ -114,17 +128,34 @@ public sealed class SterowanieViewModel : BindableBase
     public DelegateCommand ClearLogsCommand { get; private set; }
     #endregion
 
-    #region constructors
-    public SterowanieViewModel(MainWindow wnd, IFtpDispatcher dispatcher)
+    #region constructor
+    public SterowanieViewModel(MainWindow wnd, IFtpDiligentConfig config, IFtpDispatcher dispatcher, IEventAggregator eventAggr)
     {
         wnd.m_tbSterowanie = this;
 
         m_mainWnd = wnd;
+        m_config = config;
+        m_eventAggr = eventAggr;
         m_dispatcher = dispatcher;
         Processing = false;
+        wnd.Closed += OnClosed;
         StartProcessingCommand = new DelegateCommand(OnStartSync).ObservesCanExecute(() => NotProcessing);
         StopProcessingCommand = new DelegateCommand(OnStopSync).ObservesCanExecute(() => Processing);
         ClearLogsCommand = new DelegateCommand(OnClearLog);
+
+        m_eventAggr.GetEvent<StatusEvent>().Subscribe(GuiShowInfo, ThreadOption.UIThread);
+        m_eventAggr.GetEvent<FileTransferredEvent>().Subscribe(GuiShowTransferDetails, ThreadOption.UIThread);
+        m_config.LoadConfig();
+    }
+    #endregion
+
+    #region handlers
+    /// <summary>
+    /// Gdy okno zostało zamknięte
+    /// </summary>
+    private void OnClosed(object sender, EventArgs e)
+    {
+        m_config.SaveConfig();
     }
     #endregion
 
@@ -137,33 +168,48 @@ public sealed class SterowanieViewModel : BindableBase
         if (m_dispatcher.GetNumberOfFilesTransferred() > 0)
         {
             m_dispatcher.Stop();
-            GuiShowInfo(eSeverityCode.Message, "Restarting dispatcher");
+            GuiShowInfo(new StatusEventArgs(eSeverityCode.Message, "Restarting dispatcher"));
             Thread.Sleep(5000);
             m_dispatcher.Start();
         }
     }
+    #endregion
 
+    #region private
     /// <summary>
     /// Aktualizuje kontrolki na zakładce Sterowanie
     /// </summary>
-    /// <param name="code">Kategoria powiadomienia</param>
-    /// <param name="message">Treść powiadomienia</param>
-    public void GuiShowInfo(eSeverityCode code, string message)
+    /// <param name="status">Kategoria powiadomienia oraz treść wiadomości</param>
+    private void GuiShowInfo(StatusEventArgs status)
     {
-        switch (code)
+        switch (status.severity)
         {
             case eSeverityCode.NextSync:
-                NextSyncDateTime = message;
+                NextSyncDateTime = status.message;
                 break;
             case eSeverityCode.Message:
-                MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {message}");
+                MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {status.message}");
                 if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
-                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, message, EventLogEntryType.Information);
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, status.message, EventLogEntryType.Information);
+                break;
+            case eSeverityCode.Warning:
+                ErrorLog.Insert(0, new FtpErrorModel() { Category = status.severity, Message = status.message });
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, status.message, EventLogEntryType.Warning);
+                break;
+            case eSeverityCode.TransferError:
+                RestartScheduler();
+                FtpDiligentGlobals.Mailer.Run(status.message);
+                goto case eSeverityCode.Error;
+            case eSeverityCode.Error:
+                ErrorLog.Insert(0, new FtpErrorModel() { Category = status.severity, Message = status.message });
+                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, status.message, EventLogEntryType.Error);
                 break;
             default:
-                ErrorLog.Insert(0, new FtpErrorModel() { Category = code, Message = message });
+                ErrorLog.Insert(0, new FtpErrorModel() { Category = status.severity, Message = status.message });
                 if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
-                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, message, EventLogEntryType.Warning);
+                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, status.message, EventLogEntryType.Warning);
                 break;
         }
     }
@@ -172,39 +218,27 @@ public sealed class SterowanieViewModel : BindableBase
     /// Aktualizuje informacje o przesyłaniu plików na zakładce Sterowanie
     /// </summary>
     /// <param name="arg">Szczegóły operacji</param>
-    public void GuiShowTransferDetails(FileTransferredEventArgs arg)
+    private void GuiShowTransferDetails(FileTransferredEventArgs arg)
     {
-        switch (arg.severity)
+        var list = FtpFileLog;
+        list.Insert(0, new FtpFileModel()
         {
-            case eSeverityCode.Message:
-                MessageLog.Insert(0, $"{DateTime.Now:dd/MM/yyyy HH:mm} {arg.message}");
-                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Message))
-                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.Information);
-                break;
-            case eSeverityCode.FileInfo:
-                BindFileInfo(arg);
-                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.FileInfo))
-                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.SuccessAudit);
-                break;
-            case eSeverityCode.Warning:
-                ErrorLog.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
-                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Warning))
-                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.Warning);
-                break;
-            case eSeverityCode.TransferError:
-                RestartScheduler();
-                m_mainWnd.m_mailer.Run(arg.message);
-                goto case eSeverityCode.Error;
-            case eSeverityCode.Error:
-                ErrorLog.Insert(0, new FtpErrorModel() { Category = arg.severity, Message = arg.message });
-                if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.Error))
-                    EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.message, EventLogEntryType.Error);
-                break;
-        }
-    }
-    #endregion
+            Instance = (byte)arg.direction,
+            FileName = arg.file.FullName,
+            FileSize = arg.file.Length,
+            FileDate = arg.file.LastWriteTime
+        });
 
-    #region private
+        if (list.Count > m_fileLogSize)
+            list.RemoveAt(m_fileLogSize);
+
+        m_dispatcher.NotifyFileTransfer();
+        RaisePropertyChanged(nameof(FilesCount));
+
+        if (FtpDiligentGlobals.TraceLevel.HasFlag(eSeverityCode.FileInfo))
+            EventLog.WriteEntry(FtpDiligentGlobals.EventLog, arg.file.FullName + " transferred.", EventLogEntryType.SuccessAudit);
+    }
+
     /// <summary>
     /// Uruchamia realizację zaplanowanych transferów
     /// </summary>
@@ -255,29 +289,6 @@ public sealed class SterowanieViewModel : BindableBase
                 return enp.LocalDirectory;
 
         return string.Empty;
-    }
-
-    /// <summary>
-    /// Przepisuje informację o przetworzonym pliku do struktury ze zdefiniowanymi polami bindowalnymi,
-    /// aktualizuje liste plików i licznik
-    /// </summary>
-    /// <param name="message">eFtpDirection|Name|Size|Date</param>
-    private void BindFileInfo(FileTransferredEventArgs arg)
-    {
-        var list = FtpFileLog;
-        list.Insert(0, new FtpFileModel()
-        {
-            Instance = (byte)arg.direction,
-            FileName = arg.file.FullName,
-            FileSize = arg.file.Length,
-            FileDate = arg.file.LastWriteTime
-        });
-
-        if (list.Count > m_fileLogSize)
-            list.RemoveAt(m_fileLogSize);
-
-        m_dispatcher.NotifyFileTransfer();
-        RaisePropertyChanged(nameof(FilesCount));
     }
     #endregion
 }

@@ -11,6 +11,8 @@ namespace FtpDiligent;
 using System;
 using System.IO;
 
+using FtpDiligent.Events;
+
 public abstract class FtpUtilityBase
 {
     #region fields
@@ -22,7 +24,6 @@ public abstract class FtpUtilityBase
     protected DateTime m_dtLastRefresh;
     protected eSyncFileMode m_SyncMode;
     protected eFtpTransferMode m_TransferMode;
-
     protected FtpDispatcher m_Disp;
     #endregion
 
@@ -35,6 +36,8 @@ public abstract class FtpUtilityBase
     /// <param name="mode">Algorytm kwalifikacji plików do transferu</param>
     public FtpUtilityBase(FtpEndpointModel endpoint, FtpDispatcher dispatcher, eSyncFileMode mode)
     {
+        FileTransferred = FtpDiligentGlobals.EventAggregator.GetEvent<FileTransferredEvent>();
+        TransferStatusNotification = FtpDiligentGlobals.EventAggregator.GetEvent<StatusEvent>();
         m_SyncMode = mode;
         m_Disp = dispatcher;
         FromFtpEndpoint(endpoint);
@@ -46,6 +49,8 @@ public abstract class FtpUtilityBase
     /// <param name="endpoint">Parametry serwera</param>
     public FtpUtilityBase(FtpEndpointModel endpoint)
     {
+        FileTransferred = FtpDiligentGlobals.EventAggregator.GetEvent<FileTransferredEvent>();
+        TransferStatusNotification = FtpDiligentGlobals.EventAggregator.GetEvent<StatusEvent>();
         m_SyncMode = eSyncFileMode.AllFiles;
         FromFtpEndpoint(endpoint);
     }
@@ -55,12 +60,12 @@ public abstract class FtpUtilityBase
     /// <summary>
     /// Rozgłasza informację o przetransportowanym pliku
     /// </summary>
-    public static event EventHandler<FileTransferredEventArgs> FileTransferred;
+    protected FileTransferredEvent FileTransferred;
 
     /// <summary>
     /// Rozgłasza status operacji transferu pliku
     /// </summary>
-    public static event EventHandler<TransferNotificationEventArgs> TransferStatusNotification;
+    protected StatusEvent TransferStatusNotification;
     #endregion
 
     #region public methods
@@ -76,12 +81,8 @@ public abstract class FtpUtilityBase
     public bool CheckLocalDirectory()
     {
         if (!Directory.Exists(m_sLocalDir)) {
-            string sMsg = "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir;
-            if (NotifyTransferStatus != null) {
-                NotifyTransferStatus(eSeverityCode.Error, sMsg);
-                return false;
-            } else
-                throw new FtpUtilityException(sMsg);
+            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir));
+            return false;
         }
 
         return true;
@@ -133,38 +134,11 @@ public abstract class FtpUtilityBase
     protected bool CheckDispatcher()
     {
         if (m_Disp == null && m_SyncMode == eSyncFileMode.UniqueDateAndSizeInDatabase) {
-            string sMsg = "Pobieranie plików w tym trybie wymaga dispatchera";
-            if (NotifyTransferStatus != null) {
-                NotifyTransferStatus(eSeverityCode.Error, sMsg);
-                return false;
-            } else
-                throw new FtpUtilityException(sMsg);
+            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, "Pobieranie plików w tym trybie wymaga dispatchera"));
+            return false;
         }
 
         return true;
-    }
-
-    /// <summary>
-    /// Triggers an FileTransferred event with provided arguments
-    /// </summary>
-    /// <param name="severity">Severity code</param>
-    /// <param name="message">Description</param>
-    protected void NotifyTransferStatus(eSeverityCode severity, string message)
-    {
-        if (TransferStatusNotification != null)
-            TransferStatusNotification(this, new TransferNotificationEventArgs(severity, message));
-    }
-
-    /// <summary>
-    /// Triggers an FileTransferred event with provided arguments
-    /// </summary>
-    /// <param name="code">Severity code</param>
-    /// <param name="operation">Operation type</param>
-    /// <param name="file">File details</param>
-    protected void NotifyFileTransferred(eFtpDirection operation, FileInfo file)
-    {
-        if (FileTransferred != null)
-            FileTransferred(this, new FileTransferredEventArgs(eSeverityCode.FileInfo, operation, file, string.Empty));
     }
     #endregion
 

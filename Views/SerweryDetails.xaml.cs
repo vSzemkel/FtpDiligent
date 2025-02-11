@@ -13,6 +13,10 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
+using Prism.Events;
+
+using FtpDiligent.Events;
+
 /// <summary>
 /// Interaction logic for Sterowanie.xaml
 /// </summary>
@@ -40,13 +44,18 @@ public partial class SerweryDetails : UserControl
     private IFtpRepository m_repository;
     #endregion
 
+    #region events
+    private StatusEvent ShowStatus;
+    #endregion
+
     #region constructors
-    public SerweryDetails(MainWindow wnd, IFtpRepository repository)
+    public SerweryDetails(MainWindow wnd, IEventAggregator eventAggr, IFtpRepository repository)
     {
         InitializeComponent();
 
         m_mainWnd = wnd;
         m_repository = repository;
+        ShowStatus = eventAggr.GetEvent<StatusEvent>();
         cbProtocol.ItemsSource = Enum.GetValues(typeof(eFtpProtocol));
         cbMode.ItemsSource = Enum.GetValues(typeof(eFtpTransferMode));
         cbDirection.ItemsSource = new eFtpDirection[] {eFtpDirection.Get, eFtpDirection.Put, eFtpDirection.Get|eFtpDirection.Put, eFtpDirection.HotfolderPut };
@@ -81,7 +90,7 @@ public partial class SerweryDetails : UserControl
         if (string.IsNullOrEmpty(errmsg))
             RestoreTabControl();
         else
-            m_mainWnd.ShowErrorInfo(eSeverityCode.Error, errmsg);
+            ShowStatus.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
     }
 
     /// <summary>
