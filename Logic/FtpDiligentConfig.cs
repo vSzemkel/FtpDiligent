@@ -13,7 +13,6 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
-using System.Windows;
 
 using Prism.Events;
 
@@ -72,14 +71,14 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
         FtpDiligentGlobals.CheckTransferedStorage = bool.Parse(settings["CheckTransferedFile"]);
 
         if (!Enum.TryParse<eSyncFileMode>(settings["SyncMethod"], out FtpDiligentGlobals.SyncMode)) {
-            InitializationStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość."));
+            NotifyInitStatus(eSeverityCode.Warning, "Parametr SyncMethod ma nieprawidłową wartość.");
             FtpDiligentGlobals.SyncMode = eSyncFileMode.UniqueDateAndSizeInDatabase;
         }
 
         try {
             CultureInfo.CurrentUICulture = new CultureInfo(settings["CultureInfo"]);
         } catch{
-            InitializationStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość."));
+            NotifyInitStatus(eSeverityCode.Warning, "Parametr CultureInfo ma nieprawidłową wartość.");
         }
 
         CheckInstanceInitialization();
@@ -110,8 +109,7 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
             if (FtpDiligentGlobals.TraceLevel > 0 && !EventLog.SourceExists(FtpDiligentGlobals.EventLog))
                 EventLog.CreateEventSource(FtpDiligentGlobals.EventLog, FtpDiligentGlobals.EventLog);
         } catch (System.Security.SecurityException) {
-            MessageBox.Show($"Aby dokończyć instalację, uruchom {System.Reflection.Assembly.GetExecutingAssembly().Location} po raz pierwszy jako Administrator.", "Wymagana inicjalizacja", MessageBoxButton.OK, MessageBoxImage.Error);
-            throw;
+            NotifyInitStatus(eSeverityCode.Error, $"Aby dokończyć instalację, uruchom {System.Reflection.Assembly.GetExecutingAssembly().Location} po raz pierwszy jako Administrator.");
         }
     }
 
@@ -126,7 +124,12 @@ public sealed class FtpDiligentConfig : IFtpDiligentConfig
         string errmsg, localHostname = Dns.GetHostName();
         (FtpDiligentGlobals.Instance, errmsg) = m_repository.InitInstance(localHostname);
         if (!string.IsNullOrEmpty(errmsg))
-            InitializationStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
+            NotifyInitStatus(eSeverityCode.Error, errmsg);
     }
+
+    /// <summary>
+    /// Umożliwia obserwatorom zareagowanie na błąd inicjalizacji
+    /// </summary>
+    private void NotifyInitStatus(eSeverityCode code, string message) => InitializationStatusNotification.Publish(new StatusEventArgs(code, message));
     #endregion
 }

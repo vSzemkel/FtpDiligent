@@ -11,8 +11,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-using FtpDiligent.Events;
-
 /// <summary>
 /// Umożliwia przeglądanie zasob,ow serwera FTP i pobieranie plików
 /// </summary>
@@ -64,12 +62,12 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
                     MD5 = fi.FullName.ComputeMD5()
                 });
 
-                FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Get, fi));
+                NotifyFileTransferred(eFtpDirection.Get, fi);
             }
         }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Kopiowanie plików z katalogu {m_sRemoteDir} zostało przerwane przez użytkownika"));
+            NotifyTransferStatus(eSeverityCode.Message, $"Kopiowanie plików z katalogu {m_sRemoteDir} zostało przerwane przez użytkownika");
 
         return ret.ToArray();
     }
@@ -80,7 +78,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Upload()
     {
-        TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, $"Kopiowanie plików jest możliwe tylko przy użyciu operacji GET"));
+        NotifyTransferStatus(eSeverityCode.Warning, $"Kopiowanie plików jest możliwe tylko przy użyciu operacji GET");
         return null;
     }
 
@@ -97,7 +95,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
 
         bool status = PutFile(file);
         if (status)
-            FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.HotfolderPut, file));
+            NotifyFileTransferred(eFtpDirection.HotfolderPut, file);
 
         return status;
     }
@@ -186,7 +184,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
         try {
             File.Copy(file.FullName, destPath);
         } catch (Exception e) {
-            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, $"Kopiowanie nie powiodło się {file.FullName} {e.Message}"));
+            NotifyTransferStatus(eSeverityCode.Warning, $"Kopiowanie nie powiodło się {file.FullName} {e.Message}");
             return false;
         }
 

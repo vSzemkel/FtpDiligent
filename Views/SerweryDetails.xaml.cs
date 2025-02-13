@@ -13,8 +13,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
-using Prism.Events;
-
 using FtpDiligent.Events;
 
 /// <summary>
@@ -49,13 +47,13 @@ public partial class SerweryDetails : UserControl
     #endregion
 
     #region constructors
-    public SerweryDetails(MainWindow wnd, IEventAggregator eventAggr, IFtpRepository repository)
+    public SerweryDetails(MainWindow wnd, IFtpRepository repository)
     {
         InitializeComponent();
 
         m_mainWnd = wnd;
         m_repository = repository;
-        ShowStatus = eventAggr.GetEvent<StatusEvent>();
+        ShowStatus = FtpDiligentGlobals.EventAggregator.GetEvent<StatusEvent>();
         cbProtocol.ItemsSource = Enum.GetValues(typeof(eFtpProtocol));
         cbMode.ItemsSource = Enum.GetValues(typeof(eFtpTransferMode));
         cbDirection.ItemsSource = new eFtpDirection[] {eFtpDirection.Get, eFtpDirection.Put, eFtpDirection.Get|eFtpDirection.Put, eFtpDirection.HotfolderPut };

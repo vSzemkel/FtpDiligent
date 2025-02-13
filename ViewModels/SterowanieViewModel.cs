@@ -15,12 +15,12 @@ using System.Threading;
 using System.Windows;
 
 using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
 
 using FtpDiligent;
-using FtpDiligent.Views;
 using FtpDiligent.Events;
-using Prism.Events;
+using FtpDiligent.Views;
 
 public sealed class SterowanieViewModel : BindableBase
 {
@@ -220,8 +220,7 @@ public sealed class SterowanieViewModel : BindableBase
     /// <param name="arg">Szczegóły operacji</param>
     private void GuiShowTransferDetails(FileTransferredEventArgs arg)
     {
-        var list = FtpFileLog;
-        list.Insert(0, new FtpFileModel()
+        FtpFileLog.Insert(0, new FtpFileModel()
         {
             Instance = (byte)arg.direction,
             FileName = arg.file.FullName,
@@ -229,8 +228,8 @@ public sealed class SterowanieViewModel : BindableBase
             FileDate = arg.file.LastWriteTime
         });
 
-        if (list.Count > m_fileLogSize)
-            list.RemoveAt(m_fileLogSize);
+        if (FtpFileLog.Count > m_fileLogSize)
+            FtpFileLog.RemoveAt(m_fileLogSize);
 
         m_dispatcher.NotifyFileTransfer();
         RaisePropertyChanged(nameof(FilesCount));
@@ -251,7 +250,7 @@ public sealed class SterowanieViewModel : BindableBase
             m_dispatcher.Start();
             m_mainWnd.m_tbSerwery.StartHotfolders();
         } else
-            MessageBox.Show($"Katalog lokalny {hostWithBadDir} jest niepoprawny", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+            GuiShowInfo(new StatusEventArgs(eSeverityCode.Error, $"Katalog lokalny {hostWithBadDir} jest niepoprawny"));
     }
 
     /// <summary>

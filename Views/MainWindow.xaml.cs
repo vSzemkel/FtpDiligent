@@ -10,8 +10,6 @@ namespace FtpDiligent.Views;
 
 using System.Windows;
 
-using Prism.Events;
-
 using FtpDiligent.ViewModels;
 
 /// <summary>
@@ -55,7 +53,7 @@ public partial class MainWindow : Window
     public SerweryDetails m_tbSerweryDetails {
         get {
             if (_m_tbSerweryDetails == null) {
-                _m_tbSerweryDetails = new SerweryDetails(this, FtpDiligentGlobals.EventAggregator, m_repository);
+                _m_tbSerweryDetails = new SerweryDetails(this, m_repository);
                 _m_tbSerweryDetails.m_mainWnd = this;
                 tabSerweryDetails.Content = _m_tbSerweryDetails;
             }
@@ -67,7 +65,7 @@ public partial class MainWindow : Window
     public HarmonogramyDetails m_tbHarmonogramyDetails {
         get {
             if (_m_tbHarmonogramyDetails == null) {
-                _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, FtpDiligentGlobals.EventAggregator, m_repository);
+                _m_tbHarmonogramyDetails = new HarmonogramyDetails(this, m_repository);
                 _m_tbHarmonogramyDetails.m_mainWnd = this;
                 tabHarmonogramyDetails.Content = _m_tbHarmonogramyDetails;
             }

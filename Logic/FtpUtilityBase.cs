@@ -60,12 +60,12 @@ public abstract class FtpUtilityBase
     /// <summary>
     /// Rozgłasza informację o przetransportowanym pliku
     /// </summary>
-    protected FileTransferredEvent FileTransferred;
+    private FileTransferredEvent FileTransferred;
 
     /// <summary>
     /// Rozgłasza status operacji transferu pliku
     /// </summary>
-    protected StatusEvent TransferStatusNotification;
+    private StatusEvent TransferStatusNotification;
     #endregion
 
     #region public methods
@@ -81,7 +81,7 @@ public abstract class FtpUtilityBase
     public bool CheckLocalDirectory()
     {
         if (!Directory.Exists(m_sLocalDir)) {
-            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir));
+            NotifyTransferStatus(eSeverityCode.Error, "Nie odnaleziono katalogu lokalnego: " + m_sLocalDir);
             return false;
         }
 
@@ -134,12 +134,26 @@ public abstract class FtpUtilityBase
     protected bool CheckDispatcher()
     {
         if (m_Disp == null && m_SyncMode == eSyncFileMode.UniqueDateAndSizeInDatabase) {
-            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, "Pobieranie plików w tym trybie wymaga dispatchera"));
+            NotifyTransferStatus(eSeverityCode.Error, "Pobieranie plików w tym trybie wymaga dispatchera");
             return false;
         }
 
         return true;
     }
+
+    /// <summary>
+    /// Triggers an FileTransferred event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+    protected void NotifyTransferStatus(eSeverityCode severity, string message) => TransferStatusNotification.Publish(new StatusEventArgs(severity, message));
+
+    /// <summary>
+    /// Triggers an FileTransferred event with provided arguments
+    /// </summary>
+    /// <param name="operation">Operation type</param>
+    /// <param name="file">File details</param>
+    protected void NotifyFileTransferred(eFtpDirection operation, FileInfo file) => FileTransferred.Publish(new FileTransferredEventArgs(operation, file));
     #endregion
 
     #region protected abstract methods

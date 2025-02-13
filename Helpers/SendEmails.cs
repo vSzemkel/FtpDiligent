@@ -90,7 +90,7 @@ public class SendEmails
 
             return msg;
         } catch (Exception exc) {
-            MailNotificationStatus.Publish(new StatusEventArgs(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}"));
+            NotifyMailNotificatioStatus(eSeverityCode.Error, $"PrepareMimeMessage error: {exc.Message}");
             return null;
         }
     }
@@ -113,12 +113,19 @@ public class SendEmails
                 client.Disconnect(true);
             }
 
-            MailNotificationStatus.Publish(new StatusEventArgs(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe."));
+            NotifyMailNotificatioStatus(eSeverityCode.Message, $"Wysłano {msg.To.Count} powiadomienie/a mailowe.");
             return true;
         } catch (Exception exc) {
-            MailNotificationStatus.Publish(new StatusEventArgs(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}"));
+            NotifyMailNotificatioStatus(eSeverityCode.Error, $"SendEmail to {m_mailServer} error: {exc.Message}");
             return false;
         }
     }
+
+    /// <summary>
+    /// Triggers an FileTransferred event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+    protected void NotifyMailNotificatioStatus(eSeverityCode severity, string message) => MailNotificationStatus.Publish(new StatusEventArgs(severity, message));
     #endregion
 }

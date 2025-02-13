@@ -17,11 +17,12 @@ using System.Windows.Data;
 using System.Windows.Input;
 
 using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
+
 using FtpDiligent;
 using FtpDiligent.Views;
 using FtpDiligent.Events;
-using Prism.Events;
 
 public sealed class SerweryViewModel : BindableBase
 {
@@ -129,7 +130,7 @@ public sealed class SerweryViewModel : BindableBase
         foreach (FtpEndpoint enp in m_endpoints)
             if (enp.Direction.HasFlag(eFtpDirection.HotfolderPut))
             {
-                var fhw = new FtpHotfolderWatcher(enp.GetModel(), FtpDiligentGlobals.EventAggregator, m_repository);
+                var fhw = new FtpHotfolderWatcher(enp.GetModel(), m_repository);
                 fhw.StartWatching();
                 m_hotfolders.Add(fhw);
             }

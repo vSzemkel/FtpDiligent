@@ -79,138 +79,6 @@ public sealed class FtpDispatcher : IFtpDispatcher
     }
     #endregion
 
-    #region private methods
-    /// <summary>
-    /// Implementacja pętli obsługującej żądania pobrania plików z endpointu ftp
-    /// Jeżeli czas żądania upłynął, wykonuje je bezzwłocznie, jeśli nie, to zasypia 
-    /// do czasu wymagalności żądania. Zaimplementowano metodę wyjścia z pętli na
-    /// życzenie użytkownika po wywołaniu Stop(); Wartość iSchXX==-1 oznacza brak 
-    /// żądań do końca tygodnia, towarzyszy jej data początku nowego tygodnia.
-    /// </summary>
-    /// <param name="o">Nie używany</param>
-    private void DispatchFtpThread(object o)
-    {
-        int lastSchedule = 0;
-
-        while (InProgress) {
-            var (schedule, errmsg) = m_repository.GetNextSync(FtpDiligentGlobals.Instance);
-            if (!string.IsNullOrEmpty(errmsg)) {
-                if (errmsg == "0")
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie"));
-                else {
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po błędzie"));
-                    lastSchedule = 0;
-                    Thread.Sleep(m_retryWaitTime);
-                    FtpDiligentGlobals.StartProcessing();
-                }
-                return;
-            }
-
-            int currentSchedule = schedule.Hash;
-            if (currentSchedule == lastSchedule) {
-                Thread.Sleep(m_refractoryWaitTime);
-                continue;
-            }
-
-            lastSchedule = currentSchedule;
-            if (schedule.xx > 0)
-                DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.NextSync, $"Najbliższy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}"));
-            else
-                DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.NextSync, "Do końca tygodnia nie zaplanowano żadnych transferów."));
-
-            if (DateTime.Now < schedule.nextSyncTime)
-                m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
-
-            if (schedule.xx > 0 && InProgress)
-                ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, schedule);
-        } // while
-
-        if (!InProgress)
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, "Pobieranie przerwane przez użytkownika"));
-    }
-
-    /// <summary>
-    /// Wykonuje transfer plików na podstawie zaplanowanej pozycji harmonogramu
-    /// Jest uruchamiana przez dispatcher o odpowiedniej porze i tylko dla poprawnych pozycji harmonogramu
-    /// </summary>
-    /// <param name="iSchXX">
-    /// Jeśli dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
-    /// jeśli ujemny, to identyfikator endpointu, dla którego transfer uruchomiono ręcznie
-    /// </param>
-    private void ExecuteFtpTransfer(object o)
-    {
-        FtpScheduleModel schedule = (FtpScheduleModel)o;
-        int key = schedule.xx;
-        var (endpoint, errmsg) = m_repository.SelectEndpoint(key).Result;
-        if (!string.IsNullOrEmpty(errmsg)) {
-            if (errmsg == "0")
-                errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
-
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
-            return;
-        }
-
-        string remote = endpoint.host + endpoint.remDir;
-        FtpSyncModel log = new() { xx = key, syncTime = endpoint.nextSync };
-        IFtpUtility fu = IFtpUtility.Create(endpoint, this, FtpDiligentGlobals.SyncMode);
-        eFtpDirection eDirection = endpoint.direction;
-
-        if (key < 0)
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Rozpoczęto transfer plików z serwera {remote}"));
-        else
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Rozpoczęto zaplanowany transfer plików {schedule.name} z serwera {remote}"));
-
-        try { // transferuj pliki
-            #region pobieranie
-            if (eDirection.HasFlag(eFtpDirection.Get)) {
-                log.files = fu.Download();
-                if (log.files == null) {
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakończyło się niepowodzeniem"));
-                    return;
-                }
-
-                // loguj zmiany
-                int filesTransfered = log.files.Length;
-                if (filesTransfered == 0) {
-                    m_repository.LogActivation(log);
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania"));
-                } else {
-                    log.direction = eFtpDirection.Get;
-                    m_repository.LogSync(log);
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}"));
-                }
-            }
-            #endregion
-
-            #region wstawianie
-            if (eDirection.HasFlag(eFtpDirection.Put)) {
-                log.files = fu.Upload();
-                if (log.files == null) {
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakończyło się niepowodzeniem"));
-                    return;
-                }
-
-                // loguj zmiany
-                int filesTransfered = log.files.Length;
-                if (filesTransfered == 0) {
-                    m_repository.LogActivation(log);
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}"));
-                } else {
-                    log.direction = eFtpDirection.Put;
-                    m_repository.LogSync(log);
-                    DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}"));
-                }
-            }
-            #endregion
-        } catch (FtpUtilityException fex) {
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, fex.Message));
-        } catch (Exception se) {
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, se.Message));
-        }
-    }
-    #endregion
-
     #region public methods
     /// <summary>
     /// Inicjuje w wątku z puli pętlą przetwarzania żądań pobranie plików z endpointów ftp
@@ -243,7 +111,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
     {
         InProgress = false;
         m_are.Set();
-        DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików."));
+        NotifyTransferStatus(eSeverityCode.Message, $"Zatrzymano przetwarzanie. Skopiowano {m_filesTransfered} plików.");
     }
 
     /// <summary>
@@ -264,7 +132,7 @@ public sealed class FtpDispatcher : IFtpDispatcher
 
         var (status, errmsg) = m_repository.VerifyFile(file);
         if (!string.IsNullOrEmpty(errmsg)) {
-            DispatcherStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Error, errmsg));
+            NotifyTransferStatus(eSeverityCode.Error, errmsg);
             return false;
         }
 
@@ -280,5 +148,144 @@ public sealed class FtpDispatcher : IFtpDispatcher
     /// Zlicza przesłane pliki, wołane tylko przez GUI thread
     /// </summary>
     public int NotifyFileTransfer() => ++m_filesTransfered;
+    #endregion
+
+    #region private methods
+    /// <summary>
+    /// Implementacja pętli obsługującej żądania pobrania plików z endpointu ftp
+    /// Jeżeli czas żądania upłynął, wykonuje je bezzwłocznie, jeśli nie, to zasypia 
+    /// do czasu wymagalności żądania. Zaimplementowano metodę wyjścia z pętli na
+    /// życzenie użytkownika po wywołaniu Stop(); Wartość iSchXX==-1 oznacza brak 
+    /// żądań do końca tygodnia, towarzyszy jej data początku nowego tygodnia.
+    /// </summary>
+    /// <param name="o">Nie używany</param>
+    private void DispatchFtpThread(object o)
+    {
+        int lastSchedule = 0;
+
+        while (InProgress) {
+            var (schedule, errmsg) = m_repository.GetNextSync(FtpDiligentGlobals.Instance);
+            if (!string.IsNullOrEmpty(errmsg)) {
+                if (errmsg == "0")
+                    NotifyTransferStatus(eSeverityCode.NextSync, "Nie zaplanowano żadnych pozycji w harmonogramie");
+                else {
+                    NotifyTransferStatus(eSeverityCode.Error, errmsg);
+                    NotifyTransferStatus(eSeverityCode.Warning, $"Wstrzymanie pracy na {m_retryWaitTime / 60 / 1000} minut po błędzie");
+                    lastSchedule = 0;
+                    Thread.Sleep(m_retryWaitTime);
+                    FtpDiligentGlobals.StartProcessing();
+                }
+                return;
+            }
+
+            int currentSchedule = schedule.Hash;
+            if (currentSchedule == lastSchedule) {
+                Thread.Sleep(m_refractoryWaitTime);
+                continue;
+            }
+
+            lastSchedule = currentSchedule;
+            if (schedule.xx > 0)
+                NotifyTransferStatus(eSeverityCode.NextSync, $"Najbliższy transfer plików z harmonogramu {schedule.name} zaplanowano na {schedule.nextSyncTime:dd/MM/yyyy HH:mm}");
+            else
+                NotifyTransferStatus(eSeverityCode.NextSync, "Do końca tygodnia nie zaplanowano żadnych transferów.");
+
+            if (DateTime.Now < schedule.nextSyncTime)
+                m_are.WaitOne(schedule.nextSyncTime.Subtract(DateTime.Now), false);
+
+            if (schedule.xx > 0 && InProgress)
+                ThreadPool.QueueUserWorkItem(ExecuteFtpTransfer, schedule);
+        } // while
+
+        if (!InProgress)
+            NotifyTransferStatus(eSeverityCode.Message, "Pobieranie przerwane przez użytkownika");
+    }
+
+    /// <summary>
+    /// Wykonuje transfer plików na podstawie zaplanowanej pozycji harmonogramu
+    /// Jest uruchamiana przez dispatcher o odpowiedniej porze i tylko dla poprawnych pozycji harmonogramu
+    /// </summary>
+    /// <param name="iSchXX">
+    /// Jeśli dodatni, to identyfikator pozycji harmonogramu uruchomionej automatycznie,
+    /// jeśli ujemny, to identyfikator endpointu, dla którego transfer uruchomiono ręcznie
+    /// </param>
+    private void ExecuteFtpTransfer(object o)
+    {
+        FtpScheduleModel schedule = (FtpScheduleModel)o;
+        int key = schedule.xx;
+        var (endpoint, errmsg) = m_repository.SelectEndpoint(key).Result;
+        if (!string.IsNullOrEmpty(errmsg)) {
+            if (errmsg == "0")
+                errmsg = "Brak definicji endpointu dla harmonogramu: " + key;
+
+            NotifyTransferStatus(eSeverityCode.Error, errmsg);
+            return;
+        }
+
+        string remote = endpoint.host + endpoint.remDir;
+        FtpSyncModel log = new() { xx = key, syncTime = endpoint.nextSync };
+        IFtpUtility fu = IFtpUtility.Create(endpoint, this, FtpDiligentGlobals.SyncMode);
+        eFtpDirection eDirection = endpoint.direction;
+
+        if (key < 0)
+            NotifyTransferStatus(eSeverityCode.Message, $"Rozpoczęto transfer plików z serwera {remote}");
+        else
+            NotifyTransferStatus(eSeverityCode.Message, $"Rozpoczęto zaplanowany transfer plików {schedule.name} z serwera {remote}");
+
+        try { // transferuj pliki
+            #region pobieranie
+            if (eDirection.HasFlag(eFtpDirection.Get)) {
+                log.files = fu.Download();
+                if (log.files == null) {
+                    NotifyTransferStatus(eSeverityCode.TransferError, $"Pobieranie plików z serwera {remote} zakończyło się niepowodzeniem");
+                    return;
+                }
+
+                // loguj zmiany
+                int filesTransfered = log.files.Length;
+                if (filesTransfered == 0) {
+                    m_repository.LogActivation(log);
+                    NotifyTransferStatus(eSeverityCode.Message, $"Na serwerze {remote} nie znaleziono plików odpowiednich do pobrania");
+                } else {
+                    log.direction = eFtpDirection.Get;
+                    m_repository.LogSync(log);
+                    NotifyTransferStatus(eSeverityCode.Message, $"Pobrano {filesTransfered} plików z serwera {remote}");
+                }
+            }
+            #endregion
+
+            #region wstawianie
+            if (eDirection.HasFlag(eFtpDirection.Put)) {
+                log.files = fu.Upload();
+                if (log.files == null) {
+                    NotifyTransferStatus(eSeverityCode.TransferError, $"Wstawianie plików na serwer {remote} zakończyło się niepowodzeniem");
+                    return;
+                }
+
+                // loguj zmiany
+                int filesTransfered = log.files.Length;
+                if (filesTransfered == 0) {
+                    m_repository.LogActivation(log);
+                    NotifyTransferStatus(eSeverityCode.Message, $"Nie znaleziono plików do wstawienia na serwer {remote}");
+                } else {
+                    log.direction = eFtpDirection.Put;
+                    m_repository.LogSync(log);
+                    NotifyTransferStatus(eSeverityCode.Message, $"Wstawiono {filesTransfered} plików na serwer {remote}");
+                }
+            }
+            #endregion
+        } catch (FtpUtilityException fex) {
+            NotifyTransferStatus(eSeverityCode.TransferError, fex.Message);
+        } catch (Exception se) {
+            NotifyTransferStatus(eSeverityCode.TransferError, se.Message);
+        }
+    }
+
+    /// <summary>
+    /// Triggers an DispatcherStatusNotification event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+    private void NotifyTransferStatus(eSeverityCode severity, string message) => DispatcherStatusNotification.Publish(new StatusEventArgs(severity, message));
     #endregion
 }

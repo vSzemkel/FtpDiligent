@@ -18,8 +18,6 @@ using Renci.SshNet;
 using Renci.SshNet.Common;
 using Renci.SshNet.Sftp;
 
-using FtpDiligent.Events;
-
 /// <summary>
 /// Umożliwia przeglądanie zasobów serwera FTP i pobieranie plików
 /// poprzez transport oparty na protokole SSH (port 22)
@@ -94,11 +92,11 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
                     Modified = f.LastWriteTime,
                     MD5 = (m_sLocalDir + f.Name).ComputeMD5()
                 });
-                FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Get, new FileInfo(f.FullName)));
+                NotifyFileTransferred(eFtpDirection.Get, new FileInfo(f.FullName));
             }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika"));
+            NotifyTransferStatus(eSeverityCode.Message, $"Pobieranie z serwera {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_sftpClient.Disconnect();
 
@@ -126,12 +124,12 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
                     Modified = fi.LastWriteTime,
                     MD5 = fi.FullName.ComputeMD5()
                 });
-                FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Put, fi));
+                NotifyFileTransferred(eFtpDirection.Put, fi);
             }
         }
 
         if (m_Disp != null && !m_Disp.InProgress)
-            TransferStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika"));
+            NotifyTransferStatus(eSeverityCode.Message, $"Wstawianie na serwer {m_sHost}{m_sRemoteDir} zostało przerwane przez użytkownika");
 
         m_sftpClient.Disconnect();
 
@@ -151,7 +149,7 @@ public sealed class SFtpUtility : FtpUtilityBase, IFtpUtility
 
         bool status = PutFile(file);
         if (status)
-            FileTransferred.Publish(new FileTransferredEventArgs(eFtpDirection.Put, file));
+            NotifyFileTransferred(eFtpDirection.Put, file);
 
         m_sftpClient.Disconnect();
 

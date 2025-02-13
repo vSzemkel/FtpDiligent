@@ -68,14 +68,14 @@ public class FtpHotfolderWatcher
     /// </summary>
     /// <param name="endpoint">Parametry serwera</param>
     /// <param name="repository">Repozytorium danych</param>
-    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IEventAggregator eventAggr, IFtpRepository repository)
+    public FtpHotfolderWatcher(FtpEndpointModel endpoint, IFtpRepository repository)
     {
         m_repository = repository;
         m_ftpUtility = IFtpUtility.Create(endpoint);
         m_log.xx = -endpoint.xx;
         m_log.syncTime = DateTime.Now;
         m_log.direction = eFtpDirection.HotfolderPut;
-        HotfolderStatusNotification = eventAggr.GetEvent<StatusEvent>();
+        HotfolderStatusNotification = FtpDiligentGlobals.EventAggregator.GetEvent<StatusEvent>();
         RegisterWatcher();
     }
     #endregion
@@ -151,9 +151,9 @@ public class FtpHotfolderWatcher
                                 continue;
                             }
                     } catch (UnauthorizedAccessException) {
-                        HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Message, $"Odczyt pliku {file.FullName} zostanie ponowiony"));
+                        NotifyMonitoringStatus(eSeverityCode.Message, $"Odczyt pliku {file.FullName} zostanie ponowiony");
                     } catch (Exception e) {
-                        HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.Warning, $"Nie udało się odczytać pliku {file.FullName} {e.Message}"));
+                        NotifyMonitoringStatus(eSeverityCode.Warning, $"Nie udało się odczytać pliku {file.FullName} {e.Message}");
                     }
 
                     staged.Add(stagedInfo.Key, file);
@@ -192,14 +192,21 @@ public class FtpHotfolderWatcher
                         MD5 = fi.FullName.ComputeMD5()
                     });
         } catch (FtpUtilityException fex) {
-            HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, fex.Message));
+            NotifyMonitoringStatus(eSeverityCode.TransferError, fex.Message);
         } catch (System.Exception se) {
-            HotfolderStatusNotification.Publish(new StatusEventArgs(eSeverityCode.TransferError, se.Message));
+            NotifyMonitoringStatus(eSeverityCode.TransferError, se.Message);
         }
 
         m_log.files = log.ToArray();
 
         m_repository.LogSync(m_log);
     }
+
+    /// <summary>
+    /// Triggers an DispatcherStatusNotification event with provided arguments
+    /// </summary>
+    /// <param name="severity">Severity code</param>
+    /// <param name="message">Description</param>
+    private void NotifyMonitoringStatus(eSeverityCode severity, string message) => HotfolderStatusNotification.Publish(new StatusEventArgs(severity, message));
     #endregion
 }

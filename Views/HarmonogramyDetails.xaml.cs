@@ -8,7 +8,6 @@
 
 namespace FtpDiligent.Views;
 
-using Prism.Events;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
@@ -48,7 +47,7 @@ public partial class HarmonogramyDetails : UserControl
     #endregion
 
     #region constructors
-    public HarmonogramyDetails(MainWindow wnd, IEventAggregator eventAggr, IFtpRepository repository)
+    public HarmonogramyDetails(MainWindow wnd, IFtpRepository repository)
     {
         InitializeComponent();
 
@@ -57,7 +56,7 @@ public partial class HarmonogramyDetails : UserControl
         var dayNames = CultureInfo.CurrentUICulture.DateTimeFormat.DayNames;
         cbStartDay.ItemsSource = dayNames;
         cbStopDay.ItemsSource = dayNames;
-        ShowStatus = eventAggr.GetEvent<StatusEvent>();
+        ShowStatus = FtpDiligentGlobals.EventAggregator.GetEvent<StatusEvent>();
     }
     #endregion
 
