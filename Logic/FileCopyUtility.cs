@@ -78,7 +78,7 @@ public sealed class FileCopyUtility : FtpUtilityBase, IFtpUtility
     /// <returns>Informacja o skopiowanych plikach</returns>
     public FtpSyncFileModel[] Upload()
     {
-        NotifyTransferStatus(eSeverityCode.Warning, $"Kopiowanie plików jest możliwe tylko przy użyciu operacji GET");
+        NotifyTransferStatus(eSeverityCode.Warning, "Kopiowanie plików jest możliwe tylko przy użyciu operacji GET");
         return null;
     }
 

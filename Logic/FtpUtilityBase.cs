@@ -123,9 +123,7 @@ public abstract class FtpUtilityBase
     protected bool CheckLocalStorage(string sFileName, long sLength)
     {
         var fi = new FileInfo(m_sLocalDir + sFileName);
-        if (!fi.Exists) return false;
-
-        return fi.Length == sLength;
+        return fi.Exists && fi.Length == sLength;
     }
 
     /// <summary>
